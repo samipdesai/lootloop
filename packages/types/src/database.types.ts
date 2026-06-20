@@ -786,7 +786,33 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      auth_family_id: { Args: never; Returns: string };
+      auth_is_kid: { Args: never; Returns: boolean };
+      auth_profile_id: { Args: never; Returns: string };
+      auth_role: {
+        Args: never;
+        Returns: Database['public']['Enums']['profile_role'];
+      };
+      award_points_on_approval: {
+        Args: { p_completion_id: string; p_reviewer_id: string };
+        Returns: string;
+      };
+      credit_interest: {
+        Args: { p_amount: number; p_kid_id: string };
+        Returns: string;
+      };
+      purchase_reward: {
+        Args: { p_kid_id: string; p_reward_id: string };
+        Returns: string;
+      };
+      transfer_to_savings: {
+        Args: {
+          p_amount: number;
+          p_direction: Database['public']['Enums']['savings_txn_type'];
+          p_kid_id: string;
+        };
+        Returns: string;
+      };
     };
     Enums: {
       age_mode: 'simple' | 'detailed' | 'teen';
