@@ -225,6 +225,61 @@ export type Database = {
         };
         Relationships: [];
       };
+      family_invites: {
+        Row: {
+          code: string;
+          created_at: string;
+          created_by: string;
+          expires_at: string;
+          family_id: string;
+          id: string;
+          used_at: string | null;
+          used_by: string | null;
+        };
+        Insert: {
+          code: string;
+          created_at?: string;
+          created_by: string;
+          expires_at: string;
+          family_id: string;
+          id?: string;
+          used_at?: string | null;
+          used_by?: string | null;
+        };
+        Update: {
+          code?: string;
+          created_at?: string;
+          created_by?: string;
+          expires_at?: string;
+          family_id?: string;
+          id?: string;
+          used_at?: string | null;
+          used_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'family_invites_created_by_fkey';
+            columns: ['created_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'family_invites_family_id_fkey';
+            columns: ['family_id'];
+            isOneToOne: false;
+            referencedRelation: 'families';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'family_invites_used_by_fkey';
+            columns: ['used_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       point_transactions: {
         Row: {
           amount: number;
@@ -797,8 +852,17 @@ export type Database = {
         Args: { p_completion_id: string; p_reviewer_id: string };
         Returns: string;
       };
+      create_family_and_parent: {
+        Args: { p_display_name: string; p_family_name: string };
+        Returns: string;
+      };
+      create_family_invite: { Args: never; Returns: string };
       credit_interest: {
         Args: { p_amount: number; p_kid_id: string };
+        Returns: string;
+      };
+      join_family_as_parent: {
+        Args: { p_code: string; p_display_name: string };
         Returns: string;
       };
       purchase_reward: {

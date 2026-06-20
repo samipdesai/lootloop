@@ -52,7 +52,13 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # Public placeholders so `next build` can evaluate the @supabase/ssr
+      # modules (which require NEXT_PUBLIC_* at import). The build does not
+      # connect — real values come from Vercel/.env.local at runtime.
       - run: pnpm --filter web build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: build-time-placeholder-anon-key
 
   mobile-typecheck:
     runs-on: ubuntu-latest
