@@ -1,0 +1,39 @@
+/* ══════════════════════════════════════════════════════════════
+   loot loop · TYPOGRAPHY TOKENS
+   Display = Baloo 2 (chunky rounded). Body = Nunito (friendly sans).
+   ══════════════════════════════════════════════════════════════ */
+:root {
+  --font-display: 'Baloo 2', 'Nunito', system-ui, -apple-system, sans-serif;
+  --font-body:    'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-number:  'Baloo 2', 'Nunito', system-ui, sans-serif;
+
+  /* ── Type scale (px) ─────────────────────────── */
+  --fs-display: 44px;
+  --fs-h1:      32px;
+  --fs-h2:      26px;
+  --fs-h3:      21px;
+  --fs-body-lg: 18px;
+  --fs-body:    16px;
+  --fs-body-sm: 14px;
+  --fs-label:   13px;
+  --fs-caption: 12px;
+
+  /* ── Line heights ── */
+  --lh-tight:   1.1;
+  --lh-snug:    1.25;
+  --lh-normal:  1.45;
+  --lh-relaxed: 1.6;
+
+  /* ── Weights ── */
+  --fw-regular:  400;
+  --fw-semibold: 600;
+  --fw-bold:     700;
+  --fw-extra:    800;
+  --fw-black:    900;
+
+  /* ── Letter spacing ── */
+  --ls-tight:  -0.02em;
+  --ls-normal: 0;
+  --ls-wide:   0.04em;
+  --ls-label:  0.06em;
+}

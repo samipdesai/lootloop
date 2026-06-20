@@ -1,0 +1,90 @@
+/* ══════════════════════════════════════════════════════════════
+   loot loop · COLOR TOKENS
+   Warm, friendly & gender-neutral. Orange-led, green for money-saved,
+   indigo accent, gold for loot.
+   Each hue: -soft (tint bg) · base · -strong (hover/press) · -ink (text on soft)
+   ══════════════════════════════════════════════════════════════ */
+:root {
+  /* ── Orange (primary brand · energy · streaks) ─────────── */
+  --orange-soft:   #FFEEDB;
+  --orange-200:    #FFC988;
+  --orange:        #F4720E;
+  --orange-strong: #D85F06;
+  --orange-ink:    #8A4309;
+
+  /* ── Green (savings / success / calm) ──────────────────── */
+  --mint-soft:   #D7F6E9;
+  --mint-200:    #88E4C0;
+  --mint:        #16B97D;
+  --mint-strong: #0E9E68;
+  --mint-ink:    #0A6A46;
+
+  /* ── Indigo (accent / focus / links) ───────────────────── */
+  --indigo-soft:   #E7E8FD;
+  --indigo-200:    #B7BAF7;
+  --indigo:        #5B63E6;
+  --indigo-strong: #444CCB;
+  --indigo-ink:    #2C3196;
+
+  /* ── Coin (gold — currency, rewards, XP) ───────────────── */
+  --coin-soft:   #FFF3CC;
+  --coin-200:    #FFE08A;
+  --coin:        #FFC93C;
+  --coin-strong: #F0B315;
+  --coin-ink:    #8A6400;
+
+  /* ── Ink / Neutrals (warm-leaning slate greys) ─────────── */
+  --ink-900: #211E27;
+  --ink-800: #2F2B38;
+  --ink-700: #443F4E;
+  --ink-500: #756E80;
+  --ink-400: #A39CAD;
+  --ink-300: #CAC4D0;
+  --ink-200: #E6E2EA;
+  --ink-100: #F0EDF2;
+  --ink-50:  #F7F5F9;
+  --white:   #FFFFFF;
+
+  /* ── SEMANTIC ALIASES ──────────────────────────────────── */
+  --brand:          var(--orange);
+  --brand-strong:   var(--orange-strong);
+  --brand-soft:     var(--orange-soft);
+  --brand-ink:      var(--orange-ink);
+  --accent:         var(--indigo);
+  --accent-strong:  var(--indigo-strong);
+
+  /* surfaces */
+  --surface-page:   #F8F5F1;   /* warm off-white app background */
+  --surface-card:   var(--white);
+  --surface-sunken: var(--ink-50);
+  --surface-invert: var(--ink-900);
+  --overlay-scrim:  rgba(33, 30, 39, 0.55);
+
+  /* text */
+  --text-strong:  var(--ink-900);
+  --text-body:    var(--ink-700);
+  --text-muted:   var(--ink-500);
+  --text-faint:   var(--ink-400);
+  --text-inverse: var(--white);
+  --text-link:    var(--indigo-strong);
+
+  /* borders / lines */
+  --border:        var(--ink-200);
+  --border-strong: var(--ink-300);
+  --divider:       var(--ink-100);
+  --ring:          var(--indigo);      /* focus ring color */
+
+  /* status */
+  --success:      var(--mint-strong);
+  --success-soft: var(--mint-soft);
+  --success-ink:  var(--mint-ink);
+  --warning:      var(--orange);
+  --warning-soft: var(--orange-soft);
+  --warning-ink:  var(--orange-ink);
+  --danger:       #E5484D;
+  --danger-soft:  #FCE3E3;
+  --danger-ink:   #B11216;
+  --info:         var(--indigo);
+  --info-soft:    var(--indigo-soft);
+  --info-ink:     var(--indigo-ink);
+}

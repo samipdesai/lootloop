@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+@theme inline {
+  /* ── Fonts ── */
+  --font-sans: var(--font-nunito);
+  --font-display: var(--font-baloo-2);
+  --font-number: var(--font-baloo-2);
+
+  /* ── Brand colors (mirrors design/tokens/colors.css) ── */
+  --color-orange: #F4720E;
+  --color-orange-soft: #FFEEDB;
+  --color-orange-strong: #D85F06;
+  --color-orange-ink: #8A4309;
+
+  --color-mint: #16B97D;
+  --color-mint-soft: #D7F6E9;
+  --color-mint-strong: #0E9E68;
+  --color-mint-ink: #0A6A46;
+
+  --color-indigo: #5B63E6;
+  --color-indigo-soft: #E7E8FD;
+  --color-indigo-strong: #444CCB;
+  --color-indigo-ink: #2C3196;
+
+  --color-coin: #FFC93C;
+  --color-coin-soft: #FFF3CC;
+  --color-coin-strong: #F0B315;
+  --color-coin-ink: #8A6400;
+
+  --color-ink-900: #211E27;
+  --color-ink-800: #2F2B38;
+  --color-ink-700: #443F4E;
+  --color-ink-500: #756E80;
+  --color-ink-400: #A39CAD;
+  --color-ink-300: #CAC4D0;
+  --color-ink-200: #E6E2EA;
+  --color-ink-100: #F0EDF2;
+  --color-ink-50: #F7F5F9;
+
+  --color-surface-page: #F8F5F1;
+  --color-surface-card: #FFFFFF;
+
+  /* ── Radii ── */
+  --radius-xs: 8px;
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  --radius-xl: 28px;
+  --radius-2xl: 36px;
+  --radius-card: 24px;
+  --radius-pill: 999px;
+}
+
+body {
+  background: var(--color-surface-page);
+  color: var(--color-ink-900);
+  font-family: var(--font-sans), system-ui, sans-serif;
+}

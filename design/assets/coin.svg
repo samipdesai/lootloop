@@ -1,0 +1,6 @@
+<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="loot loop coin">
+  <circle cx="24" cy="24" r="20" fill="#FFC93C"></circle>
+  <circle cx="24" cy="24" r="20" stroke="#F0B315" stroke-width="2.5"></circle>
+  <circle cx="24" cy="24" r="14" stroke="#F0B315" stroke-width="2" stroke-dasharray="1.5 4" stroke-linecap="round" opacity="0.7"></circle>
+  <path d="M24 15l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-2.9-5.6 2.9 1.1-6.2-4.5-4.4 6.2-.9z" fill="#fff"></path>
+</svg>

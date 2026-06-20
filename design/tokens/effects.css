@@ -1,0 +1,43 @@
+/* ══════════════════════════════════════════════════════════════
+   loot loop · RADII, SHADOWS, MOTION
+   Big friendly corners. Soft layered shadows + chunky 3D button base.
+   ══════════════════════════════════════════════════════════════ */
+:root {
+  /* ── Corner radii (rounded, candy) ─────────────── */
+  --radius-xs:   8px;
+  --radius-sm:   12px;
+  --radius-md:   16px;
+  --radius-lg:   22px;
+  --radius-xl:   28px;
+  --radius-2xl:  36px;
+  --radius-card: 24px;
+  --radius-pill: 999px;
+
+  /* ── Shadows ───────────────────────────────────── */
+  --shadow-xs:  0 1px 2px rgba(32,36,58,0.08);
+  --shadow-sm:  0 2px 6px rgba(32,36,58,0.08);
+  --shadow-md:  0 8px 20px rgba(32,36,58,0.10);
+  --shadow-lg:  0 16px 36px rgba(32,36,58,0.14);
+  --shadow-xl:  0 24px 60px rgba(32,36,58,0.18);
+
+  --shadow-orange:  0 10px 24px rgba(244,114,14,0.32);
+  --shadow-coin:    0 10px 24px rgba(255,201,60,0.40);
+  --shadow-mint:    0 10px 24px rgba(22,185,125,0.30);
+  --shadow-indigo:  0 10px 24px rgba(91,99,230,0.30);
+
+  --edge-orange: 0 4px 0 var(--orange-strong);
+  --edge-mint:   0 4px 0 var(--mint-strong);
+  --edge-indigo: 0 4px 0 var(--indigo-strong);
+  --edge-coin:   0 4px 0 var(--coin-strong);
+  --edge-ink:    0 4px 0 var(--ink-300);
+
+  --focus-ring: 0 0 0 4px rgba(91,99,230,0.32);
+
+  /* ── Motion ────────────────────────────────────── */
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out:    cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast:   120ms;
+  --dur-base:   200ms;
+  --dur-slow:   340ms;
+}

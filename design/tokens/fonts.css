@@ -1,0 +1,6 @@
+/* ── loot loop webfonts ──────────────────────────────────────────
+   Display: Baloo 2  — chunky, rounded, friendly headline type
+   Body:    Nunito   — soft humanist sans for UI + reading
+   Loaded from Google Fonts. To self-host, drop the .woff2 files in
+   assets/fonts/ and swap these @import lines for local @font-face. */
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;0,900;1,600&display=swap');

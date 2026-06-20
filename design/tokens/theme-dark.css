@@ -1,0 +1,58 @@
+/* ══════════════════════════════════════════════════════════════
+   loot loop · DARK THEME
+   Apply to any element (or <html>) via  data-theme="dark".
+   Overrides the neutral ramp, surfaces, and hue tints so every
+   token-driven component flips automatically. Base hues stay
+   vivid — they pop on dark; only their -soft/-ink tints change.
+   ══════════════════════════════════════════════════════════════ */
+[data-theme="dark"] {
+  /* ── Neutral ramp — inverted (900 = lightest text) ─────── */
+  --ink-900: #F4F6FB;
+  --ink-800: #E2E7F0;
+  --ink-700: #C4CBDA;
+  --ink-500: #8A93A8;
+  --ink-400: #6E7689;
+  --ink-300: #4A5266;
+  --ink-200: #333B4E;
+  --ink-100: #262D3D;
+  --ink-50:  #1C2233;
+
+  /* ── Surfaces ──────────────────────────────────────────── */
+  --surface-page:   #11141E;
+  --surface-card:   #1E2434;
+  --surface-sunken: #171C28;
+  --surface-invert: #F4F6FB;
+  --overlay-scrim:  rgba(0, 0, 0, 0.6);
+
+  /* ── Text ──────────────────────────────────────────────── */
+  --text-strong:  #F4F6FB;
+  --text-body:    #C4CBDA;
+  --text-muted:   #8A93A8;
+  --text-faint:   #6E7689;
+  --text-inverse: #1B2233;
+  --text-link:    #BBC0FB;
+
+  /* ── Borders / lines ───────────────────────────────────── */
+  --border:        #333B4E;
+  --border-strong: #46506A;
+  --divider:       #262D3D;
+
+  /* ── Hue tints — dark-friendly fills + light ink text ──── */
+  --orange-soft: #3A2410;
+  --orange-ink:  #FFB269;
+  --mint-soft:   #123026;
+  --mint-ink:    #6FE0B4;
+  --indigo-soft: #20243F;
+  --indigo-ink:  #BBC0FB;
+  --coin-soft:   #332908;
+  --coin-ink:    #FFDA6E;
+  --danger-soft: #3A1722;
+  --danger-ink:  #FF94A6;
+
+  /* ── Shadows — black-based, deeper for dark ────────────── */
+  --shadow-xs:  0 1px 2px rgba(0,0,0,0.40);
+  --shadow-sm:  0 2px 8px rgba(0,0,0,0.40);
+  --shadow-md:  0 10px 24px rgba(0,0,0,0.48);
+  --shadow-lg:  0 18px 40px rgba(0,0,0,0.55);
+  --shadow-xl:  0 28px 64px rgba(0,0,0,0.62);
+}

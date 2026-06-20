@@ -1,0 +1,18 @@
+# Dependencies & lockfiles
+node_modules
+pnpm-lock.yaml
+
+# Tooling
+.husky
+
+# Build outputs
+**/dist
+**/.next
+**/out
+**/build
+coverage
+
+# Native build artifacts
+apps/mobile/ios
+apps/mobile/android
+apps/mobile/vendor
