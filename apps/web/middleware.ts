@@ -1,0 +1,97 @@
+import { createServerClient } from '@supabase/ssr';
+import { NextResponse, type NextRequest } from 'next/server';
+import type { Database } from '@lootloop/types';
+
+// Auth routes a fully-onboarded user gets bounced away from.
+const AUTH_ROUTES = [
+  '/login',
+  '/signup',
+  '/forgot-password',
+  '/reset-password',
+  '/confirm',
+  '/onboarding',
+];
+
+// Routes a logged-out user may view (onboarding excluded — spec §7).
+const PUBLIC_ROUTES = ['/login', '/signup', '/forgot-password', '/confirm'];
+
+// Refreshes the Supabase session on every request (the standard @supabase/ssr
+// updateSession pattern) and gates routes by session + profile state (spec §7).
+export async function middleware(request: NextRequest) {
+  let response = NextResponse.next({ request });
+
+  const supabase = createServerClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+          response = NextResponse.next({ request });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options),
+          );
+        },
+      },
+    },
+  );
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const { pathname } = request.nextUrl;
+  const isAuthRoute = AUTH_ROUTES.some(r => pathname.startsWith(r));
+  const isPublicRoute = PUBLIC_ROUTES.some(r => pathname.startsWith(r));
+  const isCallback = pathname.startsWith('/auth/callback');
+
+  // Let the callback exchange run regardless of session state.
+  if (isCallback) return response;
+
+  // /reset-password is reached via a recovery session from the emailed link;
+  // never redirect away from it — the screen handles the no-session (invalid
+  // link) case itself.
+  if (pathname.startsWith('/reset-password')) return response;
+
+  // No session: only the public auth routes are viewable (onboarding redirects).
+  if (!user) {
+    if (isPublicRoute) return response;
+    return redirect(request, '/login');
+  }
+
+  // Session present: resolve profile state.
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('auth_user_id', user.id)
+    .eq('role', 'parent')
+    .maybeSingle();
+
+  const onboarded = Boolean(profile);
+
+  if (!onboarded) {
+    // Confirmed but no profile → force onboarding from anywhere.
+    if (pathname.startsWith('/onboarding')) return response;
+    return redirect(request, '/onboarding');
+  }
+
+  // Fully onboarded → auth routes bounce to the dashboard.
+  if (isAuthRoute) return redirect(request, '/');
+
+  return response;
+}
+
+function redirect(request: NextRequest, to: string) {
+  const url = request.nextUrl.clone();
+  url.pathname = to;
+  url.search = '';
+  return NextResponse.redirect(url);
+}
+
+export const config = {
+  // Run on everything except static assets and image files.
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.svg$).*)'],
+};
