@@ -1,4 +1,3 @@
-// Supabase client wrapper + auth helpers (task #7)
-// Placeholder until Supabase project is configured
-
+// Supabase client wrapper + shared helpers (task #7), shared by mobile + web.
 export { createSupabaseClient } from './supabase';
+export { checkConnection } from './connection';

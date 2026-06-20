@@ -1,5 +1,8 @@
+import { useEffect } from 'react';
 import { StatusBar, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { checkConnection } from '@lootloop/client';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './src/config/env';
 
 function App() {
   return (
@@ -12,6 +15,9 @@ function App() {
 
 function AppContent() {
   const { top, bottom } = useSafeAreaInsets();
+  useEffect(() => {
+    void checkConnection(SUPABASE_URL, SUPABASE_ANON_KEY, 'mobile');
+  }, []);
   return (
     <View style={[styles.container, { paddingTop: top, paddingBottom: bottom }]}>
       <Text style={styles.emoji}>🪙</Text>

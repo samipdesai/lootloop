@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Nunito, Baloo_2 } from 'next/font/google';
 import './globals.css';
+import { ConnectionProbe } from '../components/ConnectionProbe';
 
 const nunito = Nunito({
   variable: '--font-nunito',
@@ -26,7 +27,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${nunito.variable} ${baloo2.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col font-sans">{children}</body>
+      <body className="min-h-full flex flex-col font-sans">
+        <ConnectionProbe />
+        {children}
+      </body>
     </html>
   );
 }
