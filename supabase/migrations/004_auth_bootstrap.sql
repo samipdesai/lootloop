@@ -175,10 +175,17 @@ begin
       using errcode = 'insufficient_privilege';
   end if;
 
-  -- 9 random bytes -> base64url (~12 chars), URL-safe (no +,/,=). Retry on the
-  -- (astronomically unlikely) unique-code collision.
+  -- 8-char human-shareable code from an unambiguous alphabet (no 0/O/1/I, so a
+  -- parent can read it aloud). gen_random_bytes for crypto-quality randomness;
+  -- 32^8 (~1.1e12) space, single-use + 7-day expiry. Retry on unique collision.
   loop
-    v_code := translate(encode(gen_random_bytes(9), 'base64'), '+/=', '-_');
+    v_code := (
+      select string_agg(
+        substr('ABCDEFGHJKLMNPQRSTUVWXYZ23456789', 1 + (get_byte(b, g) % 32), 1),
+        '' order by g
+      )
+      from (select gen_random_bytes(8) as b) s, generate_series(0, 7) as g
+    );
     begin
       insert into family_invites (family_id, code, created_by, expires_at)
         values (v_family_id, v_code, v_profile_id, now() + interval '7 days');
