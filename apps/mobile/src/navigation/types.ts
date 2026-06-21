@@ -1,5 +1,14 @@
 // Navigator param lists for the auth stack and the parent shell (#10).
 
+// Single stable root navigator: NavigationContainer always renders this, and
+// auth state only swaps the active screen (RN's recommended auth pattern) —
+// never swap whole navigators under the container.
+export type RootStackParamList = {
+  Splash: undefined;
+  Auth: undefined;
+  App: undefined;
+};
+
 export type AuthStackParamList = {
   Login: undefined;
   Signup: undefined;
