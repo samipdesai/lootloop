@@ -8,11 +8,21 @@ interface KidRowProps {
   kid: KidProfile;
   onEdit: (kid: KidProfile) => void;
   onChangePin: (kid: KidProfile) => void;
+  onGiveBonus: (kid: KidProfile) => void;
+  onViewHistory: (kid: KidProfile) => void;
   onDelete: (kid: KidProfile) => void;
   deleting: boolean;
 }
 
-export function KidRow({ kid, onEdit, onChangePin, onDelete, deleting }: KidRowProps) {
+export function KidRow({
+  kid,
+  onEdit,
+  onChangePin,
+  onGiveBonus,
+  onViewHistory,
+  onDelete,
+  deleting,
+}: KidRowProps) {
   const initial = kid.display_name.trim().charAt(0).toUpperCase() || '?';
 
   return (
@@ -40,7 +50,25 @@ export function KidRow({ kid, onEdit, onChangePin, onDelete, deleting }: KidRowP
         </div>
       </div>
 
-      <div className="flex shrink-0 items-center gap-1.5">
+      <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => onGiveBonus(kid)}
+          disabled={deleting}
+        >
+          Give bonus
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => onViewHistory(kid)}
+          disabled={deleting}
+        >
+          History
+        </Button>
         <Button
           type="button"
           variant="ghost"

@@ -18,6 +18,8 @@ interface KidListProps {
   onNew: () => void;
   onEdit: (kid: KidProfile) => void;
   onChangePin: (kid: KidProfile) => void;
+  onGiveBonus: (kid: KidProfile) => void;
+  onHistory: (kid: KidProfile) => void;
   onDelete: (kid: KidProfile) => Promise<void>;
 }
 
@@ -34,11 +36,15 @@ function KidRow({
   kid,
   onEdit,
   onChangePin,
+  onGiveBonus,
+  onHistory,
   onDelete,
 }: {
   kid: KidProfile;
   onEdit: () => void;
   onChangePin: () => void;
+  onGiveBonus: () => void;
+  onHistory: () => void;
   onDelete: () => Promise<void>;
 }) {
   const [confirming, setConfirming] = useState(false);
@@ -94,6 +100,12 @@ function KidRow({
           </>
         ) : (
           <>
+            <Button size="sm" variant="ghost" onPress={onGiveBonus}>
+              Give bonus
+            </Button>
+            <Button size="sm" variant="ghost" onPress={onHistory}>
+              History
+            </Button>
             <Button size="sm" variant="ghost" onPress={onEdit}>
               Edit
             </Button>
@@ -115,7 +127,15 @@ function KidRow({
   );
 }
 
-export function KidList({ kids, onNew, onEdit, onChangePin, onDelete }: KidListProps) {
+export function KidList({
+  kids,
+  onNew,
+  onEdit,
+  onChangePin,
+  onGiveBonus,
+  onHistory,
+  onDelete,
+}: KidListProps) {
   const isRegular = useSizeClass() === 'regular';
 
   return (
@@ -143,6 +163,8 @@ export function KidList({ kids, onNew, onEdit, onChangePin, onDelete }: KidListP
           kid={item}
           onEdit={() => onEdit(item)}
           onChangePin={() => onChangePin(item)}
+          onGiveBonus={() => onGiveBonus(item)}
+          onHistory={() => onHistory(item)}
           onDelete={() => onDelete(item)}
         />
       )}
