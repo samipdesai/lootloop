@@ -10,17 +10,10 @@
     "prepare": "husky"
   },
   "engines": {
-    "node": ">=20",
-    "pnpm": ">=9"
+    "node": ">=22",
+    "pnpm": ">=11"
   },
   "packageManager": "pnpm@11.8.0",
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "sharp",
-      "unrs-resolver",
-      "@tailwindcss/oxide"
-    ]
-  },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
     "eslint": "^9.39.4",

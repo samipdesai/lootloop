@@ -498,17 +498,17 @@ Runs once the v1 product is functional (Milestones 1–5 merged). The §4 testin
 
 ### Prerequisites
 
-| Tool           | Version | Purpose                         |
-| -------------- | ------- | ------------------------------- |
-| Node.js        | 20 LTS  | Runtime                         |
-| pnpm           | 9+      | Package manager (monorepo)      |
-| Watchman       | Latest  | File watching (React Native)    |
-| Xcode          | 15+     | iOS Universal builds (Mac only) |
-| Docker Desktop | Latest  | Supabase local                  |
-| Supabase CLI   | Latest  | Local dev, migrations, type gen |
-| Fastlane       | Latest  | iOS builds, signing, TestFlight |
-| Git            | 2.40+   | Version control                 |
-| VS Code        | Latest  | IDE (recommended)               |
+| Tool           | Version | Purpose                                               |
+| -------------- | ------- | ----------------------------------------------------- |
+| Node.js        | 22 LTS  | Runtime (pnpm 11.8 requires ≥22.13; CI + local on 22) |
+| pnpm           | 9+      | Package manager (monorepo)                            |
+| Watchman       | Latest  | File watching (React Native)                          |
+| Xcode          | 15+     | iOS Universal builds (Mac only)                       |
+| Docker Desktop | Latest  | Supabase local                                        |
+| Supabase CLI   | Latest  | Local dev, migrations, type gen                       |
+| Fastlane       | Latest  | iOS builds, signing, TestFlight                       |
+| Git            | 2.40+   | Version control                                       |
+| VS Code        | Latest  | IDE (recommended)                                     |
 
 **No CocoaPods.** React Native ships with Swift Package Manager as the default iOS dependency manager. CocoaPods is in maintenance mode and being phased out. Xcode resolves SPM packages automatically — no `pod install` step in the dev loop.
 
@@ -804,7 +804,7 @@ Eight subagents in `.claude/agents/`. Main Claude orchestrates; agents execute b
 - [ ] Create Supabase account at supabase.com (free tier)
 - [ ] Create Vercel account at vercel.com (free tier) — for web hosting
 - [ ] Apple Developer account ($99/yr) — defer until TestFlight push
-- [ ] Install prerequisites (Node 20, Docker Desktop, Xcode, Watchman)
+- [ ] Install prerequisites (Node 22, Docker Desktop, Xcode, Watchman)
 - [ ] Install pnpm: `npm install -g pnpm`
 - [ ] Install Supabase CLI: `brew install supabase/tap/supabase`
 - [ ] Install Fastlane: `brew install fastlane`
