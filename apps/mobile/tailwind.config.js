@@ -48,6 +48,11 @@ module.exports = {
           page: '#F8F5F1',
           card: '#FFFFFF',
         },
+        danger: {
+          DEFAULT: '#E5484D',
+          soft: '#FCE3E3',
+          ink: '#B11216',
+        },
       },
       fontFamily: {
         display: ['Baloo 2', 'system-ui'],
