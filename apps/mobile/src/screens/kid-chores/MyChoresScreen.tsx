@@ -76,7 +76,7 @@ function ChoreCard({
         </View>
       </View>
       {bucket === 'pending' ? (
-        <Text style={tw`font-sans text-[13px] font-bold text-warning-ink`}>Pending</Text>
+        <Text style={tw`font-sans text-[13px] font-bold text-coin-ink`}>Pending</Text>
       ) : bucket === 'done' ? (
         <Text style={tw`text-[22px]`}>🎉</Text>
       ) : needsClaim ? (
