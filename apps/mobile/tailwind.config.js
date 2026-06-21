@@ -1,38 +1,14 @@
-/** @type {import('tailwindcss').Config} */
+/** Design tokens consumed by twrnc (apps/mobile/src/lib/tw.ts).
+ *  Mirrors design/tokens/colors.css + apps/web @theme so web + mobile match.
+ *  twrnc reads `theme.extend` and merges it with the default Tailwind scale. */
 module.exports = {
-  content: [
-    './App.tsx',
-    './src/**/*.{ts,tsx}',
-  ],
-  presets: [require('nativewind/preset')],
   theme: {
     extend: {
       colors: {
-        // Brand tokens (mirrors design/tokens/colors.css)
-        orange: {
-          DEFAULT: '#F4720E',
-          soft: '#FFEEDB',
-          strong: '#D85F06',
-          ink: '#8A4309',
-        },
-        mint: {
-          DEFAULT: '#16B97D',
-          soft: '#D7F6E9',
-          strong: '#0E9E68',
-          ink: '#0A6A46',
-        },
-        indigo: {
-          DEFAULT: '#5B63E6',
-          soft: '#E7E8FD',
-          strong: '#444CCB',
-          ink: '#2C3196',
-        },
-        coin: {
-          DEFAULT: '#FFC93C',
-          soft: '#FFF3CC',
-          strong: '#F0B315',
-          ink: '#8A6400',
-        },
+        orange: { DEFAULT: '#F4720E', soft: '#FFEEDB', strong: '#D85F06', ink: '#8A4309' },
+        mint: { DEFAULT: '#16B97D', soft: '#D7F6E9', strong: '#0E9E68', ink: '#0A6A46' },
+        indigo: { DEFAULT: '#5B63E6', soft: '#E7E8FD', strong: '#444CCB', ink: '#2C3196' },
+        coin: { DEFAULT: '#FFC93C', soft: '#FFF3CC', strong: '#F0B315', ink: '#8A6400' },
         ink: {
           900: '#211E27',
           800: '#2F2B38',
@@ -44,15 +20,8 @@ module.exports = {
           100: '#F0EDF2',
           50: '#F7F5F9',
         },
-        surface: {
-          page: '#F8F5F1',
-          card: '#FFFFFF',
-        },
-      },
-      fontFamily: {
-        display: ['Baloo 2', 'system-ui'],
-        sans: ['Nunito', 'system-ui'],
-        number: ['Baloo 2', 'system-ui'],
+        surface: { page: '#F8F5F1', card: '#FFFFFF' },
+        danger: { DEFAULT: '#E5484D', soft: '#FCE3E3', ink: '#B11216' },
       },
       borderRadius: {
         xs: '8px',
@@ -62,9 +31,13 @@ module.exports = {
         xl: '28px',
         '2xl': '36px',
         card: '24px',
-        pill: '999px',
+        pill: '9999px',
+      },
+      fontFamily: {
+        display: ['Baloo 2'],
+        sans: ['Nunito'],
+        number: ['Baloo 2'],
       },
     },
   },
-  plugins: [],
 };

@@ -1,0 +1,104 @@
+// Shared auth-screen skeleton (spec §5). One component tree; the container
+// branches on size class only (spec §9):
+//   compact (iPhone) -> flat, full-width, vertically-centered stack
+//   regular (iPad)   -> centered floating Card (max 420) with more chrome.
+// Fields / button / error are identical across both.
+import type { ReactNode } from 'react';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Text,
+  View,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSizeClass } from '../../hooks/useSizeClass';
+import { Card } from '../../components/ui/Card';
+import tw from '../../lib/tw';
+
+interface AuthScreenProps {
+  title: string;
+  subtitle?: string;
+  children: ReactNode;
+  // Form-level error banner copy (already mapped via mapAuthError). Renders
+  // above the children's submit button area when present.
+  formError?: string;
+  footer?: ReactNode;
+}
+
+function Brandmark({ large }: { large: boolean }) {
+  // Wordmark brandmark (spec allows wordmark-only; Looty SVG asset wiring is a
+  // later polish pass once react-native-svg lands). iPad gets larger chrome.
+  return (
+    <View style={tw`items-center gap-2`}>
+      <Text style={tw.style(large ? 'text-[56px]' : 'text-[44px]')}>🪙</Text>
+      <Text
+        style={tw.style('font-display font-extrabold text-ink-900', large ? 'text-[32px]' : 'text-[28px]')}
+      >
+        LootLoop
+      </Text>
+    </View>
+  );
+}
+
+export function FormError({ message }: { message: string }) {
+  return (
+    <View
+      accessibilityLiveRegion="polite"
+      style={tw`flex-row items-center gap-2 rounded-md bg-danger-soft px-4 py-3`}
+    >
+      <Text style={tw`text-[14px]`}>⚠️</Text>
+      <Text style={tw`flex-1 font-sans text-[14px] font-bold text-danger-ink`}>{message}</Text>
+    </View>
+  );
+}
+
+export function AuthScreen({ title, subtitle, children, formError, footer }: AuthScreenProps) {
+  const sizeClass = useSizeClass();
+  const insets = useSafeAreaInsets();
+  const isRegular = sizeClass === 'regular';
+
+  const body = (
+    <View style={tw.style(isRegular ? 'w-full max-w-[420px] items-stretch gap-6' : 'w-full gap-5')}>
+      <Brandmark large={isRegular} />
+      <Card flat={!isRegular}>
+        <View style={tw`gap-4`}>
+          <View style={tw`gap-1`}>
+            <Text
+              style={tw.style('font-display font-extrabold text-ink-900', isRegular ? 'text-[32px]' : 'text-[26px]')}
+            >
+              {title}
+            </Text>
+            {subtitle ? (
+              <Text style={tw`font-sans text-[16px] font-semibold text-ink-500`}>{subtitle}</Text>
+            ) : null}
+          </View>
+          {children}
+          {formError ? <FormError message={formError} /> : null}
+        </View>
+      </Card>
+      {footer ? <View style={tw`items-center`}>{footer}</View> : null}
+    </View>
+  );
+
+  return (
+    <KeyboardAvoidingView
+      style={tw`flex-1 bg-surface-page`}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <ScrollView
+        contentContainerStyle={{
+          flexGrow: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          paddingHorizontal: 20,
+          paddingTop: insets.top + 24,
+          paddingBottom: insets.bottom + 24,
+        }}
+        keyboardShouldPersistTaps="handled"
+      >
+        {body}
+      </ScrollView>
+    </KeyboardAvoidingView>
+  );
+}

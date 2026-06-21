@@ -35,13 +35,14 @@ supabase/
 
 Backend is **Supabase** (Postgres + RLS + Auth + Edge Functions + Realtime). Family isolation is enforced via RLS — never bypass it from app code. Atomic operations (purchase_reward, transfer_to_savings, point award on approval) live in SQL functions, not client code.
 
-Mobile is **adaptive, not separate apps**: one component tree branches on size class via `useSizeClass()` (iPhone → stack/tabs nav; iPad → split-view). Kid UI also branches on `useAgeMode()` (Simple 5-8 / Detailed 9-12 / Teen 13-15). State via Zustand. Styling via NativeWind (mobile) + Tailwind (web).
+Mobile is **adaptive, not separate apps**: one component tree branches on size class via `useSizeClass()` (iPhone → stack/tabs nav; iPad → split-view). Kid UI also branches on `useAgeMode()` (Simple 5-8 / Detailed 9-12 / Teen 13-15). State via Zustand. Styling via **twrnc** (mobile — pure-JS Tailwind runtime, `style={tw\`…\`}`) + Tailwind (web).
 
 ## Stack Constraints — Do Not Reintroduce
 
 The plan explicitly rejected these. If a task seems to call for one of them, stop and ask:
 
 - **No Expo / EAS.** Bare RN only. Don't suggest `expo install`, `app.json`, or Expo modules.
+- **No NativeWind.** Mobile styling is **twrnc** (`apps/mobile/src/lib/tw.ts`; tokens in `apps/mobile/tailwind.config.js`). NativeWind v4 crashes on RN 0.86/React 19 (css-interop + navigation context); v5 requires `@expo/metro-config` + the `expo` package, which the No-Expo rule forbids. Use `style={tw\`…\`}` / `tw.style(...)`, never a `className` prop. (Web still uses Tailwind normally.)
 - **No CocoaPods.** iOS deps via Swift Package Manager (Xcode resolves automatically — no `pod install` step).
 - **No npm or yarn.** pnpm workspaces only.
 - **No `develop` branch.** Trunk-based: `main` + short-lived `feature/<milestone>/<name>` branches, squash-merged.
