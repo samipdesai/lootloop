@@ -2,3 +2,4 @@
 export { createSupabaseClient } from './supabase';
 export { checkConnection } from './connection';
 export * from './auth';
+export * from './chores';

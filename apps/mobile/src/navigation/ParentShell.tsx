@@ -7,6 +7,8 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import type { ParentTabParamList } from './types';
 import { useSizeClass } from '../hooks/useSizeClass';
 import { PlaceholderScreen } from '../screens/PlaceholderScreen';
+import { ChoresScreen } from '../screens/chores';
+import { ApprovalsScreen } from '../screens/approvals';
 import tw from '../lib/tw';
 
 const SECTIONS: { key: keyof ParentTabParamList; label: string }[] = [
@@ -18,17 +20,27 @@ const SECTIONS: { key: keyof ParentTabParamList; label: string }[] = [
   { key: 'Schedule', label: 'Schedule' },
 ];
 
+// Built sections render their real screen; the rest stay placeholders until
+// their tasks land. One resolver keeps the iPhone tabs (ParentTabs) and the
+// iPad split-view detail in sync.
+function renderSection(key: keyof ParentTabParamList, label: string) {
+  switch (key) {
+    case 'Chores':
+      return <ChoresScreen />;
+    case 'Approvals':
+      return <ApprovalsScreen />;
+    default:
+      return <PlaceholderScreen label={label} />;
+  }
+}
+
 const Tab = createBottomTabNavigator<ParentTabParamList>();
 
 function ParentTabs() {
   return (
     <Tab.Navigator screenOptions={{ headerShown: false }}>
       {SECTIONS.map((s) => (
-        <Tab.Screen
-          key={s.key}
-          name={s.key}
-          children={() => <PlaceholderScreen label={s.label} />}
-        />
+        <Tab.Screen key={s.key} name={s.key} children={() => renderSection(s.key, s.label)} />
       ))}
     </Tab.Navigator>
   );
@@ -65,9 +77,7 @@ function ParentSplitView() {
           );
         })}
       </View>
-      <View style={tw`flex-1`}>
-        <PlaceholderScreen label={activeLabel} />
-      </View>
+      <View style={tw`flex-1`}>{renderSection(active, activeLabel)}</View>
     </View>
   );
 }
