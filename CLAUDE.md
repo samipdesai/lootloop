@@ -35,6 +35,16 @@ supabase/
 
 Backend is **Supabase** (Postgres + RLS + Auth + Edge Functions + Realtime). Family isolation is enforced via RLS — never bypass it from app code. Atomic operations (purchase_reward, transfer_to_savings, point award on approval) live in SQL functions, not client code.
 
+### Portability Rules (keep the Supabase exit cheap)
+
+We're committed to Supabase for v1 and won't migrate unless scale demands it. But a few disciplines keep a future move (to a REST API + RDS, or a self-hosted stack) a contained swap instead of a rewrite — follow them:
+
+- **No raw `supabase` outside `packages/client`.** Screens, stores, and hooks import service-layer functions (e.g. `chores.list(familyId)`), never `supabase.from(...)` / `.rpc(...)` directly. `packages/client` is the only place that knows the backend exists — so swapping it for `fetch('/api/...')` later touches one package, not 30 screens.
+- **`packages/domain` stays I/O-free.** Pure TS only (interest, points, recurrence). No Supabase, no `fetch`, no DB imports. Its purity is what makes it portable verbatim.
+- **Business logic that must be atomic goes in SQL functions, not client code.** These are plain Postgres functions — they survive a move to any Postgres host. Inline multi-step logic in the client does not.
+
+If a task pushes you to call `supabase` from a screen or add I/O to `domain`, stop and route it through the service layer instead.
+
 Mobile is **adaptive, not separate apps**: one component tree branches on size class via `useSizeClass()` (iPhone → stack/tabs nav; iPad → split-view). Kid UI also branches on `useAgeMode()` (Simple 5-8 / Detailed 9-12 / Teen 13-15). State via Zustand. Styling via **twrnc** (mobile — pure-JS Tailwind runtime, `style={tw\`…\`}`) + Tailwind (web).
 
 ## Stack Constraints — Do Not Reintroduce
