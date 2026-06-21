@@ -34,7 +34,17 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # packages/client holds INTEGRATION tests (RLS + atomic SQL functions +
+      # Edge Functions) that run against a real local Supabase, per the §4
+      # testing strategy. Spin it up (Docker + migrations + functions) before
+      # the suite; domain/mobile unit tests in the same run don't need it.
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - run: supabase start
       - run: pnpm -r test --coverage --ci
+      - run: supabase stop
+        if: always()
       - uses: actions/upload-artifact@v4
         if: always()
         with:
