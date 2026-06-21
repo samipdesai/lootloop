@@ -1,12 +1,5 @@
-import { PlaceholderPage } from '@/components/dashboard/PlaceholderPage';
+import { KidsClient } from './_components/KidsClient';
 
 export default function KidsPage() {
-  return (
-    <PlaceholderPage
-      title="Kids"
-      emoji="🧒"
-      blurb="Add kids to your family, set up their PINs and age modes, and view their balances."
-      taskRef="Coming soon"
-    />
-  );
+  return <KidsClient />;
 }

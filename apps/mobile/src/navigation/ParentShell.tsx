@@ -9,6 +9,7 @@ import { useSizeClass } from '../hooks/useSizeClass';
 import { PlaceholderScreen } from '../screens/PlaceholderScreen';
 import { ChoresScreen } from '../screens/chores';
 import { ApprovalsScreen } from '../screens/approvals';
+import { KidsScreen } from '../screens/kids';
 import tw from '../lib/tw';
 
 const SECTIONS: { key: keyof ParentTabParamList; label: string }[] = [
@@ -29,6 +30,8 @@ function renderSection(key: keyof ParentTabParamList, label: string) {
       return <ChoresScreen />;
     case 'Approvals':
       return <ApprovalsScreen />;
+    case 'Kids':
+      return <KidsScreen />;
     default:
       return <PlaceholderScreen label={label} />;
   }

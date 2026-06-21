@@ -208,18 +208,21 @@ export type Database = {
         Row: {
           created_at: string;
           id: string;
+          kid_code: string;
           name: string;
           updated_at: string;
         };
         Insert: {
           created_at?: string;
           id?: string;
+          kid_code: string;
           name: string;
           updated_at?: string;
         };
         Update: {
           created_at?: string;
           id?: string;
+          kid_code?: string;
           name?: string;
           updated_at?: string;
         };
@@ -857,10 +860,22 @@ export type Database = {
         Returns: string;
       };
       create_family_invite: { Args: never; Returns: string };
+      create_kid: {
+        Args: {
+          p_age_mode: Database['public']['Enums']['age_mode'];
+          p_avatar_url?: string;
+          p_birthdate?: string;
+          p_display_name: string;
+          p_pin: string;
+        };
+        Returns: string;
+      };
       credit_interest: {
         Args: { p_amount: number; p_kid_id: string };
         Returns: string;
       };
+      delete_kid: { Args: { p_kid_id: string }; Returns: undefined };
+      gen_unique_kid_code: { Args: never; Returns: string };
       join_family_as_parent: {
         Args: { p_code: string; p_display_name: string };
         Returns: string;
@@ -869,6 +884,11 @@ export type Database = {
         Args: { p_kid_id: string; p_reward_id: string };
         Returns: string;
       };
+      regenerate_family_code: { Args: never; Returns: string };
+      set_kid_pin: {
+        Args: { p_kid_id: string; p_pin: string };
+        Returns: undefined;
+      };
       transfer_to_savings: {
         Args: {
           p_amount: number;
@@ -876,6 +896,16 @@ export type Database = {
           p_kid_id: string;
         };
         Returns: string;
+      };
+      update_kid: {
+        Args: {
+          p_age_mode?: Database['public']['Enums']['age_mode'];
+          p_avatar_url?: string;
+          p_birthdate?: string;
+          p_display_name?: string;
+          p_kid_id: string;
+        };
+        Returns: undefined;
       };
     };
     Enums: {
