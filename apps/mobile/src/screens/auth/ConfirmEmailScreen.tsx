@@ -7,6 +7,7 @@ import type { AuthStackParamList } from '../../navigation/types';
 import { AuthScreen } from './AuthScreen';
 import { Button } from '../../components/ui/Button';
 import { GhostLink } from '../../components/ui/GhostLink';
+import tw from '../../lib/tw';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'ConfirmEmail'>;
 
@@ -59,10 +60,10 @@ export function ConfirmEmailScreen({ route, navigation }: Props) {
 
   return (
     <AuthScreen title="Check your email" formError={formError}>
-      <View className="gap-5">
-        <Text className="font-sans text-[16px] font-semibold text-ink-500">
+      <View style={tw`gap-5`}>
+        <Text style={tw`font-sans text-[16px] font-semibold text-ink-500`}>
           We sent a confirmation link to{' '}
-          <Text className="font-bold text-ink-900">{email || 'your inbox'}</Text>. Click it to
+          <Text style={tw`font-bold text-ink-900`}>{email || 'your inbox'}</Text>. Click it to
           finish setting up your account.
         </Text>
         <Button
@@ -74,7 +75,7 @@ export function ConfirmEmailScreen({ route, navigation }: Props) {
         >
           {resendLabel}
         </Button>
-        <View className="items-center">
+        <View style={tw`items-center`}>
           <GhostLink label="Back to log in" onPress={() => navigation.navigate('Login')} />
         </View>
       </View>

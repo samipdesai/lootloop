@@ -9,6 +9,7 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { GhostLink } from '../../components/ui/GhostLink';
 import { validateEmail } from './validation';
+import tw from '../../lib/tw';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'ForgotPassword'>;
 
@@ -43,13 +44,13 @@ export function ForgotPasswordScreen({ navigation }: Props) {
   if (sent) {
     return (
       <AuthScreen title="Check your email">
-        <View className="gap-5">
-          <Text className="font-sans text-[16px] font-semibold text-ink-500">
+        <View style={tw`gap-5`}>
+          <Text style={tw`font-sans text-[16px] font-semibold text-ink-500`}>
             If an account exists for{' '}
-            <Text className="font-bold text-ink-900">{email.trim()}</Text>, we've sent a password
+            <Text style={tw`font-bold text-ink-900`}>{email.trim()}</Text>, we've sent a password
             reset link.
           </Text>
-          <View className="items-center">
+          <View style={tw`items-center`}>
             <GhostLink label="Back to log in" onPress={() => navigation.navigate('Login')} />
           </View>
         </View>
@@ -64,7 +65,7 @@ export function ForgotPasswordScreen({ navigation }: Props) {
       formError={formError}
       footer={<GhostLink label="Back to log in" onPress={() => navigation.navigate('Login')} />}
     >
-      <View className="gap-4">
+      <View style={tw`gap-4`}>
         <Input
           label="Email"
           placeholder="you@example.com"

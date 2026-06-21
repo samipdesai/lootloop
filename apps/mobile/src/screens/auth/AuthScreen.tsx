@@ -14,6 +14,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSizeClass } from '../../hooks/useSizeClass';
 import { Card } from '../../components/ui/Card';
+import tw from '../../lib/tw';
 
 interface AuthScreenProps {
   title: string;
@@ -29,10 +30,10 @@ function Brandmark({ large }: { large: boolean }) {
   // Wordmark brandmark (spec allows wordmark-only; Looty SVG asset wiring is a
   // later polish pass once react-native-svg lands). iPad gets larger chrome.
   return (
-    <View className="items-center gap-2">
-      <Text className={large ? 'text-[56px]' : 'text-[44px]'}>🪙</Text>
+    <View style={tw`items-center gap-2`}>
+      <Text style={tw.style(large ? 'text-[56px]' : 'text-[44px]')}>🪙</Text>
       <Text
-        className={`font-display font-extrabold text-ink-900 ${large ? 'text-[32px]' : 'text-[28px]'}`}
+        style={tw.style('font-display font-extrabold text-ink-900', large ? 'text-[32px]' : 'text-[28px]')}
       >
         LootLoop
       </Text>
@@ -44,10 +45,10 @@ export function FormError({ message }: { message: string }) {
   return (
     <View
       accessibilityLiveRegion="polite"
-      className="flex-row items-center gap-2 rounded-md bg-danger-soft px-4 py-3"
+      style={tw`flex-row items-center gap-2 rounded-md bg-danger-soft px-4 py-3`}
     >
-      <Text className="text-[14px]">⚠️</Text>
-      <Text className="flex-1 font-sans text-[14px] font-bold text-danger-ink">{message}</Text>
+      <Text style={tw`text-[14px]`}>⚠️</Text>
+      <Text style={tw`flex-1 font-sans text-[14px] font-bold text-danger-ink`}>{message}</Text>
     </View>
   );
 }
@@ -58,31 +59,31 @@ export function AuthScreen({ title, subtitle, children, formError, footer }: Aut
   const isRegular = sizeClass === 'regular';
 
   const body = (
-    <View className={isRegular ? 'w-full max-w-[420px] items-stretch gap-6' : 'w-full gap-5'}>
+    <View style={tw.style(isRegular ? 'w-full max-w-[420px] items-stretch gap-6' : 'w-full gap-5')}>
       <Brandmark large={isRegular} />
       <Card flat={!isRegular}>
-        <View className="gap-4">
-          <View className="gap-1">
+        <View style={tw`gap-4`}>
+          <View style={tw`gap-1`}>
             <Text
-              className={`font-display font-extrabold text-ink-900 ${isRegular ? 'text-[32px]' : 'text-[26px]'}`}
+              style={tw.style('font-display font-extrabold text-ink-900', isRegular ? 'text-[32px]' : 'text-[26px]')}
             >
               {title}
             </Text>
             {subtitle ? (
-              <Text className="font-sans text-[16px] font-semibold text-ink-500">{subtitle}</Text>
+              <Text style={tw`font-sans text-[16px] font-semibold text-ink-500`}>{subtitle}</Text>
             ) : null}
           </View>
           {children}
           {formError ? <FormError message={formError} /> : null}
         </View>
       </Card>
-      {footer ? <View className="items-center">{footer}</View> : null}
+      {footer ? <View style={tw`items-center`}>{footer}</View> : null}
     </View>
   );
 
   return (
     <KeyboardAvoidingView
-      className="flex-1 bg-surface-page"
+      style={tw`flex-1 bg-surface-page`}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView

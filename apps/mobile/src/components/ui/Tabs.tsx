@@ -1,6 +1,7 @@
 // Pill segmented control. Mirrors design/components/core/Tabs.jsx. Used for the
 // onboarding Create / Join toggle (spec §5.3).
 import { Pressable, Text, View } from 'react-native';
+import tw from '../../lib/tw';
 
 export interface TabItem {
   value: string;
@@ -15,7 +16,7 @@ interface TabsProps {
 
 export function Tabs({ tabs, value, onChange }: TabsProps) {
   return (
-    <View className="w-full flex-row gap-1 rounded-pill bg-ink-100 p-1">
+    <View style={tw`w-full flex-row gap-1 rounded-pill bg-ink-100 p-1`}>
       {tabs.map((t) => {
         const active = t.value === value;
         return (
@@ -24,15 +25,16 @@ export function Tabs({ tabs, value, onChange }: TabsProps) {
             accessibilityRole="tab"
             accessibilityState={{ selected: active }}
             onPress={() => onChange(t.value)}
-            className={`h-10 flex-1 items-center justify-center rounded-pill ${active ? 'bg-surface-card' : 'bg-transparent'}`}
-            style={
+            style={tw.style(
+              'h-10 flex-1 items-center justify-center rounded-pill',
+              active ? 'bg-surface-card' : 'bg-transparent',
               active
                 ? { shadowColor: 'rgba(32,36,58,1)', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 6, elevation: 2 }
-                : undefined
-            }
+                : null,
+            )}
           >
             <Text
-              className={`font-display text-[14px] font-bold ${active ? 'text-ink-900' : 'text-ink-500'}`}
+              style={tw.style('font-display text-[14px] font-bold', active ? 'text-ink-900' : 'text-ink-500')}
             >
               {t.label}
             </Text>

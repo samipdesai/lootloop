@@ -10,6 +10,7 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { GhostLink } from '../../components/ui/GhostLink';
 import { validateNewPassword } from './validation';
+import tw from '../../lib/tw';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'ResetPassword'>;
 
@@ -28,11 +29,11 @@ export function ResetPasswordScreen({ navigation }: Props) {
   if (!isRecovery && !done) {
     return (
       <AuthScreen title="Link expired">
-        <View className="gap-5">
-          <Text className="font-sans text-[16px] font-semibold text-ink-500">
+        <View style={tw`gap-5`}>
+          <Text style={tw`font-sans text-[16px] font-semibold text-ink-500`}>
             This reset link is invalid or expired.
           </Text>
-          <View className="items-center">
+          <View style={tw`items-center`}>
             <GhostLink
               label="Request a new link"
               onPress={() => navigation.navigate('ForgotPassword')}
@@ -46,8 +47,8 @@ export function ResetPasswordScreen({ navigation }: Props) {
   if (done) {
     return (
       <AuthScreen title="Password updated 🎉">
-        <View className="gap-5">
-          <Text className="font-sans text-[16px] font-semibold text-ink-500">
+        <View style={tw`gap-5`}>
+          <Text style={tw`font-sans text-[16px] font-semibold text-ink-500`}>
             Your password has been updated. Log in with your new password.
           </Text>
           <Button block onPress={() => navigation.navigate('Login')}>
@@ -81,7 +82,7 @@ export function ResetPasswordScreen({ navigation }: Props) {
       subtitle="Choose a new password for your account."
       formError={formError}
     >
-      <View className="gap-4">
+      <View style={tw`gap-4`}>
         <Input
           label="New password"
           placeholder="At least 8 characters"

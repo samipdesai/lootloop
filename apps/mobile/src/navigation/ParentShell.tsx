@@ -7,6 +7,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import type { ParentTabParamList } from './types';
 import { useSizeClass } from '../hooks/useSizeClass';
 import { PlaceholderScreen } from '../screens/PlaceholderScreen';
+import tw from '../lib/tw';
 
 const SECTIONS: { key: keyof ParentTabParamList; label: string }[] = [
   { key: 'Home', label: 'Home' },
@@ -40,9 +41,9 @@ function ParentSplitView() {
   const activeLabel = SECTIONS.find((s) => s.key === active)?.label ?? 'Home';
 
   return (
-    <View className="flex-1 flex-row bg-surface-page">
-      <View className="w-64 gap-1 border-r border-ink-200 bg-surface-card px-3 py-6">
-        <Text className="mb-3 px-3 font-display text-[22px] font-extrabold text-ink-900">
+    <View style={tw`flex-1 flex-row bg-surface-page`}>
+      <View style={tw`w-64 gap-1 border-r border-ink-200 bg-surface-card px-3 py-6`}>
+        <Text style={tw`mb-3 px-3 font-display text-[22px] font-extrabold text-ink-900`}>
           LootLoop
         </Text>
         {SECTIONS.map((s) => {
@@ -53,10 +54,10 @@ function ParentSplitView() {
               accessibilityRole="button"
               accessibilityState={{ selected }}
               onPress={() => setActive(s.key)}
-              className={`rounded-md px-3 py-3 ${selected ? 'bg-orange-soft' : 'bg-transparent'}`}
+              style={tw.style('rounded-md px-3 py-3', selected ? 'bg-orange-soft' : 'bg-transparent')}
             >
               <Text
-                className={`font-sans text-[16px] font-bold ${selected ? 'text-orange-ink' : 'text-ink-700'}`}
+                style={tw.style('font-sans text-[16px] font-bold', selected ? 'text-orange-ink' : 'text-ink-700')}
               >
                 {s.label}
               </Text>
@@ -64,7 +65,7 @@ function ParentSplitView() {
           );
         })}
       </View>
-      <View className="flex-1">
+      <View style={tw`flex-1`}>
         <PlaceholderScreen label={activeLabel} />
       </View>
     </View>

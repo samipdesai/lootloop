@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import tw from '../../lib/tw';
 
 type Variant = 'primary' | 'ghost';
 type Size = 'lg' | 'sm';
@@ -43,19 +44,7 @@ export function Button({
   // edge + translates down 2px. Ghost has no edge.
   const edge = isGhost || isDisabled ? 0 : pressed ? 2 : s.edge;
 
-  const containerClasses = [
-    'flex-row items-center justify-center gap-2 rounded-pill px-7',
-    s.h,
-    block ? 'w-full' : 'self-start',
-    isDisabled ? 'bg-ink-200' : isGhost ? 'bg-transparent' : 'bg-orange',
-    pressed && !isGhost && !isDisabled ? 'translate-y-[2px]' : '',
-  ].join(' ');
-
-  const labelColor = isDisabled
-    ? 'text-ink-400'
-    : isGhost
-      ? 'text-orange-strong'
-      : 'text-white';
+  const labelColor = isDisabled ? 'text-ink-400' : isGhost ? 'text-orange-strong' : 'text-white';
 
   return (
     <Pressable
@@ -66,20 +55,30 @@ export function Button({
       onPress={onPress}
       onPressIn={() => setPressed(true)}
       onPressOut={() => setPressed(false)}
-      className={containerClasses}
-      style={
+      style={tw.style(
+        'flex-row items-center justify-center gap-2 rounded-pill px-7',
+        s.h,
+        block ? 'w-full' : 'self-start',
+        isDisabled ? 'bg-ink-200' : isGhost ? 'bg-transparent' : 'bg-orange',
+        pressed && !isGhost && !isDisabled ? { transform: [{ translateY: 2 }] } : null,
         edge > 0
-          ? { shadowColor: '#D85F06', shadowOffset: { width: 0, height: edge }, shadowOpacity: 1, shadowRadius: 0, elevation: edge }
-          : undefined
-      }
+          ? {
+              shadowColor: '#D85F06',
+              shadowOffset: { width: 0, height: edge },
+              shadowOpacity: 1,
+              shadowRadius: 0,
+              elevation: edge,
+            }
+          : null,
+      )}
     >
       {loading ? (
-        <View className="flex-row items-center gap-2">
+        <View style={tw`flex-row items-center gap-2`}>
           <ActivityIndicator color={isGhost ? '#D85F06' : '#FFFFFF'} />
-          <Text className={`font-display font-bold ${s.text} ${labelColor}`}>{children}</Text>
+          <Text style={tw.style('font-display font-bold', s.text, labelColor)}>{children}</Text>
         </View>
       ) : (
-        <Text className={`font-display font-bold ${s.text} ${labelColor}`}>{children}</Text>
+        <Text style={tw.style('font-display font-bold', s.text, labelColor)}>{children}</Text>
       )}
     </Pressable>
   );

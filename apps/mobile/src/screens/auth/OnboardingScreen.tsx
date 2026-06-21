@@ -13,6 +13,7 @@ import { Input } from '../../components/ui/Input';
 import { Tabs } from '../../components/ui/Tabs';
 import { GhostLink } from '../../components/ui/GhostLink';
 import { validateDisplayName, validateFamilyName, validateInviteCode } from './validation';
+import tw from '../../lib/tw';
 
 type Path = 'create' | 'join';
 
@@ -70,7 +71,7 @@ export function OnboardingScreen() {
       formError={formError}
       footer={<GhostLink label="Log out" onPress={() => void signOut(supabase)} />}
     >
-      <View className="gap-4">
+      <View style={tw`gap-4`}>
         <Tabs
           tabs={[
             { value: 'create', label: 'Create a family' },

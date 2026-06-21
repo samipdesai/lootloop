@@ -5,12 +5,13 @@
 // #15/#38+.
 import { Text, View } from 'react-native';
 import { useSizeClass } from '../hooks/useSizeClass';
+import tw from '../lib/tw';
 
 function KidStub({ variant }: { variant: 'KidTabs' | 'KidSplitView' }) {
   return (
-    <View className="flex-1 items-center justify-center bg-surface-page px-5">
-      <Text className="font-display text-[24px] font-extrabold text-ink-900">{variant}</Text>
-      <Text className="mt-2 text-center font-sans text-[14px] font-semibold text-ink-500">
+    <View style={tw`flex-1 items-center justify-center bg-surface-page px-5`}>
+      <Text style={tw`font-display text-[24px] font-extrabold text-ink-900`}>{variant}</Text>
+      <Text style={tw`mt-2 text-center font-sans text-[14px] font-semibold text-ink-500`}>
         Kid surface placeholder. {/* TODO(#9): kid PIN login — deferred. */}
       </Text>
     </View>

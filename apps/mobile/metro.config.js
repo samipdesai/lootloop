@@ -1,5 +1,4 @@
 const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
-const { withNativewind } = require('nativewind/metro');
 const path = require('path');
 
 const projectRoot = __dirname;
@@ -25,6 +24,4 @@ const config = {
   },
 };
 
-// NativeWind v5: withNativewind no longer takes a second `{ input }` arg — the
-// CSS entry is picked up from the `import './global.css'` in the app code.
-module.exports = withNativewind(mergeConfig(getDefaultConfig(projectRoot), config));
+module.exports = mergeConfig(getDefaultConfig(projectRoot), config);

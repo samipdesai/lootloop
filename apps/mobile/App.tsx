@@ -1,4 +1,3 @@
-import './global.css';
 import { enableScreens } from 'react-native-screens';
 import { StatusBar } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';

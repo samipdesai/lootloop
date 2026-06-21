@@ -9,6 +9,7 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { AuthFooter } from './AuthFooter';
 import { validateEmail, validateNewPassword } from './validation';
+import tw from '../../lib/tw';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Signup'>;
 
@@ -52,7 +53,7 @@ export function SignupScreen({ navigation }: Props) {
         />
       }
     >
-      <View className="gap-4">
+      <View style={tw`gap-4`}>
         <Input
           label="Email"
           placeholder="you@example.com"

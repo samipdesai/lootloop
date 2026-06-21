@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 import type { TextInputProps } from 'react-native';
+import tw from '../../lib/tw';
 
 interface InputProps extends Omit<TextInputProps, 'secureTextEntry'> {
   label?: string;
@@ -20,16 +21,18 @@ export function Input({ label, hint, error, password = false, onFocus, onBlur, .
   const ringColor = error ? '#E5484D' : focused ? '#444CCB' : '#E6E2EA';
 
   return (
-    <View className="w-full gap-1.5">
+    <View style={tw`w-full gap-1.5`}>
       {label ? (
-        <Text className="font-sans text-[14px] font-bold text-ink-900">{label}</Text>
+        <Text style={tw`font-sans text-[14px] font-bold text-ink-900`}>{label}</Text>
       ) : null}
       <View
-        className="h-12 flex-row items-center rounded-lg bg-surface-card px-4"
-        style={{ borderWidth: 2, borderColor: ringColor }}
+        style={tw.style('h-12 flex-row items-center rounded-lg bg-surface-card px-4', {
+          borderWidth: 2,
+          borderColor: ringColor,
+        })}
       >
         <TextInput
-          className="flex-1 font-sans text-[16px] font-semibold text-ink-900"
+          style={tw`flex-1 font-sans text-[16px] font-semibold text-ink-900`}
           placeholderTextColor="#A39CAD"
           secureTextEntry={password && !revealed}
           onFocus={(e) => {
@@ -49,7 +52,7 @@ export function Input({ label, hint, error, password = false, onFocus, onBlur, .
             hitSlop={8}
             onPress={() => setRevealed((v) => !v)}
           >
-            <Text className="font-sans text-[13px] font-bold text-indigo-strong">
+            <Text style={tw`font-sans text-[13px] font-bold text-indigo-strong`}>
               {revealed ? 'Hide' : 'Show'}
             </Text>
           </Pressable>
@@ -57,7 +60,7 @@ export function Input({ label, hint, error, password = false, onFocus, onBlur, .
       </View>
       {error || hint ? (
         <Text
-          className={`font-sans text-[12px] font-semibold ${error ? 'text-danger-ink' : 'text-ink-500'}`}
+          style={tw.style('font-sans text-[12px] font-semibold', error ? 'text-danger-ink' : 'text-ink-500')}
         >
           {error || hint}
         </Text>

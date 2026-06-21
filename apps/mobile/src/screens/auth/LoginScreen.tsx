@@ -10,6 +10,7 @@ import { Input } from '../../components/ui/Input';
 import { GhostLink } from '../../components/ui/GhostLink';
 import { AuthFooter } from './AuthFooter';
 import { validateEmail, validateLoginPassword } from './validation';
+import tw from '../../lib/tw';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
@@ -51,7 +52,7 @@ export function LoginScreen({ navigation }: Props) {
         />
       }
     >
-      <View className="gap-4">
+      <View style={tw`gap-4`}>
         <Input
           label="Email"
           placeholder="you@example.com"
@@ -69,7 +70,7 @@ export function LoginScreen({ navigation }: Props) {
           autoComplete="email"
           editable={!submitting}
         />
-        <View className="gap-1.5">
+        <View style={tw`gap-1.5`}>
           <Input
             label="Password"
             placeholder="Your password"
@@ -87,7 +88,7 @@ export function LoginScreen({ navigation }: Props) {
             autoComplete="current-password"
             editable={!submitting}
           />
-          <View className="items-end">
+          <View style={tw`items-end`}>
             <GhostLink
               label="Forgot password?"
               size="caption"
