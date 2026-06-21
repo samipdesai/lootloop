@@ -6,3 +6,5 @@ export * from './chores';
 export * from './kids';
 export * from './kidSession';
 export * from './kidChores';
+export * from './rewards';
+export * from './points';

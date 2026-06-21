@@ -1,0 +1,46 @@
+# Maestro kid STORE golden path (task #47 / M3): family-code login → Store tab →
+# buy a reward → balance drops (celebration #26 fires) → reward now unaffordable.
+# Runs on iPhone AND iPad sims (same flow). Seed with seed-store-flow.sql first.
+# Bundle id is the bare-RN default.
+appId: org.reactjs.native.example.mobile
+tags:
+  - kid
+  - golden-path
+---
+# Fresh state → parent Login screen (kid entry lives there).
+- launchApp:
+    clearState: true
+- assertVisible: 'Welcome back'
+
+# Kid login: family code → roster → PIN.
+- tapOn: 'Kid signing in? Use your family code'
+- assertVisible: 'Enter your family code'
+- tapOn:
+    id: 'kid-code-input'
+- inputText: 'MAESTRO7'
+- tapOn: 'Continue'
+- assertVisible: "Who's here?"
+# Roster tile sets accessibilityLabel="Sign in as <name>" (absorbs child text on iOS).
+- tapOn: 'Sign in as Ava'
+- assertVisible: 'Log in'
+- tapOn:
+    id: 'kid-pin-input'
+- inputText: '1234'
+- tapOn: 'Log in'
+
+# Kid shell lands on Home (dashboard); switch to the Store tab (#23). Tap by
+# testID (set in KidShell) — iOS tab-bar a11y bounds are unreliable to tap by text.
+- tapOn:
+    id: 'tab-Store'
+- assertVisible: 'Your loot'
+- assertVisible: 'Ice cream Sundae'
+
+# Buy it (#24): Buy → inline confirm → Yes.
+- tapOn: 'Buy'
+- assertVisible: 'Buy for.*' # the "Buy for 🪙 70?" confirm prompt
+- tapOn: 'Yes'
+
+# After purchase the balance dropped 100→30 (celebration #26 fired transiently),
+# so the 70-cost reward is now unaffordable — a durable confirmation the spend
+# went through and affordability re-evaluated.
+- assertVisible: 'Need.*' # "Need 🪙 40 more"

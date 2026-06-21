@@ -6,9 +6,13 @@ adapts, so the same steps pass on either form factor.
 
 ## Flows
 
-| File                  | Golden path                                                                           |
-| --------------------- | ------------------------------------------------------------------------------------- |
-| `kid-chore-flow.yaml` | Kid family-code login → roster → PIN → My Chores → mark a chore done (#9 / #15 / #16) |
+| File                  | Golden path                                                                                     |
+| --------------------- | ----------------------------------------------------------------------------------------------- |
+| `kid-chore-flow.yaml` | Kid family-code login → roster → PIN → Chores tab → mark a chore done (#9 / #15 / #16)          |
+| `kid-store-flow.yaml` | Kid login → Store tab → buy a reward → balance drops, celebration fires (#19 / #23 / #24 / #26) |
+
+Each flow has a matching `seed-*.sql` (run first) that recreates a deterministic test
+family as the postgres superuser, so every run starts clean.
 
 ## One-time setup
 
@@ -38,4 +42,9 @@ as the postgres superuser, so every run starts from a clean, actionable state.
 - Text inputs are targeted by `testID` (`kid-code-input`, `kid-pin-input`); buttons/labels
   by visible text. The roster tile is tapped by its `accessibilityLabel` ("Sign in as Ava")
   since the label absorbs the child text on iOS.
+- **Kid-shell tabs are tapped by `testID`** (`tab-Home`/`tab-Chores`/`tab-Store`, set via
+  `tabBarButtonTestID` + the iPad sidebar's `testID`): iOS tab-bar accessibility bounds are
+  unreliable to tap by visible text.
+- Maestro **full-matches** the selector regex against an element's text, so partial matches
+  need `.*` (e.g. `Buy for.*`, `Need.*`).
 - CI wiring (run on release per §4) is task #48.

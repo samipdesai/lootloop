@@ -39,3 +39,10 @@ export type ParentTabParamList = {
   Rewards: undefined;
   Schedule: undefined;
 };
+
+// Kid shell tabs (#19/#15/#23). More tabs (savings, reading) land in later tasks.
+export type KidTabParamList = {
+  Home: undefined;
+  Chores: undefined;
+  Store: undefined;
+};

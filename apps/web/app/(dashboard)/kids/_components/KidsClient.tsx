@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { listKids, deleteKid, type KidProfile } from '@lootloop/client';
+import { listKids, deleteKid, getMyParentProfile, type KidProfile } from '@lootloop/client';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -9,6 +9,8 @@ import { ErrorBanner } from '@/components/ui/ErrorBanner';
 import { KidRow } from './KidRow';
 import { KidForm } from './KidForm';
 import { ChangePinModal } from './ChangePinModal';
+import { GiveBonusModal } from './GiveBonusModal';
+import { PointHistoryModal } from './PointHistoryModal';
 import { FamilyCodePanel } from './FamilyCodePanel';
 
 // `form` state: null = closed, 'new' = create, KidProfile = editing that kid.
@@ -21,8 +23,15 @@ export function KidsClient() {
 
   const [form, setForm] = useState<FormState>(null);
   const [pinKid, setPinKid] = useState<KidProfile | null>(null);
+  const [bonusKid, setBonusKid] = useState<KidProfile | null>(null);
+  const [historyKid, setHistoryKid] = useState<KidProfile | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState('');
+  // Inline confirmation after a bonus award (#21); auto-clears.
+  const [toast, setToast] = useState('');
+
+  // The signed-in parent's profile id — awardedBy on the bonus RPC (#21).
+  const [parentId, setParentId] = useState<string | null>(null);
 
   // Bumped to re-run the load effect (mount load + retry + post-save refetch).
   const [reloadKey, setReloadKey] = useState(0);
@@ -32,14 +41,18 @@ export function KidsClient() {
     const supabase = createClient();
 
     (async () => {
-      const { data, error } = await listKids(supabase);
+      const [kidsRes, parentRes] = await Promise.all([
+        listKids(supabase),
+        getMyParentProfile(supabase),
+      ]);
       if (cancelled) return;
-      if (error) {
-        setLoadError(error.message ?? 'Could not load your kids. Please try again.');
+      if (kidsRes.error) {
+        setLoadError(kidsRes.error.message ?? 'Could not load your kids. Please try again.');
         setLoading(false);
         return;
       }
-      setKids(data ?? []);
+      setKids(kidsRes.data ?? []);
+      setParentId(parentRes.data?.id ?? null);
       setLoading(false);
     })();
 
@@ -47,6 +60,12 @@ export function KidsClient() {
       cancelled = true;
     };
   }, [reloadKey]);
+
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(''), 4000);
+    return () => clearTimeout(t);
+  }, [toast]);
 
   function refetch() {
     setReloadKey(k => k + 1);
@@ -64,6 +83,13 @@ export function KidsClient() {
     setForm(null);
     setPinKid(null);
     refetch();
+  }
+
+  // After a bonus award: close the modal, confirm inline. The balance lives in
+  // the History panel (read on open), so a roster refetch isn't needed here.
+  function handleBonusAwarded(kid: KidProfile, amount: number) {
+    setBonusKid(null);
+    setToast(`Gave ${amount} ${amount === 1 ? 'point' : 'points'} to ${kid.display_name}.`);
   }
 
   async function handleDelete(kid: KidProfile) {
@@ -100,6 +126,27 @@ export function KidsClient() {
 
       <FamilyCodePanel />
 
+      {toast && (
+        <div
+          role="status"
+          className="flex items-center gap-2 rounded-md bg-mint-soft px-4 py-3 font-sans text-sm font-bold text-mint-ink"
+        >
+          <svg
+            aria-hidden
+            viewBox="0 0 24 24"
+            className="h-4 w-4 shrink-0"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M20 6 9 17l-5-5" />
+          </svg>
+          <span>{toast}</span>
+        </div>
+      )}
+
       {actionError && <ErrorBanner>{actionError}</ErrorBanner>}
 
       {loading ? (
@@ -135,6 +182,15 @@ export function KidsClient() {
               kid={kid}
               onEdit={k => setForm(k)}
               onChangePin={k => setPinKid(k)}
+              onGiveBonus={k => {
+                if (!parentId) {
+                  setActionError('Could not find your parent profile. Refresh and try again.');
+                  return;
+                }
+                setActionError('');
+                setBonusKid(k);
+              }}
+              onViewHistory={k => setHistoryKid(k)}
               onDelete={handleDelete}
               deleting={deletingId === kid.id}
             />
@@ -153,6 +209,17 @@ export function KidsClient() {
       {pinKid && (
         <ChangePinModal kid={pinKid} onClose={() => setPinKid(null)} onSaved={handleSaved} />
       )}
+
+      {bonusKid && parentId && (
+        <GiveBonusModal
+          kid={bonusKid}
+          awardedBy={parentId}
+          onClose={() => setBonusKid(null)}
+          onAwarded={amount => handleBonusAwarded(bonusKid, amount)}
+        />
+      )}
+
+      {historyKid && <PointHistoryModal kid={historyKid} onClose={() => setHistoryKid(null)} />}
     </div>
   );
 }

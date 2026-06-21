@@ -851,6 +851,15 @@ export type Database = {
         Args: never;
         Returns: Database['public']['Enums']['profile_role'];
       };
+      award_bonus_points: {
+        Args: {
+          p_amount: number;
+          p_awarded_by: string;
+          p_kid_id: string;
+          p_note: string;
+        };
+        Returns: string;
+      };
       award_points_on_approval: {
         Args: { p_completion_id: string; p_reviewer_id: string };
         Returns: string;

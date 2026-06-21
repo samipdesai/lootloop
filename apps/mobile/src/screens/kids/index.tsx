@@ -15,13 +15,17 @@ import tw from '../../lib/tw';
 import { KidList } from './KidList';
 import { KidForm } from './KidForm';
 import { ChangePinForm } from './ChangePinForm';
+import { AwardBonusForm } from './AwardBonusForm';
+import { PointHistory } from './PointHistory';
 import { FamilyCodePanel } from './FamilyCodePanel';
 
 type ScreenView =
   | { mode: 'list' }
   | { mode: 'create' }
   | { mode: 'edit'; kid: KidProfile }
-  | { mode: 'pin'; kid: KidProfile };
+  | { mode: 'pin'; kid: KidProfile }
+  | { mode: 'bonus'; kid: KidProfile }
+  | { mode: 'history'; kid: KidProfile };
 
 function CenteredState({ top, children }: { top: number; children: React.ReactNode }) {
   return (
@@ -38,6 +42,8 @@ export function KidsScreen() {
   const [loadError, setLoadError] = useState('');
   const [view, setView] = useState<ScreenView>({ mode: 'list' });
   const [rowError, setRowError] = useState('');
+  // Inline confirmation banner after a bonus award (no blocking Alert.alert).
+  const [rowNote, setRowNote] = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -59,6 +65,12 @@ export function KidsScreen() {
     setView({ mode: 'list' });
     void load();
   }, [load]);
+
+  const handleBonusAwarded = useCallback((kid: KidProfile, amount: number) => {
+    setView({ mode: 'list' });
+    setRowError('');
+    setRowNote(`Gave ${amount} pts to ${kid.display_name}.`);
+  }, []);
 
   const handleDelete = useCallback(async (kid: KidProfile) => {
     setRowError('');
@@ -85,6 +97,19 @@ export function KidsScreen() {
         onCancel={() => setView({ mode: 'list' })}
       />
     );
+  }
+  if (view.mode === 'bonus') {
+    const kid = view.kid;
+    return (
+      <AwardBonusForm
+        kid={kid}
+        onSaved={(amount) => handleBonusAwarded(kid, amount)}
+        onCancel={() => setView({ mode: 'list' })}
+      />
+    );
+  }
+  if (view.mode === 'history') {
+    return <PointHistory kid={view.kid} onBack={() => setView({ mode: 'list' })} />;
   }
 
   // --- List mode states -------------------------------------------------------
@@ -143,11 +168,26 @@ export function KidsScreen() {
           <FormError message={rowError} />
         </View>
       ) : null}
+      {rowNote ? (
+        <View style={tw.style('px-5', { paddingTop: insets.top + 8 })}>
+          <View style={tw`rounded-card bg-mint-soft px-4 py-3`}>
+            <Text style={tw`font-sans text-[14px] font-bold text-mint-ink`}>{rowNote}</Text>
+          </View>
+        </View>
+      ) : null}
       <KidList
         kids={kids}
         onNew={() => setView({ mode: 'create' })}
         onEdit={(kid) => setView({ mode: 'edit', kid })}
         onChangePin={(kid) => setView({ mode: 'pin', kid })}
+        onGiveBonus={(kid) => {
+          setRowNote('');
+          setView({ mode: 'bonus', kid });
+        }}
+        onHistory={(kid) => {
+          setRowNote('');
+          setView({ mode: 'history', kid });
+        }}
         onDelete={handleDelete}
       />
     </View>

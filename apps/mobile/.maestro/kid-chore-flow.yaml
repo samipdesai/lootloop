@@ -34,7 +34,10 @@ tags:
 - inputText: '1234'
 - tapOn: 'Log in'
 
-# Kid shell → My Chores (#15): today's assigned chore is visible.
+# Kid shell lands on Home (dashboard); switch to the Chores tab (#15). Tap by
+# testID (set in KidShell) — iOS tab-bar a11y bounds are unreliable to tap by text.
+- tapOn:
+    id: 'tab-Chores'
 - assertVisible: 'Make your bed'
 
 # Complete it (#16) → moves to the pending/awaiting-approval state.
