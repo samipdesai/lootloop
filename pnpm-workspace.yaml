@@ -6,3 +6,9 @@ allowBuilds:
   sharp: true
   unrs-resolver: true
   '@tailwindcss/oxide': true
+  lightningcss: true
+
+# Single lightningcss version — NativeWind v5 / react-native-css hits a CSS
+# deserialization error when the tree resolves more than one (we had 1.27 + 1.32).
+overrides:
+  lightningcss: 1.30.1
