@@ -56,6 +56,7 @@ export function KidPinScreen({ navigation, route }: Props) {
     >
       <View style={tw`gap-4`}>
         <Input
+          testID="kid-pin-input"
           label="PIN"
           placeholder="••••"
           value={pin}

@@ -51,6 +51,7 @@ export function KidCodeScreen({ navigation }: Props) {
     >
       <View style={tw`gap-4`}>
         <Input
+          testID="kid-code-input"
           label="Family code"
           placeholder="ABCD2345"
           value={code}
