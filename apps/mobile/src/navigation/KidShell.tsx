@@ -42,6 +42,7 @@ function KidTabs() {
           name={s.key}
           options={{
             tabBarLabel: s.label,
+            tabBarButtonTestID: `tab-${s.key}`,
             tabBarIcon: ({ focused }) => (
               <Text style={tw.style('text-[18px]', focused ? '' : 'opacity-60')}>{s.icon}</Text>
             ),
@@ -64,6 +65,7 @@ function KidSplitView() {
           return (
             <Pressable
               key={s.key}
+              testID={`tab-${s.key}`}
               accessibilityRole="button"
               accessibilityState={{ selected }}
               onPress={() => setActive(s.key)}
