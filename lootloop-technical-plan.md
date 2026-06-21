@@ -46,6 +46,8 @@
 
 **Phase 2 — CocoaPods → SPM migration:** The task #1 scaffold shipped iOS deps via CocoaPods (RN 0.86's default; `ios/Podfile` + `Pods/`), deviating from the plan's stated "No CocoaPods — Swift Package Manager" constraint (§ below). Rationale for deferring: RN 0.86's SPM support is still experimental, and CocoaPods builds and runs cleanly today on iPhone + iPad. Migrate to SPM-only in Phase 2 once RN's SPM path is stable; until then `pod install` stays in the iOS dev loop.
 
+**Revision (2026-06-20) — NativeWind → twrnc:** Mobile styling moved off NativeWind to **twrnc** (pure-JS Tailwind runtime; `style={tw\`…\`}` via `apps/mobile/src/lib/tw.ts`, tokens in `apps/mobile/tailwind.config.js`). NativeWind is incompatible with this stack: v4 crashes on RN 0.86 / React 19 (react-native-css-interop trips a "navigation context" error on dynamic className toggling), and v5's `react-native-css` hardcodes `@expo/metro-config`'s transform worker, which requires the `expo` package — disallowed by the No-Expo constraint. twrnc needs no Babel/Metro plugin, so it sidesteps both (verified booting on iPhone + iPad). Web still uses Tailwind v4.
+
 ---
 
 ## 1. Lightweight SDLC Process
@@ -713,7 +715,7 @@ lootloop/                             # pnpm monorepo root
 │   │   ├── __tests__/
 │   │   ├── metro.config.js
 │   │   ├── babel.config.js
-│   │   ├── tailwind.config.js        # for NativeWind
+│   │   ├── tailwind.config.js        # design tokens for twrnc
 │   │   └── package.json
 │   └── web/                          # Next.js (App Router)
 │       ├── app/
@@ -781,7 +783,7 @@ Eight subagents in `.claude/agents/`. Main Claude orchestrates; agents execute b
 
 | Agent                     | Scope                                                                                                                                                                                                              | Model  |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------ |
-| **scaffolder**            | One-shot: pnpm monorepo, bare RN init, Next.js init, shared packages, Tailwind/NativeWind, ESLint/Prettier/Husky, GitHub Actions, Fastlane skeleton                                                                | Sonnet |
+| **scaffolder**            | One-shot: pnpm monorepo, bare RN init, Next.js init, shared packages, Tailwind (web) / twrnc (mobile), ESLint/Prettier/Husky, GitHub Actions, Fastlane skeleton                                                                | Sonnet |
 | **db-architect**          | Postgres migrations, RLS policies, atomic SQL functions, integration tests against local Supabase                                                                                                                  | Opus   |
 | **edge-fn-eng**           | Supabase Edge Functions: `kid-auth`, `calculate-interest`, `generate-recurring-chores` + their tests                                                                                                               | Sonnet |
 | **design-translator**     | Extracts RN + Tailwind specs from `design/claude-design/*.html`. Owns age-mode variants, size-class variants (iPhone vs iPad), and state coverage (loading/empty/error). Derives iPhone layouts from iPad mockups. | Opus   |
