@@ -50,6 +50,9 @@ coverage/
 # Turbo / build caches
 .turbo/
 
+# Claude Code agent worktrees
+.claude/worktrees/
+
 # Supabase
 supabase/.branches/
 supabase/.temp/
