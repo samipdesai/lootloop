@@ -40,7 +40,7 @@
 - Integration (Supabase Docker) for DB functions + RLS policies
 - E2E (Maestro for iOS on iPhone + iPad, Playwright for web) — 4-6 golden paths only
 
-**42 tasks across 5 milestones**, each independently testable on at least one mobile form factor + web (where applicable).
+**42 tasks across 5 milestones (v1)**, each independently testable on at least one mobile form factor + web (where applicable). A post-v1 **Milestone 6** (6 tasks, #43–#48) hardens the automated test suite — unit + integration coverage backfill plus the E2E/UI regression flows — so regressions are caught as features evolve. See §5.
 
 **Phase 2 (out of v1 scope):** Marketing site + signup, Android target, Live Activities. Scaffolding is set up from day 1 so these are additive, not rewrites.
 
@@ -399,7 +399,7 @@ Jobs:
 
 ## 5. Task Breakdown (GitHub Issues)
 
-42 tasks across 5 milestones. Task IDs preserved from the original plan so prior issues carry over cleanly. Each task notes its target platform(s).
+42 tasks across 5 v1 milestones, plus a post-v1 **Milestone 6** (automated test suite, tasks #43–#48). Task IDs preserved from the original plan so prior issues carry over cleanly. Each task notes its target platform(s).
 
 ### Milestone 1: Foundation (Days 1-2) — 10 tasks
 
@@ -468,7 +468,7 @@ Jobs:
 | 41  | Realtime subscriptions (cross-device updates)                                          | Parent approves on web → kid sees update on iPhone or iPad instantly                                | #18          | 2h  |
 | 42  | Final polish (loading states, error states, empty states, iPhone/iPad adaptive polish) | No blank screens, graceful errors, proper loading indicators, layouts polished on both form factors | All          | 4h  |
 
-**Total: 42 tasks across 5 milestones**
+**Total: 42 tasks across 5 milestones (v1).** A sixth, post-v1 milestone (automated test suite) follows below.
 
 **Note on timeline:** Two scope expansions vs the original Expo-based plan:
 
@@ -477,23 +477,38 @@ Jobs:
 
 Realistic risk: +1.5 to +2 days vs the original 10-day target. Day 9 is the most loaded. If tight, the natural cut is "parent mobile = approvals + balance views only; CRUD stays web-only" — reverts most of expansion #2.
 
+### Milestone 6: Automated Test & Regression Suite (Post-v1) — 6 tasks
+
+Runs once the v1 product is functional (Milestones 1–5 merged). The §4 testing strategy describes _what_ to test; this milestone makes that coverage **tracked, deliverable work** rather than an implicit Day-10 line item. The goal is a CI-enforced safety net that catches regressions as features evolve. Maps the §4 testing pyramid bottom-up: unit → integration → E2E → CI gates.
+
+| #   | Task                                                                          | Acceptance Criteria                                                                                                                                                                                                                    | Dependencies  | Est |
+| --- | ----------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- | --- |
+| 43  | Unit backfill: `packages/domain/` (interest, points, recurrence)              | ≥70% coverage on `packages/domain/`; edge cases covered — interest rounding/compounding, point math, recurrence boundaries, streak increment/reset                                                                                     | #29, #34      | 3h  |
+| 44  | Unit backfill: Zustand stores + hooks (`apps/*/src/{stores,hooks}/`)          | ≥70% coverage; state transitions + `useSizeClass` / `useAgeMode` / `useChores` / `usePoints` / `useSavings` tested; Supabase mocked at the boundary                                                                                    | All v1 UI     | 4h  |
+| 45  | Integration suite: RLS isolation + atomic functions + Edge Functions (Docker) | Against `supabase start`: cross-family isolation proven for all tables; `purchase_reward` / `transfer_to_savings` / `award_points_on_approval` / `credit_interest` edge cases + idempotency; `kid-auth` + `calculate-interest` covered | #6, #34       | 4h  |
+| 46  | E2E web (Playwright): parent golden paths                                     | Green in CI: signup → create family → add kid; create chore → approve → points appear; reward CRUD → fulfillment                                                                                                                       | #25, #28      | 4h  |
+| 47  | E2E mobile (Maestro, iPhone + iPad): kid + cross-device golden paths          | One flow file runs on BOTH sims: kid completes chore; kid purchases reward; kid saves points + sees interest. Cross-device: parent approves on web → kid sees update                                                                   | #26, #32, #41 | 4h  |
+| 48  | CI/CD wiring + coverage & regression gates                                    | Per §4 "When Tests Run": Playwright on merge-to-`main`, Maestro on release; 70% coverage threshold enforced as a PR gate; a failing E2E/coverage check blocks merge                                                                    | #46, #47, #3  | 2h  |
+
+**Total Milestone 6: 6 tasks (~21h).** Sequence bottom-up (43 → 44 → 45 → 46 → 47 → 48); 43–45 can run in parallel with 46–47 once their feature deps are merged. Owned primarily by the **test-author** subagent (E2E) with **db-architect** on #45 and screen-builders backfilling #43–#44.
+
 ---
 
 ## 6. Development Environment Setup
 
 ### Prerequisites
 
-| Tool           | Version | Purpose                         |
-| -------------- | ------- | ------------------------------- |
-| Node.js        | 20 LTS  | Runtime                         |
-| pnpm           | 9+      | Package manager (monorepo)      |
-| Watchman       | Latest  | File watching (React Native)    |
-| Xcode          | 15+     | iOS Universal builds (Mac only) |
-| Docker Desktop | Latest  | Supabase local                  |
-| Supabase CLI   | Latest  | Local dev, migrations, type gen |
-| Fastlane       | Latest  | iOS builds, signing, TestFlight |
-| Git            | 2.40+   | Version control                 |
-| VS Code        | Latest  | IDE (recommended)               |
+| Tool           | Version | Purpose                                               |
+| -------------- | ------- | ----------------------------------------------------- |
+| Node.js        | 22 LTS  | Runtime (pnpm 11.8 requires ≥22.13; CI + local on 22) |
+| pnpm           | 9+      | Package manager (monorepo)                            |
+| Watchman       | Latest  | File watching (React Native)                          |
+| Xcode          | 15+     | iOS Universal builds (Mac only)                       |
+| Docker Desktop | Latest  | Supabase local                                        |
+| Supabase CLI   | Latest  | Local dev, migrations, type gen                       |
+| Fastlane       | Latest  | iOS builds, signing, TestFlight                       |
+| Git            | 2.40+   | Version control                                       |
+| VS Code        | Latest  | IDE (recommended)                                     |
 
 **No CocoaPods.** React Native ships with Swift Package Manager as the default iOS dependency manager. CocoaPods is in maintenance mode and being phased out. Xcode resolves SPM packages automatically — no `pod install` step in the dev loop.
 
@@ -789,7 +804,7 @@ Eight subagents in `.claude/agents/`. Main Claude orchestrates; agents execute b
 - [ ] Create Supabase account at supabase.com (free tier)
 - [ ] Create Vercel account at vercel.com (free tier) — for web hosting
 - [ ] Apple Developer account ($99/yr) — defer until TestFlight push
-- [ ] Install prerequisites (Node 20, Docker Desktop, Xcode, Watchman)
+- [ ] Install prerequisites (Node 22, Docker Desktop, Xcode, Watchman)
 - [ ] Install pnpm: `npm install -g pnpm`
 - [ ] Install Supabase CLI: `brew install supabase/tap/supabase`
 - [ ] Install Fastlane: `brew install fastlane`
