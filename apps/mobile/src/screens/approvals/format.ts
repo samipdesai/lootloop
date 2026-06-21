@@ -25,3 +25,15 @@ export function initial(name: string): string {
   const trimmed = name.trim();
   return trimmed ? trimmed.charAt(0).toUpperCase() : '?';
 }
+
+// Short "read on" date label for a reading log's read_on (a YYYY-MM-DD date), e.g.
+// "Jun 21". Parsed as a local calendar date (not UTC) so it never shifts a day
+// across timezones. Returns '' for an empty/invalid date.
+export function readDate(date: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(date.trim());
+  if (!match) return '';
+  const [, y, m, d] = match;
+  const local = new Date(Number(y), Number(m) - 1, Number(d));
+  if (Number.isNaN(local.getTime())) return '';
+  return local.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}

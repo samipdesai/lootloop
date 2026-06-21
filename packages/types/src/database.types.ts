@@ -293,6 +293,7 @@ export type Database = {
           id: string;
           kid_id: string;
           note: string | null;
+          reading_log_id: string | null;
           type: Database['public']['Enums']['point_txn_type'];
         };
         Insert: {
@@ -304,6 +305,7 @@ export type Database = {
           id?: string;
           kid_id: string;
           note?: string | null;
+          reading_log_id?: string | null;
           type: Database['public']['Enums']['point_txn_type'];
         };
         Update: {
@@ -315,6 +317,7 @@ export type Database = {
           id?: string;
           kid_id?: string;
           note?: string | null;
+          reading_log_id?: string | null;
           type?: Database['public']['Enums']['point_txn_type'];
         };
         Relationships: [
@@ -344,6 +347,13 @@ export type Database = {
             columns: ['kid_id'];
             isOneToOne: false;
             referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'point_transactions_reading_log_id_fkey';
+            columns: ['reading_log_id'];
+            isOneToOne: false;
+            referencedRelation: 'reading_logs';
             referencedColumns: ['id'];
           },
         ];
@@ -844,6 +854,10 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      approve_reading_log: {
+        Args: { p_points: number; p_reading_id: string; p_reviewer_id: string };
+        Returns: string;
+      };
       auth_family_id: { Args: never; Returns: string };
       auth_is_kid: { Args: never; Returns: boolean };
       auth_profile_id: { Args: never; Returns: string };

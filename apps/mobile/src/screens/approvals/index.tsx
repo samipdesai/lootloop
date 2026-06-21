@@ -1,28 +1,39 @@
-// Parent Approval Queue (#17) + award wiring (#18), mobile parent surface.
-// Self-contained: loads the reviewer profile + pending completions on mount via
-// the supabase singleton, lists them, and approves/rejects each inline. The
-// approve path calls the atomic award_points_on_approval RPC (#18).
+// Parent Approval Queue (#17) + award wiring (#18) + reading approval (#28),
+// mobile parent surface. Self-contained: loads the reviewer profile + both
+// pending queues (chore completions, reading logs) on mount via the supabase
+// singleton, splits them with a Chores / Reading segmented control, and
+// approves/rejects each inline.
+//
+// Chores: approve awards the chore's fixed points (award_points_on_approval RPC).
+// Reading: approve awards parent-chosen points — the row reveals a small numeric
+// field (default 10, integer > 0) before calling approve_reading_log (#28/#29).
 //
 // Adaptive (one component tree, branched on useSizeClass):
 //   compact (iPhone) -> single column, full-width rows.
 //   regular (iPad)   -> centered max-width column, two-up grid of rows.
 //
 // No Alert.alert (blocks the JS bridge) — errors render inline as banners.
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 import {
   approveCompletion,
+  approveReadingLog,
   getMyParentProfile,
   listPendingCompletions,
+  listPendingReadingLogs,
   rejectCompletion,
+  rejectReadingLog,
   type PendingCompletion,
+  type PendingReadingLog,
 } from '@lootloop/client';
 import { supabase } from '../../lib/supabase';
 import { useSizeClass } from '../../hooks/useSizeClass';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
+import { Input } from '../../components/ui/Input';
+import { Tabs } from '../../components/ui/Tabs';
 import tw from '../../lib/tw';
-import { initial, relativeTime } from './format';
+import { initial, readDate, relativeTime } from './format';
 
 // Inline confirmation shown briefly after an approve/reject resolves.
 interface Toast {
@@ -37,12 +48,24 @@ type RowState =
   | { kind: 'busy' }
   | { kind: 'error'; message: string };
 
+type TabValue = 'chores' | 'reading';
+
+const TABS = [
+  { value: 'chores', label: 'Chores' },
+  { value: 'reading', label: 'Reading' },
+];
+
+const DEFAULT_READING_POINTS = 10;
+
 export function ApprovalsScreen() {
   const sizeClass = useSizeClass();
   const isRegular = sizeClass === 'regular';
 
+  const [tab, setTab] = useState<TabValue>('chores');
+
   const [reviewerId, setReviewerId] = useState<string | null>(null);
-  const [items, setItems] = useState<PendingCompletion[]>([]);
+  const [chores, setChores] = useState<PendingCompletion[]>([]);
+  const [reads, setReads] = useState<PendingReadingLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [rowStates, setRowStates] = useState<Record<string, RowState>>({});
@@ -51,9 +74,10 @@ export function ApprovalsScreen() {
   const load = useCallback(async () => {
     setLoading(true);
     setLoadError(null);
-    const [profileRes, pendingRes] = await Promise.all([
+    const [profileRes, choresRes, readsRes] = await Promise.all([
       getMyParentProfile(supabase),
       listPendingCompletions(supabase),
+      listPendingReadingLogs(supabase),
     ]);
 
     if (profileRes.error || !profileRes.data) {
@@ -61,14 +85,20 @@ export function ApprovalsScreen() {
       setLoading(false);
       return;
     }
-    if (pendingRes.error || !pendingRes.data) {
+    if (choresRes.error || !choresRes.data) {
+      setLoadError("We couldn't load the approval queue. Tap retry.");
+      setLoading(false);
+      return;
+    }
+    if (readsRes.error || !readsRes.data) {
       setLoadError("We couldn't load the approval queue. Tap retry.");
       setLoading(false);
       return;
     }
 
     setReviewerId(profileRes.data.id);
-    setItems(pendingRes.data);
+    setChores(choresRes.data);
+    setReads(readsRes.data);
     setRowStates({});
     setLoading(false);
   }, []);
@@ -81,8 +111,7 @@ export function ApprovalsScreen() {
     setRowStates((prev) => ({ ...prev, [id]: state }));
   }, []);
 
-  const removeItem = useCallback((id: string) => {
-    setItems((prev) => prev.filter((c) => c.id !== id));
+  const clearRow = useCallback((id: string) => {
     setRowStates((prev) => {
       const next = { ...prev };
       delete next[id];
@@ -97,7 +126,9 @@ export function ApprovalsScreen() {
     }, 3200);
   }, []);
 
-  const onApprove = useCallback(
+  // --- Chores ---------------------------------------------------------------
+
+  const onApproveChore = useCallback(
     async (item: PendingCompletion) => {
       if (!reviewerId) return;
       if (rowStates[item.id]?.kind === 'busy') return;
@@ -107,17 +138,18 @@ export function ApprovalsScreen() {
         setRow(item.id, { kind: 'error', message: "Couldn't approve — tap to retry." });
         return;
       }
-      removeItem(item.id);
+      setChores((prev) => prev.filter((c) => c.id !== item.id));
+      clearRow(item.id);
       pushToast({
         id: `${item.id}-approve`,
         tone: 'mint',
         message: `+${item.points} points to ${item.kid_display_name || 'kid'}`,
       });
     },
-    [reviewerId, rowStates, setRow, removeItem, pushToast],
+    [reviewerId, rowStates, setRow, clearRow, pushToast],
   );
 
-  const onReject = useCallback(
+  const onRejectChore = useCallback(
     async (item: PendingCompletion) => {
       if (!reviewerId) return;
       if (rowStates[item.id]?.kind === 'busy') return;
@@ -127,15 +159,63 @@ export function ApprovalsScreen() {
         setRow(item.id, { kind: 'error', message: "Couldn't reject — tap to retry." });
         return;
       }
-      removeItem(item.id);
+      setChores((prev) => prev.filter((c) => c.id !== item.id));
+      clearRow(item.id);
       pushToast({
         id: `${item.id}-reject`,
         tone: 'ink',
         message: `Sent back to ${item.kid_display_name || 'kid'}`,
       });
     },
-    [reviewerId, rowStates, setRow, removeItem, pushToast],
+    [reviewerId, rowStates, setRow, clearRow, pushToast],
   );
+
+  // --- Reading --------------------------------------------------------------
+
+  const onApproveReading = useCallback(
+    async (item: PendingReadingLog, points: number) => {
+      if (!reviewerId) return;
+      if (rowStates[item.id]?.kind === 'busy') return;
+      setRow(item.id, { kind: 'busy' });
+      const { error } = await approveReadingLog(supabase, item.id, reviewerId, points);
+      if (error) {
+        setRow(item.id, { kind: 'error', message: "Couldn't approve — tap to retry." });
+        return;
+      }
+      setReads((prev) => prev.filter((r) => r.id !== item.id));
+      clearRow(item.id);
+      pushToast({
+        id: `${item.id}-approve`,
+        tone: 'mint',
+        message: `+${points} to ${item.kid_display_name || 'kid'} for reading`,
+      });
+    },
+    [reviewerId, rowStates, setRow, clearRow, pushToast],
+  );
+
+  const onRejectReading = useCallback(
+    async (item: PendingReadingLog) => {
+      if (!reviewerId) return;
+      if (rowStates[item.id]?.kind === 'busy') return;
+      setRow(item.id, { kind: 'busy' });
+      const { error } = await rejectReadingLog(supabase, item.id, reviewerId);
+      if (error) {
+        setRow(item.id, { kind: 'error', message: "Couldn't reject — tap to retry." });
+        return;
+      }
+      setReads((prev) => prev.filter((r) => r.id !== item.id));
+      clearRow(item.id);
+      pushToast({
+        id: `${item.id}-reject`,
+        tone: 'ink',
+        message: `Sent back to ${item.kid_display_name || 'kid'}`,
+      });
+    },
+    [reviewerId, rowStates, setRow, clearRow, pushToast],
+  );
+
+  const total = chores.length + reads.length;
+  const activeCount = tab === 'chores' ? chores.length : reads.length;
 
   // --- States ---------------------------------------------------------------
 
@@ -167,52 +247,56 @@ export function ApprovalsScreen() {
     );
   }
 
-  if (items.length === 0) {
-    return (
-      <Centered>
-        <Text style={tw`text-[44px]`}>🎉</Text>
-        <Text style={tw`mt-3 text-center font-display text-[22px] font-extrabold text-ink-900`}>
-          All caught up
-        </Text>
-        <Text style={tw`mt-1 text-center font-sans text-[15px] font-semibold text-ink-500`}>
-          Nothing to approve right now.
-        </Text>
-        <ToastStack toasts={toasts} />
-      </Centered>
-    );
-  }
-
   return (
     <View style={tw`flex-1 bg-surface-page`}>
       <ScrollView
-        contentContainerStyle={tw.style(
-          'px-5 py-6',
-          isRegular ? 'items-center' : '',
-        )}
+        contentContainerStyle={tw.style('px-5 py-6', isRegular ? 'items-center' : '')}
       >
         <View style={tw.style('w-full', isRegular ? 'max-w-[860px]' : '')}>
           <Text style={tw`mb-1 font-display text-[26px] font-extrabold text-ink-900`}>
             Approvals
           </Text>
-          <Text style={tw`mb-5 font-sans text-[15px] font-semibold text-ink-500`}>
-            {items.length} waiting for review
+          <Text style={tw`mb-4 font-sans text-[15px] font-semibold text-ink-500`}>
+            {total} waiting for review
           </Text>
 
-          <View style={tw.style('flex-row flex-wrap', isRegular ? '-mx-2' : '')}>
-            {items.map((item) => (
-              <View
-                key={item.id}
-                style={tw.style(isRegular ? 'w-1/2 px-2 pb-4' : 'w-full pb-3')}
-              >
-                <ApprovalRow
-                  item={item}
-                  state={rowStates[item.id] ?? { kind: 'idle' }}
-                  onApprove={() => onApprove(item)}
-                  onReject={() => onReject(item)}
-                />
-              </View>
-            ))}
+          <View style={tw`mb-5`}>
+            <Tabs tabs={TABS} value={tab} onChange={(v) => setTab(v as TabValue)} />
           </View>
+
+          {activeCount === 0 ? (
+            <EmptyQueue tab={tab} />
+          ) : (
+            <View style={tw.style('flex-row flex-wrap', isRegular ? '-mx-2' : '')}>
+              {tab === 'chores'
+                ? chores.map((item) => (
+                    <View
+                      key={item.id}
+                      style={tw.style(isRegular ? 'w-1/2 px-2 pb-4' : 'w-full pb-3')}
+                    >
+                      <ChoreRow
+                        item={item}
+                        state={rowStates[item.id] ?? { kind: 'idle' }}
+                        onApprove={() => onApproveChore(item)}
+                        onReject={() => onRejectChore(item)}
+                      />
+                    </View>
+                  ))
+                : reads.map((item) => (
+                    <View
+                      key={item.id}
+                      style={tw.style(isRegular ? 'w-1/2 px-2 pb-4' : 'w-full pb-3')}
+                    >
+                      <ReadingRow
+                        item={item}
+                        state={rowStates[item.id] ?? { kind: 'idle' }}
+                        onApprove={(points) => onApproveReading(item, points)}
+                        onReject={() => onRejectReading(item)}
+                      />
+                    </View>
+                  ))}
+            </View>
+          )}
         </View>
       </ScrollView>
       <ToastStack toasts={toasts} />
@@ -220,9 +304,9 @@ export function ApprovalsScreen() {
   );
 }
 
-// --- Row ---------------------------------------------------------------------
+// --- Chore row ---------------------------------------------------------------
 
-function ApprovalRow({
+function ChoreRow({
   item,
   state,
   onApprove,
@@ -238,9 +322,7 @@ function ApprovalRow({
   return (
     <Card>
       <View style={tw`flex-row items-center gap-3`}>
-        <View
-          style={tw`h-12 w-12 items-center justify-center rounded-md bg-coin-soft`}
-        >
+        <View style={tw`h-12 w-12 items-center justify-center rounded-md bg-coin-soft`}>
           <Text style={tw`text-[22px]`}>{item.chore_icon ?? '✅'}</Text>
         </View>
         <View style={tw`flex-1`}>
@@ -257,9 +339,7 @@ function ApprovalRow({
             </Text>
           </View>
         </View>
-        <View
-          style={tw`flex-row items-center gap-1 rounded-pill bg-coin-soft px-3 py-1.5`}
-        >
+        <View style={tw`flex-row items-center gap-1 rounded-pill bg-coin-soft px-3 py-1.5`}>
           <Text style={tw`text-[13px]`}>🪙</Text>
           <Text style={tw`font-number text-[15px] font-extrabold text-coin-ink`}>
             {item.points}
@@ -294,18 +374,169 @@ function ApprovalRow({
         </View>
       </View>
 
-      {state.kind === 'error' ? (
-        <View
-          accessibilityLiveRegion="polite"
-          style={tw`mt-3 flex-row items-center gap-2 rounded-md bg-danger-soft px-3 py-2`}
-        >
-          <Text style={tw`text-[13px]`}>⚠️</Text>
-          <Text style={tw`flex-1 font-sans text-[13px] font-bold text-danger-ink`}>
-            {state.message}
-          </Text>
-        </View>
-      ) : null}
+      <RowError state={state} />
     </Card>
+  );
+}
+
+// --- Reading row -------------------------------------------------------------
+
+function ReadingRow({
+  item,
+  state,
+  onApprove,
+  onReject,
+}: {
+  item: PendingReadingLog;
+  state: RowState;
+  onApprove: (points: number) => void;
+  onReject: () => void;
+}) {
+  const busy = state.kind === 'busy';
+
+  // The points field only appears once the parent taps Approve, so the resting
+  // row stays compact. `raw` is the text buffer; `points` is the parsed integer.
+  const [awarding, setAwarding] = useState(false);
+  const [raw, setRaw] = useState(String(DEFAULT_READING_POINTS));
+
+  const points = useMemo(() => {
+    const n = Number.parseInt(raw, 10);
+    return Number.isFinite(n) ? n : NaN;
+  }, [raw]);
+  const validPoints = Number.isInteger(points) && points > 0;
+
+  const onChangePoints = (text: string) => {
+    // Digits only — keeps the number-pad input a clean positive integer.
+    setRaw(text.replace(/[^0-9]/g, ''));
+  };
+
+  return (
+    <Card>
+      <View style={tw`flex-row items-center gap-3`}>
+        <View style={tw`h-12 w-12 items-center justify-center rounded-md bg-indigo-soft`}>
+          <Text style={tw`text-[22px]`}>📚</Text>
+        </View>
+        <View style={tw`flex-1`}>
+          <Text
+            numberOfLines={1}
+            style={tw`font-display text-[16px] font-extrabold text-ink-900`}
+          >
+            {item.book_title || 'Reading'}
+          </Text>
+          <View style={tw`mt-1 flex-row items-center gap-2`}>
+            <KidAvatar name={item.kid_display_name} />
+            <Text numberOfLines={1} style={tw`font-sans text-[13px] font-bold text-ink-500`}>
+              {item.kid_display_name || 'Kid'} · {item.minutes} min · {readDate(item.read_on)}
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      {awarding ? (
+        <View style={tw`mt-3 gap-3`}>
+          <View style={tw`flex-row items-end gap-3`}>
+            <View style={tw`w-24`}>
+              <Input
+                label="Points"
+                value={raw}
+                onChangeText={onChangePoints}
+                keyboardType="number-pad"
+                maxLength={4}
+                editable={!busy}
+                accessibilityLabel={`Points to award ${item.kid_display_name} for reading`}
+                error={validPoints ? undefined : 'Enter a number'}
+              />
+            </View>
+            <View style={tw`flex-1 flex-row gap-3`}>
+              <View style={tw`flex-1`}>
+                <Button
+                  block
+                  variant="ghost"
+                  size="sm"
+                  disabled={busy}
+                  onPress={() => setAwarding(false)}
+                  accessibilityLabel="Cancel awarding points"
+                >
+                  Cancel
+                </Button>
+              </View>
+              <View style={tw`flex-1`}>
+                <Button
+                  block
+                  size="sm"
+                  loading={busy}
+                  disabled={busy || !validPoints}
+                  onPress={() => onApprove(points)}
+                  accessibilityLabel={`Award ${validPoints ? points : ''} points to ${item.kid_display_name} for reading`}
+                >
+                  {busy ? 'Working' : 'Award'}
+                </Button>
+              </View>
+            </View>
+          </View>
+        </View>
+      ) : (
+        <View style={tw`mt-3 flex-row items-center gap-3`}>
+          <View style={tw`flex-1`}>
+            <Button
+              block
+              variant="ghost"
+              size="sm"
+              disabled={busy}
+              onPress={onReject}
+              accessibilityLabel={`Reject reading "${item.book_title}" from ${item.kid_display_name}`}
+            >
+              Reject
+            </Button>
+          </View>
+          <View style={tw`flex-1`}>
+            <Button
+              block
+              size="sm"
+              disabled={busy}
+              onPress={() => setAwarding(true)}
+              accessibilityLabel={`Approve reading "${item.book_title}" from ${item.kid_display_name}`}
+            >
+              Approve
+            </Button>
+          </View>
+        </View>
+      )}
+
+      <RowError state={state} />
+    </Card>
+  );
+}
+
+// --- Shared bits -------------------------------------------------------------
+
+function RowError({ state }: { state: RowState }) {
+  if (state.kind !== 'error') return null;
+  return (
+    <View
+      accessibilityLiveRegion="polite"
+      style={tw`mt-3 flex-row items-center gap-2 rounded-md bg-danger-soft px-3 py-2`}
+    >
+      <Text style={tw`text-[13px]`}>⚠️</Text>
+      <Text style={tw`flex-1 font-sans text-[13px] font-bold text-danger-ink`}>
+        {state.message}
+      </Text>
+    </View>
+  );
+}
+
+function EmptyQueue({ tab }: { tab: TabValue }) {
+  const reading = tab === 'reading';
+  return (
+    <View style={tw`items-center px-4 py-12`}>
+      <Text style={tw`text-[44px]`}>{reading ? '📚' : '🎉'}</Text>
+      <Text style={tw`mt-3 text-center font-display text-[22px] font-extrabold text-ink-900`}>
+        {reading ? 'No reading entries waiting 📚' : 'All caught up'}
+      </Text>
+      <Text style={tw`mt-1 text-center font-sans text-[15px] font-semibold text-ink-500`}>
+        {reading ? 'Reading logs to review will show up here.' : 'Nothing to approve right now.'}
+      </Text>
+    </View>
   );
 }
 
@@ -320,8 +551,6 @@ function KidAvatar({ name }: { name: string }) {
     </View>
   );
 }
-
-// --- Shared shells -----------------------------------------------------------
 
 function Centered({ children }: { children: React.ReactNode }) {
   return (
