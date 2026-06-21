@@ -1,0 +1,42 @@
+# Maestro kid golden-path flow (task #47): family-code login → roster → PIN →
+# My Chores → mark a chore done. Runs on iPhone AND iPad simulators (the same
+# flow — the size-class-aware UI adapts). Seed deterministic data first with
+# seed-kid-flow.sql (the run-kid-flow.sh wrapper does both).
+#
+# Prereqs: local Supabase up + seeded; the mobile app installed on a booted sim;
+# Metro running. Bundle id is the bare-RN default below.
+appId: org.reactjs.native.example.mobile
+tags:
+  - kid
+  - golden-path
+---
+# Fresh app state → lands on the parent Login screen (kid entry lives there).
+- launchApp:
+    clearState: true
+- assertVisible: 'Welcome back'
+
+# Kid login: family code → roster → PIN.
+- tapOn: 'Kid signing in? Use your family code'
+- assertVisible: 'Enter your family code'
+- tapOn:
+    id: 'kid-code-input'
+- inputText: 'MAESTRO7'
+- tapOn: 'Continue'
+
+- assertVisible: "Who's here?"
+# The roster tile sets accessibilityLabel="Sign in as <name>", which on iOS
+# absorbs the child "Ava" text — so target the label, not the bare name.
+- tapOn: 'Sign in as Ava'
+
+- assertVisible: 'Log in' # PIN screen ("Hi Ava!" + PIN field)
+- tapOn:
+    id: 'kid-pin-input'
+- inputText: '1234'
+- tapOn: 'Log in'
+
+# Kid shell → My Chores (#15): today's assigned chore is visible.
+- assertVisible: 'Make your bed'
+
+# Complete it (#16) → moves to the pending/awaiting-approval state.
+- tapOn: 'Mark done'
+- assertVisible: 'Pending'

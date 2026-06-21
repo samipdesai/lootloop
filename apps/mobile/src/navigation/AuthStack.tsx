@@ -9,6 +9,9 @@ import { ConfirmEmailScreen } from '../screens/auth/ConfirmEmailScreen';
 import { ForgotPasswordScreen } from '../screens/auth/ForgotPasswordScreen';
 import { ResetPasswordScreen } from '../screens/auth/ResetPasswordScreen';
 import { OnboardingScreen } from '../screens/auth/OnboardingScreen';
+import { KidCodeScreen } from '../screens/kid-login/KidCodeScreen';
+import { KidRosterScreen } from '../screens/kid-login/KidRosterScreen';
+import { KidPinScreen } from '../screens/kid-login/KidPinScreen';
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 
@@ -28,6 +31,9 @@ export function AuthStack({ entry }: { entry: AuthEntry }) {
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
       <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
       <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+      <Stack.Screen name="KidCode" component={KidCodeScreen} />
+      <Stack.Screen name="KidRoster" component={KidRosterScreen} />
+      <Stack.Screen name="KidPin" component={KidPinScreen} />
     </Stack.Navigator>
   );
 }

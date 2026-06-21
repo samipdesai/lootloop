@@ -1,5 +1,8 @@
 module.exports = {
   preset: '@react-native/jest-preset',
+  // Mocks for native modules (AsyncStorage, react-native-config) pulled in by the
+  // kid session store; see jest.setup.js.
+  setupFiles: ['<rootDir>/jest.setup.js'],
   // pnpm stores deps under node_modules/.pnpm/<pkg>@<ver>/node_modules/<pkg>,
   // so the RN preset's default transformIgnorePatterns (which expects a flat
   // node_modules/<pkg> layout) fails to transform RN packages that ship ESM

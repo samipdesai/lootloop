@@ -3,6 +3,7 @@ import { StatusBar } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { SessionProvider } from './src/stores/session';
+import { KidSessionProvider } from './src/stores/kidSession';
 import { RootNavigator } from './src/navigation/RootNavigator';
 
 // react-navigation perf: back native screen containers.
@@ -13,9 +14,11 @@ function App() {
     <SafeAreaProvider>
       <StatusBar barStyle="dark-content" backgroundColor="#F8F5F1" />
       <SessionProvider>
-        <NavigationContainer>
-          <RootNavigator />
-        </NavigationContainer>
+        <KidSessionProvider>
+          <NavigationContainer>
+            <RootNavigator />
+          </NavigationContainer>
+        </KidSessionProvider>
       </SessionProvider>
     </SafeAreaProvider>
   );

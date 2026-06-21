@@ -100,6 +100,13 @@ export function LoginScreen({ navigation }: Props) {
           Log in
         </Button>
         {/* OAuth: Sign in with Apple — deferred, see spec §1.4 */}
+        <View style={tw`items-center pt-1`}>
+          <GhostLink
+            label="Kid signing in? Use your family code"
+            size="caption"
+            onPress={() => navigation.navigate('KidCode')}
+          />
+        </View>
       </View>
     </AuthScreen>
   );

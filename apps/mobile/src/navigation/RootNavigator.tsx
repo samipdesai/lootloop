@@ -18,16 +18,23 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { RootStackParamList } from './types';
 import { useSession } from '../stores/session';
+import { useKidSession } from '../stores/kidSession';
 import { SplashScreen } from './SplashScreen';
 import { AuthStack, type AuthEntry } from './AuthStack';
 import { ParentShell } from './ParentShell';
+import { KidShell } from './KidShell';
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 
 export function RootNavigator() {
   const { status, hasParentProfile, isRecovery } = useSession();
+  const kid = useKidSession();
 
   const signedInAsParent = status === 'signedIn' && hasParentProfile && !isRecovery;
+  const signedInAsKid = kid.status === 'signedIn';
+  // Splash until BOTH session stores have resolved, so we don't flash the auth
+  // stack before a persisted kid/parent session rehydrates.
+  const loading = status === 'loading' || kid.status === 'loading';
 
   // A recovery session is not a full login — show the reset screen even though a
   // session technically exists (spec §7).
@@ -39,10 +46,12 @@ export function RootNavigator() {
 
   return (
     <RootStack.Navigator screenOptions={{ headerShown: false }}>
-      {status === 'loading' ? (
+      {loading ? (
         <RootStack.Screen name="Splash" component={SplashScreen} />
       ) : signedInAsParent ? (
         <RootStack.Screen name="App" component={ParentShell} />
+      ) : signedInAsKid ? (
+        <RootStack.Screen name="KidApp" component={KidShell} />
       ) : (
         <RootStack.Screen name="Auth">{() => <AuthStack entry={authEntry} />}</RootStack.Screen>
       )}
