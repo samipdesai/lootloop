@@ -29,6 +29,7 @@ interface ButtonProps {
   disabled?: boolean;
   loading?: boolean;
   accessibilityLabel?: string;
+  testID?: string;
 }
 
 const SIZE = {
@@ -45,6 +46,7 @@ export function Button({
   disabled = false,
   loading = false,
   accessibilityLabel,
+  testID,
 }: ButtonProps) {
   const [pressed, setPressed] = useState(false);
   const isDisabled = disabled || loading;
@@ -64,6 +66,7 @@ export function Button({
 
   return (
     <Pressable
+      testID={testID}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       accessibilityState={{ disabled: isDisabled, busy: loading }}

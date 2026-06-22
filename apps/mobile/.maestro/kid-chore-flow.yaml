@@ -42,6 +42,10 @@ tags:
     point: '30%,96%'
 - assertVisible: 'Make your bed'
 
-# Complete it (#16) → moves to the pending/awaiting-approval state.
-- tapOn: 'Mark done'
-- assertVisible: 'Pending'
+# Complete it (#16) → moves to the pending/awaiting-approval state. Tap the Done
+# button by id (the screen also has a "Done" segment tab — avoid the text clash),
+# then switch to the Pending tab and confirm the chore moved there.
+- tapOn:
+    id: 'chore-done'
+- tapOn: 'Pending'
+- assertVisible: 'Make your bed'
