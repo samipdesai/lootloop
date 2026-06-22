@@ -11,6 +11,7 @@ import { ChoresScreen } from '../screens/chores';
 import { ApprovalsScreen } from '../screens/approvals';
 import { KidsScreen } from '../screens/kids';
 import { RewardsScreen } from '../screens/rewards';
+import { ScheduleScreen } from '../screens/schedule';
 import tw from '../lib/tw';
 
 const SECTIONS: { key: keyof ParentTabParamList; label: string }[] = [
@@ -35,6 +36,8 @@ function renderSection(key: keyof ParentTabParamList, label: string) {
       return <KidsScreen />;
     case 'Rewards':
       return <RewardsScreen />;
+    case 'Schedule':
+      return <ScheduleScreen />;
     default:
       return <PlaceholderScreen label={label} />;
   }

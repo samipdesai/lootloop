@@ -10,13 +10,16 @@ import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Text, View } from 'react-native';
 import {
   getKidWallet,
+  listKidScheduleItems,
   listPointTransactions,
   type PointTransaction,
+  type ScheduleItem,
 } from '@lootloop/client';
 import { useKidSession } from '../../stores/kidSession';
 import { useSizeClass } from '../../hooks/useSizeClass';
 import tw from '../../lib/tw';
 import { ledgerRow, relativeDate } from './ledger';
+import { formatTime, todaysItems } from './timeline';
 
 // Keep the home view snappy — the ledger is "recent activity", not the full
 // history. The full ledger lives behind a dedicated screen later if needed.
@@ -28,6 +31,7 @@ interface DashboardData {
   walletBalance: number;
   savingsBalance: number;
   txns: PointTransaction[];
+  schedule: ScheduleItem[]; // already filtered to today + ordered by start_time
 }
 
 function CoinNumber({ value, big }: { value: number; big: boolean }) {
@@ -89,6 +93,83 @@ function WalletHero({
   );
 }
 
+// One row of the "Today's schedule" timeline: a left time column, a connector
+// line + dot, then the item's icon, title and (optional) end time. `first`/`last`
+// trim the connector so the line doesn't poke past the top/bottom rows.
+function TimelineRow({
+  item,
+  first,
+  last,
+}: {
+  item: ScheduleItem;
+  first: boolean;
+  last: boolean;
+}) {
+  return (
+    <View style={tw`flex-row gap-3`}>
+      <View style={tw`w-16 pt-3 items-end`}>
+        <Text style={tw`font-display text-[13px] font-extrabold text-indigo-strong`}>
+          {formatTime(item.start_time)}
+        </Text>
+      </View>
+      <View style={tw`w-6 items-center`}>
+        <View style={tw.style('w-0.5 flex-1', first ? '' : 'bg-indigo-soft')} />
+        <View style={tw`h-3 w-3 rounded-full bg-indigo-strong`} />
+        <View style={tw.style('w-0.5 flex-1', last ? '' : 'bg-indigo-soft')} />
+      </View>
+      <View style={tw`min-w-0 flex-1`}>
+        <View style={tw`flex-row items-center gap-3 rounded-xl bg-surface-card px-4 py-3.5`}>
+          <View style={tw`h-11 w-11 items-center justify-center rounded-lg bg-indigo-soft`}>
+            <Text style={tw`text-[20px]`}>{item.icon || '⏰'}</Text>
+          </View>
+          <View style={tw`min-w-0 flex-1`}>
+            <Text
+              numberOfLines={1}
+              style={tw`font-display text-[15px] font-extrabold text-ink-900`}
+            >
+              {item.title}
+            </Text>
+            {item.end_time ? (
+              <Text style={tw`font-sans text-[13px] font-bold text-ink-400`}>
+                until {formatTime(item.end_time)}
+              </Text>
+            ) : null}
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function TodaysSchedule({ items }: { items: ScheduleItem[] }) {
+  return (
+    <View style={tw`gap-3`}>
+      <Text style={tw`mt-1 font-display text-[19px] font-extrabold text-ink-900`}>
+        Today&apos;s schedule
+      </Text>
+      {items.length === 0 ? (
+        <View style={tw`items-center gap-2 rounded-xl bg-surface-card px-6 py-8`}>
+          <Text style={tw`text-[34px]`}>🎉</Text>
+          <Text style={tw`text-center font-display text-[15px] font-extrabold text-ink-800`}>
+            Nothing scheduled today 🎉
+          </Text>
+        </View>
+      ) : (
+        <View>
+          {items.map((item, i) => (
+            <TimelineRow
+              key={item.id}
+              item={item}
+              first={i === 0}
+              last={i === items.length - 1}
+            />
+          ))}
+        </View>
+      )}
+    </View>
+  );
+}
+
 function ActivityRow({ txn }: { txn: PointTransaction }) {
   const row = ledgerRow(txn);
   const positive = row.tone === 'positive';
@@ -137,19 +218,21 @@ export function KidDashboardScreen() {
   const load = useCallback(async () => {
     if (!client || !profile) return;
     setError('');
-    const [walletRes, txnRes] = await Promise.all([
+    const [walletRes, txnRes, scheduleRes] = await Promise.all([
       getKidWallet(client, profile.id),
       listPointTransactions(client, profile.id),
+      listKidScheduleItems(client, profile.id),
     ]);
-    if (walletRes.error || txnRes.error) {
+    if (walletRes.error || txnRes.error || scheduleRes.error) {
       setError("Couldn't load your loot. Pull to try again.");
-      setData({ walletBalance: 0, savingsBalance: 0, txns: [] });
+      setData({ walletBalance: 0, savingsBalance: 0, txns: [], schedule: [] });
       return;
     }
     setData({
       walletBalance: walletRes.data?.wallet_balance ?? 0,
       savingsBalance: walletRes.data?.savings_balance ?? 0,
       txns: (txnRes.data ?? []).slice(0, RECENT_LIMIT),
+      schedule: todaysItems(scheduleRes.data ?? []),
     });
   }, [client, profile]);
 
@@ -185,6 +268,7 @@ export function KidDashboardScreen() {
               walletBalance={data.walletBalance}
               savingsBalance={data.savingsBalance}
             />
+            <TodaysSchedule items={data.schedule} />
             <Text style={tw`mt-1 font-display text-[19px] font-extrabold text-ink-900`}>
               Recent activity
             </Text>
