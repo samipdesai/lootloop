@@ -20,3 +20,11 @@ export function relativeTime(iso: string, now: number = Date.now()): string {
   const diffDay = Math.round(diffHr / 24);
   return `${diffDay}d ago`;
 }
+
+// Friendly calendar date ("Jun 21") for a Postgres `date` column (read_on).
+// Dates have no time component, so relativeTime would be misleading here.
+export function shortDate(iso: string): string {
+  const d = new Date(`${iso}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}

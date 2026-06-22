@@ -8,3 +8,5 @@ export * from './kidSession';
 export * from './kidChores';
 export * from './rewards';
 export * from './points';
+export * from './reading';
+export * from './savings';

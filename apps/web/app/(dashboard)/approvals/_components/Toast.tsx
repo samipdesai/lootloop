@@ -2,6 +2,11 @@
 
 import { useEffect } from 'react';
 
+export interface ToastState {
+  message: string;
+  tone: 'mint' | 'neutral';
+}
+
 // Transient confirmation surfaced after an approve/reject succeeds and the row
 // has been removed. Auto-dismisses; mint tone for awards, neutral for rejects.
 export function Toast({

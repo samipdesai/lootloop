@@ -1,4 +1,4 @@
-import { initial, relativeTime } from './format';
+import { initial, readDate, relativeTime } from './format';
 
 describe('relativeTime', () => {
   const now = new Date('2026-06-21T12:00:00.000Z');
@@ -35,5 +35,19 @@ describe('initial', () => {
 
   it('falls back to "?" for an empty name', () => {
     expect(initial('   ')).toBe('?');
+  });
+});
+
+describe('readDate', () => {
+  it('formats a YYYY-MM-DD date as a short month/day label', () => {
+    expect(readDate('2026-06-21')).toBe('Jun 21');
+  });
+
+  it('returns an empty string for an empty date', () => {
+    expect(readDate('')).toBe('');
+  });
+
+  it('returns an empty string for an invalid date', () => {
+    expect(readDate('not-a-date')).toBe('');
   });
 });

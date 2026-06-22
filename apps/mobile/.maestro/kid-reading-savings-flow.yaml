@@ -1,0 +1,54 @@
+# Maestro kid reading + savings golden path (task #47 / M4): login → Reading tab
+# → log a book (#27, appears in the list) → Savings tab → deposit to savings
+# (#32, lands in history). Runs on iPhone AND iPad. Seed with
+# seed-reading-savings-flow.sql first.
+appId: org.reactjs.native.example.mobile
+tags:
+  - kid
+  - golden-path
+---
+- launchApp:
+    clearState: true
+- assertVisible: 'Welcome back'
+
+# Kid login: family code → roster → PIN.
+- tapOn: 'Kid signing in? Use your family code'
+- assertVisible: 'Enter your family code'
+- tapOn:
+    id: 'kid-code-input'
+- inputText: 'MAESTRO7'
+- tapOn: 'Continue'
+- assertVisible: "Who's here?"
+- tapOn: 'Sign in as Ava'
+- assertVisible: 'Log in'
+- tapOn:
+    id: 'kid-pin-input'
+- inputText: '1234'
+- tapOn: 'Log in'
+
+# Reading (#27/#30): log a book → it appears in the list.
+- tapOn:
+    id: 'tab-Reading'
+- tapOn:
+    id: 'reading-title-input'
+- inputText: "Charlotte's Web"
+- tapOn:
+    id: 'reading-minutes-input'
+- inputText: '20'
+- tapOn: '.*Log reading.*' # button label is "＋ Log reading"
+- assertVisible: "Charlotte's Web" # the new log row (Pending)
+
+# Savings (#31/#32/#33): deposit 40 (default direction is Deposit) → it lands in
+# the savings history.
+- tapOn:
+    id: 'tab-Savings'
+- tapOn:
+    id: 'savings-amount-input'
+- inputText: '40'
+# Dismiss the number-pad (it covers the input-gated Deposit button on iPhone) by
+# tapping the card title — the FlatList dismisses the keyboard on a non-input tap.
+# (Maestro's hideKeyboard is unreliable on iOS sims.) This also lets the
+# enabled-state re-render settle before we tap.
+- tapOn: 'Move your loot'
+- tapOn: 'Deposit to savings'
+- assertVisible: 'Deposit' # the new "Deposit" history row (exact label)

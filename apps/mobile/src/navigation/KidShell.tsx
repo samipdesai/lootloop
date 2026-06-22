@@ -12,12 +12,16 @@ import { useSizeClass } from '../hooks/useSizeClass';
 import { KidDashboardScreen } from '../screens/kid-dashboard';
 import { MyChoresScreen } from '../screens/kid-chores/MyChoresScreen';
 import { KidStoreScreen } from '../screens/kid-store';
+import { KidReadingScreen } from '../screens/kid-reading';
+import { KidSavingsScreen } from '../screens/kid-savings';
 import tw from '../lib/tw';
 
 const SECTIONS: { key: keyof KidTabParamList; label: string; icon: string }[] = [
   { key: 'Home', label: 'Home', icon: '🏠' },
   { key: 'Chores', label: 'Chores', icon: '🧹' },
   { key: 'Store', label: 'Store', icon: '🎁' },
+  { key: 'Reading', label: 'Reading', icon: '📚' },
+  { key: 'Savings', label: 'Savings', icon: '🐷' },
 ];
 
 function renderSection(key: keyof KidTabParamList) {
@@ -26,6 +30,10 @@ function renderSection(key: keyof KidTabParamList) {
       return <MyChoresScreen />;
     case 'Store':
       return <KidStoreScreen />;
+    case 'Reading':
+      return <KidReadingScreen />;
+    case 'Savings':
+      return <KidSavingsScreen />;
     default:
       return <KidDashboardScreen />;
   }

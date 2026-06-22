@@ -6,10 +6,11 @@ adapts, so the same steps pass on either form factor.
 
 ## Flows
 
-| File                  | Golden path                                                                                     |
-| --------------------- | ----------------------------------------------------------------------------------------------- |
-| `kid-chore-flow.yaml` | Kid family-code login → roster → PIN → Chores tab → mark a chore done (#9 / #15 / #16)          |
-| `kid-store-flow.yaml` | Kid login → Store tab → buy a reward → balance drops, celebration fires (#19 / #23 / #24 / #26) |
+| File                            | Golden path                                                                                           |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `kid-chore-flow.yaml`           | Kid family-code login → roster → PIN → Chores tab → mark a chore done (#9 / #15 / #16)                |
+| `kid-store-flow.yaml`           | Kid login → Store tab → buy a reward → balance drops, celebration fires (#19 / #23 / #24 / #26)       |
+| `kid-reading-savings-flow.yaml` | Kid login → Reading tab → log a book → Savings tab → deposit to savings (#27 / #30 / #31 / #32 / #33) |
 
 Each flow has a matching `seed-*.sql` (run first) that recreates a deterministic test
 family as the postgres superuser, so every run starts clean.
@@ -47,4 +48,8 @@ as the postgres superuser, so every run starts from a clean, actionable state.
   unreliable to tap by visible text.
 - Maestro **full-matches** the selector regex against an element's text, so partial matches
   need `.*` (e.g. `Buy for.*`, `Need.*`).
+- Text inputs that gate a button (e.g. the savings Amount → Deposit button): the number-pad
+  covers the button on iPhone, so dismiss it before tapping by tapping a non-input element
+  in the list (the FlatList dismisses the keyboard on a non-input tap). `hideKeyboard` is
+  unreliable on iOS sims.
 - CI wiring (run on release per §4) is task #48.
