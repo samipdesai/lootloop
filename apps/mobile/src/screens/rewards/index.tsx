@@ -9,7 +9,7 @@
 //
 // No Alert.alert (blocks the JS bridge) — errors render inline as banners.
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Modal, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   deleteReward,
@@ -164,22 +164,26 @@ export function RewardsScreen() {
     [reviewerId, rowStates],
   );
 
-  // --- Store form modes (full-screen, replace the whole surface) -------------
-  if (tab === 'store' && storeView.mode === 'create') {
-    return <RewardForm onSaved={handleSaved} onCancel={() => setStoreView({ mode: 'list' })} />;
-  }
-  if (tab === 'store' && storeView.mode === 'edit') {
-    return (
-      <RewardForm
-        reward={storeView.reward}
-        onSaved={handleSaved}
-        onCancel={() => setStoreView({ mode: 'list' })}
-      />
-    );
-  }
+  const closeForm = () => setStoreView({ mode: 'list' });
 
   return (
     <View style={tw`flex-1 bg-surface-page`}>
+      {/* Create/edit reward form as a native page-sheet (smooth slide up/down). */}
+      <Modal
+        visible={storeView.mode !== 'list'}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={closeForm}
+      >
+        <View style={tw`flex-1 bg-surface-page`}>
+          {storeView.mode === 'create' ? (
+            <RewardForm onSaved={handleSaved} onCancel={closeForm} />
+          ) : null}
+          {storeView.mode === 'edit' ? (
+            <RewardForm reward={storeView.reward} onSaved={handleSaved} onCancel={closeForm} />
+          ) : null}
+        </View>
+      </Modal>
       <ScrollView
         contentContainerStyle={tw.style('px-5 pb-6', isRegular ? 'items-center' : '', {
           paddingTop: insets.top + 12,
