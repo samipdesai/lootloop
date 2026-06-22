@@ -44,6 +44,7 @@ import {
   Star,
   Trash2,
   TrendingUp,
+  Users,
   Utensils,
   X,
   type LucideIcon,
@@ -90,6 +91,7 @@ const ICONS = {
   star: Star,
   'trash-2': Trash2,
   'trending-up': TrendingUp,
+  users: Users,
   utensils: Utensils,
   x: X,
 } satisfies Record<string, LucideIcon>;

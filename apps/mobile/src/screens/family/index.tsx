@@ -5,6 +5,7 @@
 // live via a wallets subscription.
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { listKidsWithBalances, subscribeToTable, type KidWithBalance } from '@lootloop/client';
 import { supabase } from '../../lib/supabase';
@@ -64,6 +65,7 @@ function ActionCard({ label, icon, tile, fg, onPress }: (typeof ACTIONS)[number]
 export function FamilyOverviewScreen() {
   const nav = useNavigation<{ navigate: (s: string) => void }>();
   const isRegular = useSizeClass() === 'regular';
+  const insets = useSafeAreaInsets();
   const [kids, setKids] = useState<KidWithBalance[] | null>(null);
   const [error, setError] = useState('');
 
@@ -103,7 +105,9 @@ export function FamilyOverviewScreen() {
   return (
     <ScrollView
       style={tw`flex-1 bg-surface-page`}
-      contentContainerStyle={tw.style('gap-4 px-4 py-4', isRegular ? 'mx-auto w-full max-w-[640px]' : '')}
+      contentContainerStyle={tw.style('gap-4 px-4 pb-4', isRegular ? 'mx-auto w-full max-w-[640px]' : '', {
+        paddingTop: insets.top + 12,
+      })}
     >
       <View>
         <Text style={tw`font-sans text-[13px] font-extrabold uppercase tracking-wide text-[13px] text-indigo`}>

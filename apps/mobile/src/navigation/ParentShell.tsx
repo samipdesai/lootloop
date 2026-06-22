@@ -13,15 +13,16 @@ import { KidsScreen } from '../screens/kids';
 import { RewardsScreen } from '../screens/rewards';
 import { ScheduleScreen } from '../screens/schedule';
 import { FamilyOverviewScreen } from '../screens/family';
+import { Icon, type IconName } from '../components/ui/Icon';
 import tw from '../lib/tw';
 
-const SECTIONS: { key: keyof ParentTabParamList; label: string }[] = [
-  { key: 'Home', label: 'Home' },
-  { key: 'Chores', label: 'Chores' },
-  { key: 'Approvals', label: 'Approvals' },
-  { key: 'Kids', label: 'Kids' },
-  { key: 'Rewards', label: 'Rewards' },
-  { key: 'Schedule', label: 'Schedule' },
+const SECTIONS: { key: keyof ParentTabParamList; label: string; icon: IconName }[] = [
+  { key: 'Home', label: 'Home', icon: 'layout-dashboard' },
+  { key: 'Chores', label: 'Chores', icon: 'list-todo' },
+  { key: 'Approvals', label: 'Approvals', icon: 'inbox' },
+  { key: 'Kids', label: 'Kids', icon: 'users' },
+  { key: 'Rewards', label: 'Rewards', icon: 'gift' },
+  { key: 'Schedule', label: 'Schedule', icon: 'calendar-clock' },
 ];
 
 // Built sections render their real screen; the rest stay placeholders until
@@ -50,9 +51,26 @@ const Tab = createBottomTabNavigator<ParentTabParamList>();
 
 function ParentTabs() {
   return (
-    <Tab.Navigator screenOptions={{ headerShown: false }}>
+    <Tab.Navigator
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: '#F4720E',
+        tabBarInactiveTintColor: '#A39CAD',
+      }}
+    >
       {SECTIONS.map((s) => (
-        <Tab.Screen key={s.key} name={s.key} children={() => renderSection(s.key, s.label)} />
+        <Tab.Screen
+          key={s.key}
+          name={s.key}
+          options={{
+            tabBarLabel: s.label,
+            tabBarButtonTestID: `ptab-${s.key}`,
+            tabBarIcon: ({ focused }) => (
+              <Icon name={s.icon} size={24} color={focused ? '#F4720E' : '#A39CAD'} />
+            ),
+          }}
+          children={() => renderSection(s.key, s.label)}
+        />
       ))}
     </Tab.Navigator>
   );
@@ -78,8 +96,12 @@ function ParentSplitView() {
               accessibilityRole="button"
               accessibilityState={{ selected }}
               onPress={() => setActive(s.key)}
-              style={tw.style('rounded-md px-3 py-3', selected ? 'bg-orange-soft' : 'bg-transparent')}
+              style={tw.style(
+                'flex-row items-center gap-2.5 rounded-md px-3 py-3',
+                selected ? 'bg-orange-soft' : 'bg-transparent',
+              )}
             >
+              <Icon name={s.icon} size={20} color={selected ? '#8A4309' : '#443F4E'} />
               <Text
                 style={tw.style('font-sans text-[16px] font-bold', selected ? 'text-orange-ink' : 'text-ink-700')}
               >

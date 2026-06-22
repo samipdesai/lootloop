@@ -15,6 +15,7 @@
 // No Alert.alert (blocks the JS bridge) — errors render inline as banners.
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   approveCompletion,
   approveReadingLog,
@@ -63,6 +64,7 @@ const DEFAULT_READING_POINTS = 10;
 export function ApprovalsScreen() {
   const sizeClass = useSizeClass();
   const isRegular = sizeClass === 'regular';
+  const insets = useSafeAreaInsets();
 
   const [tab, setTab] = useState<TabValue>('chores');
 
@@ -287,7 +289,9 @@ export function ApprovalsScreen() {
   return (
     <View style={tw`flex-1 bg-surface-page`}>
       <ScrollView
-        contentContainerStyle={tw.style('px-5 py-6', isRegular ? 'items-center' : '')}
+        contentContainerStyle={tw.style('px-5 pb-6', isRegular ? 'items-center' : '', {
+          paddingTop: insets.top + 12,
+        })}
       >
         <View style={tw.style('w-full', isRegular ? 'max-w-[860px]' : '')}>
           <View style={tw`mb-1 flex-row items-center gap-2.5`}>

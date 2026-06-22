@@ -6,6 +6,7 @@
 // size class centres the column and widens it.
 import { useState } from 'react';
 import { FlatList, Pressable, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { KidProfile } from '@lootloop/client';
 import { useSizeClass } from '../../hooks/useSizeClass';
 import { Button } from '../../components/ui/Button';
@@ -138,6 +139,7 @@ export function KidList({
   onDelete,
 }: KidListProps) {
   const isRegular = useSizeClass() === 'regular';
+  const insets = useSafeAreaInsets();
 
   return (
     <FlatList
@@ -145,8 +147,9 @@ export function KidList({
       keyExtractor={(k) => k.id}
       style={tw`flex-1 bg-surface-page`}
       contentContainerStyle={tw.style(
-        'gap-3 px-5 pb-10 pt-4',
+        'gap-3 px-5 pb-10',
         isRegular ? 'mx-auto w-full max-w-[720px]' : null,
+        { paddingTop: insets.top + 12 },
       )}
       ListHeaderComponent={
         <View style={tw`mb-1 gap-4`}>
