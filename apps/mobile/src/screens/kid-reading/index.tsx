@@ -111,6 +111,7 @@ function LogForm({
         📖 Log your reading
       </Text>
       <Input
+        testID="reading-title-input"
         label="Book title"
         placeholder="What did you read?"
         value={bookTitle}
@@ -121,6 +122,7 @@ function LogForm({
         editable={!submitting}
       />
       <Input
+        testID="reading-minutes-input"
         label="Minutes"
         placeholder="How many minutes?"
         value={minutes}

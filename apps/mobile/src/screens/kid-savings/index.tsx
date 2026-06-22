@@ -156,6 +156,7 @@ function TransferCard({
       </Text>
 
       <Input
+        testID="savings-amount-input"
         label="Amount"
         keyboardType="number-pad"
         placeholder="0"
