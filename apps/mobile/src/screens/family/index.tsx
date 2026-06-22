@@ -4,10 +4,10 @@
 // roster + balances through the parent (GoTrue) session client; balances refresh
 // live via a wallets subscription.
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { listKidsWithBalances, subscribeToTable, type KidWithBalance } from '@lootloop/client';
+import { listKidsWithBalances, signOut, subscribeToTable, type KidWithBalance } from '@lootloop/client';
 import { supabase } from '../../lib/supabase';
 import { useSizeClass } from '../../hooks/useSizeClass';
 import { Avatar } from '../../components/ui/Avatar';
@@ -67,10 +67,59 @@ function ActionCard({ label, icon, tile, fg, onPress }: (typeof ACTIONS)[number]
   );
 }
 
+// Settings menu — a small sheet anchored top-right (Log out now; room for more
+// account settings later). Tapping the scrim closes it.
+function SettingsMenu({
+  open,
+  top,
+  onClose,
+  onLogout,
+}: {
+  open: boolean;
+  top: number;
+  onClose: () => void;
+  onLogout: () => void;
+}) {
+  return (
+    <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
+      <View style={tw`flex-1`}>
+        {/* Scrim sits BEHIND the menu (sibling, not parent) so the menu's own
+            taps aren't swallowed by the backdrop's press handler. */}
+        <Pressable
+          accessibilityLabel="Close menu"
+          style={tw`absolute inset-0`}
+          onPress={onClose}
+        />
+        <View
+          style={tw.style('absolute right-4 w-52 gap-1 rounded-card bg-surface-card p-2', {
+            top: top + 52,
+            shadowColor: 'rgba(32,36,58,1)',
+            shadowOffset: { width: 0, height: 8 },
+            shadowOpacity: 0.16,
+            shadowRadius: 24,
+            elevation: 8,
+          })}
+        >
+          <Pressable
+            testID="parent-logout"
+            accessibilityRole="button"
+            onPress={onLogout}
+            style={tw`flex-row items-center gap-3 rounded-md px-3 py-3`}
+          >
+            <Icon name="log-out" size={20} color="#B11216" />
+            <Text style={tw`font-display text-[15px] font-extrabold text-danger-ink`}>Log out</Text>
+          </Pressable>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
 export function FamilyOverviewScreen() {
   const nav = useNavigation<{ navigate: (s: string) => void }>();
   const isRegular = useSizeClass() === 'regular';
   const insets = useSafeAreaInsets();
+  const [menuOpen, setMenuOpen] = useState(false);
   const [kids, setKids] = useState<KidWithBalance[] | null>(null);
   const [error, setError] = useState('');
 
@@ -108,17 +157,45 @@ export function FamilyOverviewScreen() {
   const actionRows = [ACTIONS.slice(0, 2), ACTIONS.slice(2, 4)];
 
   return (
-    <ScrollView
-      style={tw`flex-1 bg-surface-page`}
-      contentContainerStyle={tw.style('gap-4 px-4 pb-4', isRegular ? 'mx-auto w-full max-w-[640px]' : '', {
-        paddingTop: insets.top + 12,
-      })}
-    >
-      <View>
-        <Text style={tw`font-sans text-[13px] font-extrabold uppercase tracking-wide text-[13px] text-indigo`}>
-          Parent
-        </Text>
-        <Text style={tw`font-display text-[26px] font-extrabold text-ink-900`}>Family</Text>
+    <View style={tw`flex-1 bg-surface-page`}>
+      <SettingsMenu
+        open={menuOpen}
+        top={insets.top}
+        onClose={() => setMenuOpen(false)}
+        onLogout={() => {
+          setMenuOpen(false);
+          void signOut(supabase);
+        }}
+      />
+      <ScrollView
+        style={tw`flex-1 bg-surface-page`}
+        contentContainerStyle={tw.style('gap-4 px-4 pb-4', isRegular ? 'mx-auto w-full max-w-[640px]' : '', {
+          paddingTop: insets.top + 12,
+        })}
+      >
+      <View style={tw`flex-row items-start justify-between`}>
+        <View>
+          <Text style={tw`font-sans text-[13px] font-extrabold uppercase tracking-wide text-[13px] text-indigo`}>
+            Parent
+          </Text>
+          <Text style={tw`font-display text-[26px] font-extrabold text-ink-900`}>Family</Text>
+        </View>
+        <Pressable
+          testID="parent-settings"
+          accessibilityRole="button"
+          accessibilityLabel="Settings"
+          onPress={() => setMenuOpen(true)}
+          hitSlop={8}
+          style={tw.style('h-10 w-10 items-center justify-center rounded-full bg-surface-card', {
+            shadowColor: 'rgba(32,36,58,1)',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.08,
+            shadowRadius: 6,
+            elevation: 2,
+          })}
+        >
+          <Icon name="settings" size={22} color="#443F4E" />
+        </Pressable>
       </View>
 
       {error ? (
@@ -154,6 +231,7 @@ export function FamilyOverviewScreen() {
           </View>
         ))}
       </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
