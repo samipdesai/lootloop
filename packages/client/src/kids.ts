@@ -6,8 +6,37 @@
 // roster reads — not re-exported here.
 import type { Database } from '@lootloop/types';
 import type { LootLoopClient } from './auth';
+import { listKids, type KidProfile } from './chores';
 
 export type AgeMode = Database['public']['Enums']['age_mode'];
+
+export interface KidWithBalance extends KidProfile {
+  wallet_balance: number;
+  savings_balance: number;
+}
+
+// Family roster with each kid's spendable + savings balance, for the parent
+// Family overview (#19). Two RLS-scoped reads (kids + the family's wallets)
+// merged by kid_id — avoids a PostgREST embed so the types stay simple.
+export async function listKidsWithBalances(
+  client: LootLoopClient,
+): Promise<{ data: KidWithBalance[] | null; error: unknown }> {
+  const [kidsRes, walletsRes] = await Promise.all([
+    listKids(client),
+    client.from('wallets').select('kid_id, wallet_balance, savings_balance'),
+  ]);
+  if (kidsRes.error || !kidsRes.data) return { data: null, error: kidsRes.error };
+  if (walletsRes.error || !walletsRes.data) return { data: null, error: walletsRes.error };
+  const byKid = new Map(walletsRes.data.map(w => [w.kid_id, w]));
+  return {
+    data: kidsRes.data.map(k => ({
+      ...k,
+      wallet_balance: byKid.get(k.id)?.wallet_balance ?? 0,
+      savings_balance: byKid.get(k.id)?.savings_balance ?? 0,
+    })),
+    error: null,
+  };
+}
 
 // The generated RPC Args type declares the optional params as non-nullable
 // `string`, but the SQL functions accept SQL NULL (and coalesce it to "leave
