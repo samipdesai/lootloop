@@ -33,7 +33,7 @@ tags:
 # Store is the 3rd (≈50% width, ≈96% height).
 - tapOn:
     point: '50%,96%'
-- assertVisible: 'Your loot'
+- assertVisible: 'Store'
 - assertVisible: 'Ice cream Sundae'
 
 # Buy it (#24): Buy → inline confirm → Yes.

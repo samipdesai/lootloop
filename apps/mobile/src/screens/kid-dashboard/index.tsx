@@ -127,7 +127,7 @@ function ChoreRow({
       {pending ? (
         <Text style={tw`font-sans text-[13px] font-bold text-coin-ink`}>Pending</Text>
       ) : needsClaim ? (
-        <Button size="sm" variant="ghost" loading={busy} disabled={busy} onPress={onClaim}>
+        <Button size="sm" variant="indigo" loading={busy} disabled={busy} onPress={onClaim}>
           Claim
         </Button>
       ) : (
