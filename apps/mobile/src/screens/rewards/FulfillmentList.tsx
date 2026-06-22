@@ -8,6 +8,7 @@ import type { FulfillmentItem } from '@lootloop/client';
 import { useSizeClass } from '../../hooks/useSizeClass';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
+import { CoinBadge } from '../../components/ui/money';
 import tw from '../../lib/tw';
 import { initial, relativeTime } from './format';
 
@@ -64,10 +65,7 @@ function FulfillmentRow({
             </Text>
           </View>
         </View>
-        <View style={tw`flex-row items-center gap-1 rounded-pill bg-coin-soft px-3 py-1.5`}>
-          <Text style={tw`text-[13px]`}>🪙</Text>
-          <Text style={tw`font-number text-[15px] font-extrabold text-coin-ink`}>{item.cost}</Text>
-        </View>
+        <CoinBadge amount={item.cost} size="sm" tone="soft" />
       </View>
 
       <View style={tw`mt-3`}>

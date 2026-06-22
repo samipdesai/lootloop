@@ -8,6 +8,7 @@ import { Pressable, Text, View } from 'react-native';
 import type { Reward } from '@lootloop/client';
 import { useSizeClass } from '../../hooks/useSizeClass';
 import { Button } from '../../components/ui/Button';
+import { CoinBadge } from '../../components/ui/money';
 import tw from '../../lib/tw';
 
 interface StoreListProps {
@@ -71,11 +72,8 @@ function RewardCard({
               </View>
             ) : null}
           </View>
-          <View style={tw`mt-1.5 flex-row items-center gap-1 self-start rounded-pill bg-coin-soft px-2.5 py-1`}>
-            <Text style={tw`text-[12px]`}>🪙</Text>
-            <Text style={tw`font-number text-[14px] font-extrabold text-coin-ink`}>
-              {reward.cost}
-            </Text>
+          <View style={tw`mt-1.5`}>
+            <CoinBadge amount={reward.cost} size="sm" tone="soft" />
           </View>
         </View>
       </View>
