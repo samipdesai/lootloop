@@ -10,6 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { listChores, listKids, deleteChore, type Chore, type KidProfile } from '@lootloop/client';
 import { supabase } from '../../lib/supabase';
 import { Button } from '../../components/ui/Button';
+import { Icon } from '../../components/ui/Icon';
 import { FormError } from '../auth/AuthScreen';
 import tw from '../../lib/tw';
 import { ChoreList } from './ChoreList';
@@ -131,7 +132,7 @@ export function ChoresScreen() {
   if (chores.length === 0) {
     return (
       <CenteredState top={insets.top}>
-        <Text style={tw`text-[40px]`}>🧹</Text>
+        <Icon name="list-todo" size={40} color="#A39CAD" />
         <Text style={tw`mt-3 text-center font-display text-[20px] font-extrabold text-ink-900`}>
           No chores yet
         </Text>

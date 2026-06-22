@@ -29,3 +29,10 @@ where u.email = 'parent@maestro.test';
 -- Give Ava a visible balance for the Family-overview kid card.
 update wallets set wallet_balance = 1240, savings_balance = 860
 where kid_id = 'aaaaaaaa-0000-0000-0000-000000000002';
+
+-- A chore so the Manage-chores list (#21) shows a real card.
+insert into chores (id, family_id, title, points, assignment, assigned_kid_id, active, icon)
+values (
+  'aaaaaaaa-0000-0000-0000-000000000010', 'aaaaaaaa-0000-0000-0000-000000000001',
+  'Feed the dog', 15, 'assigned', 'aaaaaaaa-0000-0000-0000-000000000002', true, 'dog'
+);

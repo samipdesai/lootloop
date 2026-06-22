@@ -32,3 +32,11 @@ tags:
 - assertVisible: 'Ava'
 - assertVisible: 'Quick actions'
 - assertVisible: 'Give bonus'
+
+# Manage chores (#21): tap the Chores tab (2nd of 6 parent tabs ≈ 25% width).
+- tapOn:
+    point: '25%,96%'
+- assertVisible: 'Chores'
+- assertVisible: 'Feed the dog'
+- assertVisible:
+    id: 'new-chore'
