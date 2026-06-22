@@ -62,8 +62,13 @@ export function signInKid(
 // helpers in migration 002). Auth persistence + autorefresh are off: this is a
 // minted token, not a GoTrue session, so there is nothing to persist or refresh.
 export function createKidClient(url: string, anonKey: string, accessToken: string): LootLoopClient {
-  return createClient<Database>(url, anonKey, {
+  const client = createClient<Database>(url, anonKey, {
     auth: { autoRefreshToken: false, persistSession: false },
     global: { headers: { Authorization: `Bearer ${accessToken}` } },
   });
+  // Realtime auth is separate from the PostgREST bearer header: hand the kid JWT
+  // to the Realtime socket so RLS-scoped change events are delivered (#41).
+  // Verified end-to-end that a parent's award reaches the kid's subscription.
+  client.realtime.setAuth(accessToken);
+  return client;
 }
