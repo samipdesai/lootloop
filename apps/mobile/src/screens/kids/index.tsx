@@ -10,6 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { listKids, deleteKid, type KidProfile } from '@lootloop/client';
 import { supabase } from '../../lib/supabase';
 import { Button } from '../../components/ui/Button';
+import { Icon } from '../../components/ui/Icon';
 import { FormError } from '../auth/AuthScreen';
 import tw from '../../lib/tw';
 import { KidList } from './KidList';
@@ -140,7 +141,7 @@ export function KidsScreen() {
       <CenteredState top={insets.top}>
         <View style={tw`w-full max-w-[460px] gap-6`}>
           <View style={tw`items-center`}>
-            <Text style={tw`text-[40px]`}>🧒</Text>
+            <Icon name="smile" size={40} color="#A39CAD" />
             <Text style={tw`mt-3 text-center font-display text-[20px] font-extrabold text-ink-900`}>
               No kids yet
             </Text>

@@ -5,10 +5,11 @@
 // populated roster + the New affordance. One component tree; the regular (iPad)
 // size class centres the column and widens it.
 import { useState } from 'react';
-import { FlatList, Text, View } from 'react-native';
+import { FlatList, Pressable, Text, View } from 'react-native';
 import type { KidProfile } from '@lootloop/client';
 import { useSizeClass } from '../../hooks/useSizeClass';
 import { Button } from '../../components/ui/Button';
+import { Icon } from '../../components/ui/Icon';
 import tw from '../../lib/tw';
 import { ageModeBadge } from './ageMode';
 import { FamilyCodePanel } from './FamilyCodePanel';
@@ -150,10 +151,26 @@ export function KidList({
       ListHeaderComponent={
         <View style={tw`mb-1 gap-4`}>
           <View style={tw`flex-row items-center justify-between`}>
-            <Text style={tw`font-display text-[28px] font-extrabold text-ink-900`}>Kids</Text>
-            <Button size="sm" onPress={onNew} accessibilityLabel="New kid">
-              ＋ New
-            </Button>
+            <View>
+              <Text style={tw`font-sans text-[13px] font-extrabold uppercase tracking-wide text-[13px] text-indigo`}>
+                Parent
+              </Text>
+              <Text style={tw`font-display text-[26px] font-extrabold text-ink-900`}>Kids</Text>
+            </View>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="New kid"
+              onPress={onNew}
+              style={tw.style('h-10 w-10 items-center justify-center rounded-full bg-indigo', {
+                shadowColor: '#444CCB',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 1,
+                shadowRadius: 0,
+                elevation: 4,
+              })}
+            >
+              <Icon name="plus" size={22} color="#FFFFFF" />
+            </Pressable>
           </View>
           <FamilyCodePanel />
         </View>

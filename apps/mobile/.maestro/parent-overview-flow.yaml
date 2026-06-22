@@ -47,3 +47,11 @@ tags:
     point: '42%,96%'
 - assertVisible: 'Approvals'
 - assertVisible: 'Feed the dog'
+
+# Kids roster (#15) → Give bonus (#23): Kids tab (4th of 6 ≈ 58% width).
+- tapOn:
+    point: '58%,96%'
+- assertVisible: 'Kids'
+- assertVisible: 'Ava'
+- tapOn: 'Give bonus'
+- assertVisible: 'Award bonus points to Ava.*' # the bonus form for Ava (#23)
