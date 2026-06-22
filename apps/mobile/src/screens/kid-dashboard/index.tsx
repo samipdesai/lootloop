@@ -79,8 +79,9 @@ function WalletHero({
       >
         <Text
           style={tw.style(
-            'font-sans font-extrabold uppercase tracking-wide text-white opacity-90',
-            { fontSize: theme.captionSize },
+            // font-size stays in the class (not a style object) so twrnc can derive
+            // the relative `tracking-wide` letter-spacing from it.
+            `font-sans font-extrabold uppercase tracking-wide text-[${theme.captionSize}px] text-white opacity-90`,
           )}
         >
           Wallet
@@ -291,7 +292,7 @@ export function KidDashboardScreen() {
     <View style={tw`flex-1 bg-surface-page`}>
       <FlatList
         data={data.txns}
-        keyExtractor={(t) => t.id}
+        keyExtractor={(txn) => txn.id}
         contentContainerStyle={tw.style(
           'gap-2.5 px-4 py-4',
           isRegular ? 'mx-auto w-full max-w-[640px]' : '',

@@ -16,6 +16,7 @@ import {
   listPurchases,
   listRewards,
   markPurchaseGiven,
+  subscribeToTable,
   type FulfillmentItem,
   type Reward,
 } from '@lootloop/client';
@@ -65,6 +66,7 @@ export function RewardsScreen() {
 
   // --- Fulfillment data ------------------------------------------------------
   const [reviewerId, setReviewerId] = useState<string | null>(null);
+  const [familyId, setFamilyId] = useState<string | null>(null);
   const [items, setItems] = useState<FulfillmentItem[]>([]);
   const [giveLoading, setGiveLoading] = useState(true);
   const [giveError, setGiveError] = useState('');
@@ -88,6 +90,7 @@ export function RewardsScreen() {
       return;
     }
     setReviewerId(profileRes.data.id);
+    setFamilyId(profileRes.data.family_id);
     setItems(purchasesRes.data);
     setRowStates({});
     setGiveLoading(false);
@@ -97,6 +100,26 @@ export function RewardsScreen() {
     void loadStore();
     void loadGive();
   }, [loadStore, loadGive]);
+
+  // Quiet refetch for realtime (#41): refresh the fulfillment queue in place
+  // without flashing the section's loading state.
+  const reloadGive = useCallback(async () => {
+    const { data, error } = await listPurchases(supabase, 'purchased');
+    if (!error && data) setItems(data);
+  }, []);
+
+  // Realtime (#41): a kid buying a reward lands in the "To give" queue live.
+  // Filter by the parent's family_id (RLS also scopes it); subscribe once
+  // family_id is known and tear the channel down on cleanup.
+  useEffect(() => {
+    if (!familyId) return;
+    const unsub = subscribeToTable(supabase, {
+      table: 'reward_purchases',
+      filter: `family_id=eq.${familyId}`,
+      onChange: () => void reloadGive(),
+    });
+    return () => unsub();
+  }, [familyId, reloadGive]);
 
   // --- Store handlers --------------------------------------------------------
   const handleSaved = useCallback(() => {

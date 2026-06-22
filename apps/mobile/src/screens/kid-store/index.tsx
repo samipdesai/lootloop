@@ -12,24 +12,49 @@ import {
   getKidWallet,
   listActiveRewards,
   purchaseReward,
+  subscribeToTable,
   type Reward,
 } from '@lootloop/client';
 import { useKidSession } from '../../stores/kidSession';
 import { useSizeClass } from '../../hooks/useSizeClass';
+import { useAgeModeTheme, type AgeModeTheme } from '../../theme/ageMode';
 import { Button } from '../../components/ui/Button';
 import tw from '../../lib/tw';
 import { canAfford, shortfall } from './affordability';
 import { Celebration } from './Celebration';
 
-function BalanceHeader({ balance }: { balance: number | null }) {
+function BalanceHeader({ balance, theme }: { balance: number | null; theme: AgeModeTheme }) {
+  // Age-mode: the spendable-loot number is the screen's hero — it scales big +
+  // playful for Simple, compact for Teen. Copy follows gamification too.
+  const playful = theme.gamification === 'high';
   return (
-    <View style={tw`mb-4 rounded-card bg-indigo-soft px-5 py-4`}>
-      <Text style={tw`font-sans text-[13px] font-bold uppercase text-indigo-ink`}>Your loot</Text>
-      <Text style={tw`mt-0.5 font-display text-[30px] font-extrabold text-indigo-ink`}>
+    <View
+      style={tw.style(`mb-4 rounded-${theme.cardRadius} bg-indigo-soft px-5 py-4`)}
+    >
+      <Text
+        style={tw.style('font-sans font-bold uppercase text-indigo-ink', {
+          fontSize: theme.captionSize,
+        })}
+      >
+        Your loot
+      </Text>
+      <Text
+        style={tw.style('mt-0.5 font-display font-extrabold text-indigo-ink', {
+          fontSize: theme.titleSize,
+        })}
+      >
         🪙 {balance == null ? '—' : balance.toLocaleString('en-US')}
       </Text>
-      <Text style={tw`mt-1 font-sans text-[13px] font-bold text-indigo-strong`}>
-        Spend it on a reward — saving up unlocks the big stuff!
+      <Text
+        style={tw.style('mt-1 font-sans font-bold text-indigo-strong', {
+          fontSize: theme.captionSize,
+        })}
+      >
+        {playful
+          ? 'Spend it on a reward — saving up unlocks the big stuff! 🎁'
+          : theme.gamification === 'low'
+            ? 'Spend on a reward, or save toward something bigger.'
+            : 'Spend it on a reward — saving up unlocks the big stuff!'}
       </Text>
     </View>
   );
@@ -41,6 +66,7 @@ function RewardCard({
   busy,
   confirming,
   error,
+  theme,
   onAskBuy,
   onCancel,
   onConfirm,
@@ -50,6 +76,7 @@ function RewardCard({
   busy: boolean;
   confirming: boolean;
   error: boolean;
+  theme: AgeModeTheme;
   onAskBuy: () => void;
   onCancel: () => void;
   onConfirm: () => void;
@@ -57,10 +84,17 @@ function RewardCard({
   const affordable = canAfford(balance, reward.cost);
   const need = shortfall(balance, reward.cost);
 
+  // Age-mode: scale the emoji tile + glyph, reward title/cost type, and give the
+  // Buy button room to hit the band's touch target — chunky for Simple, tight for
+  // Teen. The tile height + emoji are sized off a 104/52px base.
+  const tileHeight = Math.round(104 * theme.iconScale);
+  const emojiSize = Math.round(52 * theme.iconScale);
+  const playful = theme.gamification === 'high';
+
   return (
     <View
       style={tw.style(
-        'flex-1 overflow-hidden rounded-card bg-surface-card',
+        `flex-1 overflow-hidden rounded-${theme.cardRadius} bg-surface-card`,
         !affordable ? 'opacity-60' : '',
         {
           shadowColor: 'rgba(32,36,58,1)',
@@ -71,17 +105,28 @@ function RewardCard({
         },
       )}
     >
-      <View style={tw`h-[104px] items-center justify-center bg-indigo-soft`}>
-        <Text style={tw`text-[52px]`}>{reward.emoji ?? '🎁'}</Text>
+      <View
+        style={tw.style('items-center justify-center bg-indigo-soft', { height: tileHeight })}
+      >
+        <Text style={{ fontSize: emojiSize }}>{reward.emoji ?? '🎁'}</Text>
       </View>
       <View style={tw`gap-3 px-4 pb-4 pt-3.5`}>
         <View style={tw`gap-1.5`}>
-          <Text numberOfLines={2} style={tw`font-display text-[15px] font-extrabold text-ink-900`}>
+          <Text
+            numberOfLines={2}
+            style={tw.style('font-display font-extrabold text-ink-900', {
+              fontSize: theme.bodySize,
+            })}
+          >
             {reward.title}
           </Text>
           <View style={tw`flex-row`}>
             <View style={tw`flex-row items-center gap-1 rounded-pill bg-coin-soft px-2.5 py-1`}>
-              <Text style={tw`font-number text-[13px] font-extrabold text-coin-ink`}>
+              <Text
+                style={tw.style('font-number font-extrabold text-coin-ink', {
+                  fontSize: theme.captionSize + 1,
+                })}
+              >
                 🪙 {reward.cost.toLocaleString('en-US')}
               </Text>
             </View>
@@ -90,10 +135,12 @@ function RewardCard({
 
         {confirming ? (
           <View style={tw`gap-2`}>
-            <Text style={tw`font-sans text-[13px] font-bold text-ink-700`}>
+            <Text
+              style={tw.style('font-sans font-bold text-ink-700', { fontSize: theme.captionSize + 1 })}
+            >
               Buy for 🪙 {reward.cost.toLocaleString('en-US')}?
             </Text>
-            <View style={tw`flex-row gap-2`}>
+            <View style={tw.style('flex-row items-center gap-2', { minHeight: theme.touchTarget })}>
               <Button size="sm" loading={busy} disabled={busy} onPress={onConfirm}>
                 Yes
               </Button>
@@ -103,16 +150,24 @@ function RewardCard({
             </View>
           </View>
         ) : affordable ? (
-          <Button size="sm" block onPress={onAskBuy}>
-            Buy
-          </Button>
+          <View style={tw.style('justify-center', { minHeight: theme.touchTarget })}>
+            <Button size="sm" block onPress={onAskBuy}>
+              {playful ? 'Buy it!' : 'Buy'}
+            </Button>
+          </View>
         ) : (
-          <Text style={tw`font-sans text-[13px] font-bold text-ink-400`}>Need 🪙 {need} more</Text>
+          <Text
+            style={tw.style('font-sans font-bold text-ink-400', { fontSize: theme.captionSize + 1 })}
+          >
+            Need 🪙 {need} more
+          </Text>
         )}
 
         {error ? (
-          <Text style={tw`font-sans text-[12px] font-bold text-danger-ink`}>
-            Couldn't buy that — try again.
+          <Text
+            style={tw.style('font-sans font-bold text-danger-ink', { fontSize: theme.captionSize })}
+          >
+            Couldn&apos;t buy that — try again.
           </Text>
         ) : null}
       </View>
@@ -123,6 +178,7 @@ function RewardCard({
 export function KidStoreScreen() {
   const { client, profile } = useKidSession();
   const isRegular = useSizeClass() === 'regular';
+  const t = useAgeModeTheme();
   const numColumns = isRegular ? 3 : 2;
 
   const [rewards, setRewards] = useState<Reward[] | null>(null);
@@ -156,6 +212,27 @@ export function KidStoreScreen() {
     void load();
   }, [load]);
 
+  // Realtime (#41): the kid's wallet updates live when a parent awards points or
+  // after a purchase clears (balance + affordability re-evaluate), and the rewards
+  // list reflects rewards a parent adds/removes/toggles — no manual refresh. The
+  // kid client is already realtime-authed (createKidClient).
+  useEffect(() => {
+    if (!client || !profile) return;
+    const unsubs = [
+      subscribeToTable(client, {
+        table: 'wallets',
+        filter: `kid_id=eq.${profile.id}`,
+        onChange: () => void load(),
+      }),
+      subscribeToTable(client, {
+        table: 'rewards',
+        filter: `family_id=eq.${profile.family_id}`,
+        onChange: () => void load(),
+      }),
+    ];
+    return () => unsubs.forEach((u) => u());
+  }, [client, profile, load]);
+
   const buy = async (reward: Reward) => {
     if (!client || !profile || busyId) return;
     setBusyId(reward.id);
@@ -188,14 +265,15 @@ export function KidStoreScreen() {
         key={`cols-${numColumns}`}
         keyExtractor={(r) => r.id}
         numColumns={numColumns}
-        columnWrapperStyle={tw`gap-3`}
+        columnWrapperStyle={tw.style({ gap: t.gap })}
         contentContainerStyle={tw.style(
-          'gap-3 px-4 py-4',
+          'px-4 py-4',
           isRegular ? 'mx-auto w-full max-w-[720px]' : '',
+          { gap: t.gap },
         )}
         ListHeaderComponent={
           <View>
-            <BalanceHeader balance={balance} />
+            <BalanceHeader balance={balance} theme={t} />
             {loadError ? (
               <View style={tw`mb-3 rounded-md bg-danger-soft px-4 py-3`}>
                 <Text style={tw`font-sans text-[14px] font-bold text-danger-ink`}>{loadError}</Text>
@@ -204,10 +282,24 @@ export function KidStoreScreen() {
           </View>
         }
         ListEmptyComponent={
-          <View style={tw`items-center gap-2 rounded-card bg-surface-card px-6 py-12`}>
-            <Text style={tw`text-[40px]`}>🛍️</Text>
-            <Text style={tw`text-center font-display text-[16px] font-extrabold text-ink-800`}>
-              No rewards yet — ask a grown-up!
+          <View
+            style={tw.style(`items-center gap-2 rounded-${t.cardRadius} bg-surface-card px-6 py-12`)}
+          >
+            <Text
+              style={tw.style({
+                fontSize: t.gamification === 'high' ? 56 : t.gamification === 'low' ? 32 : 40,
+              })}
+            >
+              🛍️
+            </Text>
+            <Text
+              style={tw.style('text-center font-display font-extrabold text-ink-800', {
+                fontSize: t.headingSize,
+              })}
+            >
+              {t.gamification === 'low'
+                ? 'No rewards yet — ask a parent to add some.'
+                : 'No rewards yet — ask a grown-up!'}
             </Text>
           </View>
         }
@@ -218,6 +310,7 @@ export function KidStoreScreen() {
             busy={busyId === item.id}
             confirming={confirmId === item.id}
             error={errorId === item.id}
+            theme={t}
             onAskBuy={() => {
               setErrorId(null);
               setConfirmId(item.id);
