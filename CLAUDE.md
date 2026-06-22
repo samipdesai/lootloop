@@ -52,10 +52,13 @@ Mobile is **adaptive, not separate apps**: one component tree branches on size c
 The plan explicitly rejected these. If a task seems to call for one of them, stop and ask:
 
 - **No Expo / EAS.** Bare RN only. Don't suggest `expo install`, `app.json`, or Expo modules.
-- **No NativeWind.** Mobile styling is **twrnc** (`apps/mobile/src/lib/tw.ts`; tokens in `apps/mobile/tailwind.config.js`). NativeWind v4 crashes on RN 0.86/React 19 (css-interop + navigation context); v5 requires `@expo/metro-config` + the `expo` package, which the No-Expo rule forbids. Use `style={tw\`…\`}` / `tw.style(...)`, never a `className` prop. (Web still uses Tailwind normally.)
-- **No CocoaPods.** iOS deps via Swift Package Manager (Xcode resolves automatically — no `pod install` step).
+- **No NativeWind.** Mobile styling is **twrnc** (`apps/mobile/src/lib/tw.ts`; tokens in `apps/mobile/tailwind.config.js`). NativeWind v4 crashes on RN 0.86/React 19 (css-interop + navigation context); v5 requires `@expo/metro-config` + the `expo` package, which the No-Expo rule forbids. Use `style={tw\`…\`}`/`tw.style(...)`, never a `className` prop. (Web still uses Tailwind normally.)
 - **No npm or yarn.** pnpm workspaces only.
 - **No `develop` branch.** Trunk-based: `main` + short-lived `feature/<milestone>/<name>` branches, squash-merged.
+
+### iOS dependencies: CocoaPods (for now)
+
+The scaffold ships iOS native deps via **CocoaPods** (RN 0.86's default — `apps/mobile/ios/Podfile` + `Pods/`), not SPM. After adding a native module run `pod install` **from `apps/mobile/ios`** (running it from the repo root resolves the wrong autolink root and fails). Migrating to a Swift-Package-Manager-only setup is a **Phase 2 backlog item** (plan §"Phase 2 — CocoaPods → SPM migration") — RN's SPM path isn't stable yet, so don't attempt SPM-only now.
 
 ## Commands (once scaffold exists)
 
