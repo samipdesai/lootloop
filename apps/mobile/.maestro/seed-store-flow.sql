@@ -17,7 +17,7 @@ insert into profiles (id, family_id, role, display_name, pin_hash, age_mode)
 values (
   'aaaaaaaa-0000-0000-0000-000000000002',
   'aaaaaaaa-0000-0000-0000-000000000001',
-  'kid', 'Ava', crypt('1234', gen_salt('bf', 10)), 'simple'
+  'kid', 'Ava', crypt('1234', gen_salt('bf', 10)), 'detailed'
 );
 
 -- Give Ava spendable loot (set directly for the test — bypasses the atomic fn).

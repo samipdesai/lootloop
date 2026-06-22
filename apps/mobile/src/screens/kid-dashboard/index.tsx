@@ -12,11 +12,13 @@ import {
   getKidWallet,
   listKidScheduleItems,
   listPointTransactions,
+  subscribeToTable,
   type PointTransaction,
   type ScheduleItem,
 } from '@lootloop/client';
 import { useKidSession } from '../../stores/kidSession';
 import { useSizeClass } from '../../hooks/useSizeClass';
+import { useAgeModeTheme, type AgeModeTheme } from '../../theme/ageMode';
 import tw from '../../lib/tw';
 import { ledgerRow, relativeDate } from './ledger';
 import { formatTime, todaysItems } from './timeline';
@@ -34,16 +36,19 @@ interface DashboardData {
   schedule: ScheduleItem[]; // already filtered to today + ordered by start_time
 }
 
-function CoinNumber({ value, big }: { value: number; big: boolean }) {
+function CoinNumber({
+  value,
+  numberSize,
+  iconSize,
+}: {
+  value: number;
+  numberSize: number;
+  iconSize: number;
+}) {
   return (
     <View style={tw`flex-row items-center gap-2`}>
-      <Text style={tw.style('text-[28px]', big ? 'text-[34px]' : '')}>🪙</Text>
-      <Text
-        style={tw.style(
-          'font-display font-extrabold text-white',
-          big ? 'text-[44px]' : 'text-[18px]',
-        )}
-      >
+      <Text style={{ fontSize: iconSize }}>🪙</Text>
+      <Text style={tw.style('font-display font-extrabold text-white', { fontSize: numberSize })}>
         {fmt(value)}
       </Text>
     </View>
@@ -53,14 +58,18 @@ function CoinNumber({ value, big }: { value: number; big: boolean }) {
 function WalletHero({
   walletBalance,
   savingsBalance,
+  theme,
 }: {
   walletBalance: number;
   savingsBalance: number;
+  theme: AgeModeTheme;
 }) {
+  // Age-mode: the hero loot number scales with the band (huge for Simple, compact
+  // for Teen) — the most visible age signal on the kid's home.
   return (
     <View style={tw`gap-3`}>
       <View
-        style={tw.style('gap-1 rounded-card bg-orange px-6 py-5', {
+        style={tw.style(`gap-1 rounded-${theme.cardRadius} bg-orange px-6 py-5`, {
           shadowColor: '#D85F06',
           shadowOffset: { width: 0, height: 6 },
           shadowOpacity: 1,
@@ -69,11 +78,19 @@ function WalletHero({
         })}
       >
         <Text
-          style={tw`font-sans text-[12px] font-extrabold uppercase tracking-wide text-white opacity-90`}
+          style={tw.style(
+            // font-size stays in the class (not a style object) so twrnc can derive
+            // the relative `tracking-wide` letter-spacing from it.
+            `font-sans font-extrabold uppercase tracking-wide text-[${theme.captionSize}px] text-white opacity-90`,
+          )}
         >
           Wallet
         </Text>
-        <CoinNumber value={walletBalance} big />
+        <CoinNumber
+          value={walletBalance}
+          numberSize={theme.titleSize + 16}
+          iconSize={theme.titleSize}
+        />
       </View>
 
       <View
@@ -141,10 +158,12 @@ function TimelineRow({
   );
 }
 
-function TodaysSchedule({ items }: { items: ScheduleItem[] }) {
+function TodaysSchedule({ items, headingSize }: { items: ScheduleItem[]; headingSize: number }) {
   return (
     <View style={tw`gap-3`}>
-      <Text style={tw`mt-1 font-display text-[19px] font-extrabold text-ink-900`}>
+      <Text
+        style={tw.style('mt-1 font-display font-extrabold text-ink-900', { fontSize: headingSize })}
+      >
         Today&apos;s schedule
       </Text>
       {items.length === 0 ? (
@@ -212,6 +231,7 @@ function ActivityRow({ txn }: { txn: PointTransaction }) {
 export function KidDashboardScreen() {
   const { client, profile } = useKidSession();
   const isRegular = useSizeClass() === 'regular';
+  const t = useAgeModeTheme();
   const [data, setData] = useState<DashboardData | null>(null);
   const [error, setError] = useState('');
 
@@ -240,6 +260,26 @@ export function KidDashboardScreen() {
     void load();
   }, [load]);
 
+  // Realtime (#41): the kid's wallet + ledger update live when a parent approves
+  // a chore / awards points / a purchase clears — no manual refresh. The kid
+  // client is already realtime-authed (createKidClient).
+  useEffect(() => {
+    if (!client || !profile) return;
+    const unsubs = [
+      subscribeToTable(client, {
+        table: 'point_transactions',
+        filter: `kid_id=eq.${profile.id}`,
+        onChange: () => void load(),
+      }),
+      subscribeToTable(client, {
+        table: 'wallets',
+        filter: `kid_id=eq.${profile.id}`,
+        onChange: () => void load(),
+      }),
+    ];
+    return () => unsubs.forEach((u) => u());
+  }, [client, profile, load]);
+
   if (!client || !profile || data === null) {
     return (
       <View style={tw`flex-1 items-center justify-center bg-surface-page`}>
@@ -252,7 +292,7 @@ export function KidDashboardScreen() {
     <View style={tw`flex-1 bg-surface-page`}>
       <FlatList
         data={data.txns}
-        keyExtractor={(t) => t.id}
+        keyExtractor={(txn) => txn.id}
         contentContainerStyle={tw.style(
           'gap-2.5 px-4 py-4',
           isRegular ? 'mx-auto w-full max-w-[640px]' : '',
@@ -267,9 +307,14 @@ export function KidDashboardScreen() {
             <WalletHero
               walletBalance={data.walletBalance}
               savingsBalance={data.savingsBalance}
+              theme={t}
             />
-            <TodaysSchedule items={data.schedule} />
-            <Text style={tw`mt-1 font-display text-[19px] font-extrabold text-ink-900`}>
+            <TodaysSchedule items={data.schedule} headingSize={t.headingSize} />
+            <Text
+              style={tw.style('mt-1 font-display font-extrabold text-ink-900', {
+                fontSize: t.headingSize,
+              })}
+            >
               Recent activity
             </Text>
           </View>

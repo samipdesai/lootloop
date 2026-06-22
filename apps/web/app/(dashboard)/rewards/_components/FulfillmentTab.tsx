@@ -5,6 +5,7 @@ import {
   getMyParentProfile,
   listPurchases,
   markPurchaseGiven,
+  subscribeToTable,
   type FulfillmentItem,
 } from '@lootloop/client';
 import { createClient } from '@/lib/supabase/client';
@@ -20,6 +21,7 @@ export function FulfillmentTab() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [parentId, setParentId] = useState<string | null>(null);
+  const [familyId, setFamilyId] = useState<string | null>(null);
   const [items, setItems] = useState<FulfillmentItem[]>([]);
 
   // Per-row state keyed by purchase id.
@@ -49,6 +51,7 @@ export function FulfillmentTab() {
       }
 
       setParentId(profileRes.data.id);
+      setFamilyId(profileRes.data.family_id);
       setItems(purchasesRes.data);
       setLoading(false);
     })();
@@ -57,6 +60,32 @@ export function FulfillmentTab() {
       cancelled = true;
     };
   }, []);
+
+  // Live refresh (task #41): a kid purchasing a reward inserts a 'purchased'
+  // reward_purchases row. Subscribe filtered by family_id (loaded above) and
+  // refetch the pending queue on each event so new purchases appear live.
+  useEffect(() => {
+    if (!familyId) return;
+    let cancelled = false;
+    const client = createClient();
+
+    const unsubscribe = subscribeToTable(client, {
+      table: 'reward_purchases',
+      filter: `family_id=eq.${familyId}`,
+      onChange: () => {
+        void (async () => {
+          const purchasesRes = await listPurchases(client, 'purchased');
+          if (cancelled || purchasesRes.error || !purchasesRes.data) return;
+          setItems(purchasesRes.data);
+        })();
+      },
+    });
+
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
+  }, [familyId]);
 
   const handleGiven = useCallback(
     async (item: FulfillmentItem) => {

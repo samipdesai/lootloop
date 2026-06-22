@@ -5,6 +5,7 @@ import {
   listPendingReadingLogs,
   approveReadingLog,
   rejectReadingLog,
+  subscribeToTable,
   type PendingReadingLog,
 } from '@lootloop/client';
 import { createClient } from '@/lib/supabase/client';
@@ -33,11 +34,15 @@ export function ReadingQueue({ reviewerId, onToast }: ReadingQueueProps) {
   const [busy, setBusy] = useState<Record<string, RowBusy>>({});
   const [rowErrors, setRowErrors] = useState<Record<string, string>>({});
 
+  // Live refresh (task #41): a kid submitting a reading log inserts a pending
+  // reading_logs row. RLS scopes change events to this parent's family, so we
+  // subscribe unfiltered and refetch on each event. This component only has
+  // reviewerId in props (no family_id), hence no filter.
   useEffect(() => {
     let cancelled = false;
     const client = createClient();
 
-    (async () => {
+    const load = async () => {
       const pendingRes = await listPendingReadingLogs(client);
       if (cancelled) return;
 
@@ -49,10 +54,20 @@ export function ReadingQueue({ reviewerId, onToast }: ReadingQueueProps) {
 
       setLogs(pendingRes.data);
       setLoading(false);
-    })();
+    };
+
+    void load();
+
+    const unsubscribe = subscribeToTable(client, {
+      table: 'reading_logs',
+      onChange: () => {
+        void load();
+      },
+    });
 
     return () => {
       cancelled = true;
+      unsubscribe();
     };
   }, []);
 

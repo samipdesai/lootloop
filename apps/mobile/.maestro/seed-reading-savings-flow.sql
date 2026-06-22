@@ -13,7 +13,7 @@ insert into profiles (id, family_id, role, display_name, pin_hash, age_mode)
 values (
   'aaaaaaaa-0000-0000-0000-000000000002',
   'aaaaaaaa-0000-0000-0000-000000000001',
-  'kid', 'Ava', crypt('1234', gen_salt('bf', 10)), 'simple'
+  'kid', 'Ava', crypt('1234', gen_salt('bf', 10)), 'detailed'
 );
 
 update wallets set wallet_balance = 100

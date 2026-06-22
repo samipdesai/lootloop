@@ -5,6 +5,7 @@ import {
   listPendingCompletions,
   approveCompletion,
   rejectCompletion,
+  subscribeToTable,
   type PendingCompletion,
 } from '@lootloop/client';
 import { createClient } from '@/lib/supabase/client';
@@ -33,11 +34,15 @@ export function ChoreQueue({ reviewerId, onToast }: ChoreQueueProps) {
   const [busy, setBusy] = useState<Record<string, RowBusy>>({});
   const [rowErrors, setRowErrors] = useState<Record<string, string>>({});
 
+  // Live refresh (task #41): a kid completing a chore inserts/updates a pending
+  // chore_completions row. RLS scopes change events to this parent's family, so
+  // we subscribe unfiltered and refetch the queue on each event. We don't have
+  // family_id in this component's props (only reviewerId), hence no filter.
   useEffect(() => {
     let cancelled = false;
     const client = createClient();
 
-    (async () => {
+    const load = async () => {
       const pendingRes = await listPendingCompletions(client);
       if (cancelled) return;
 
@@ -49,10 +54,20 @@ export function ChoreQueue({ reviewerId, onToast }: ChoreQueueProps) {
 
       setCompletions(pendingRes.data);
       setLoading(false);
-    })();
+    };
+
+    void load();
+
+    const unsubscribe = subscribeToTable(client, {
+      table: 'chore_completions',
+      onChange: () => {
+        void load();
+      },
+    });
 
     return () => {
       cancelled = true;
+      unsubscribe();
     };
   }, []);
 

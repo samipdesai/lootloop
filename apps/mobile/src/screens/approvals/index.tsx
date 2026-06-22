@@ -23,6 +23,7 @@ import {
   listPendingReadingLogs,
   rejectCompletion,
   rejectReadingLog,
+  subscribeToTable,
   type PendingCompletion,
   type PendingReadingLog,
 } from '@lootloop/client';
@@ -64,6 +65,7 @@ export function ApprovalsScreen() {
   const [tab, setTab] = useState<TabValue>('chores');
 
   const [reviewerId, setReviewerId] = useState<string | null>(null);
+  const [familyId, setFamilyId] = useState<string | null>(null);
   const [chores, setChores] = useState<PendingCompletion[]>([]);
   const [reads, setReads] = useState<PendingReadingLog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -97,6 +99,7 @@ export function ApprovalsScreen() {
     }
 
     setReviewerId(profileRes.data.id);
+    setFamilyId(profileRes.data.family_id);
     setChores(choresRes.data);
     setReads(readsRes.data);
     setRowStates({});
@@ -106,6 +109,38 @@ export function ApprovalsScreen() {
   useEffect(() => {
     load();
   }, [load]);
+
+  // Quiet refetches for realtime (#41): refresh a queue in place without flashing
+  // the full-screen loading state. Used by the live subscriptions below.
+  const reloadChores = useCallback(async () => {
+    const { data, error } = await listPendingCompletions(supabase);
+    if (!error && data) setChores(data);
+  }, []);
+
+  const reloadReads = useCallback(async () => {
+    const { data, error } = await listPendingReadingLogs(supabase);
+    if (!error && data) setReads(data);
+  }, []);
+
+  // Realtime (#41): a kid completing a chore / logging reading lands in the queue
+  // live. Filter by the parent's family_id (RLS also scopes it); subscribe once
+  // family_id is known and tear the channels down on cleanup.
+  useEffect(() => {
+    if (!familyId) return;
+    const unsubs = [
+      subscribeToTable(supabase, {
+        table: 'chore_completions',
+        filter: `family_id=eq.${familyId}`,
+        onChange: () => void reloadChores(),
+      }),
+      subscribeToTable(supabase, {
+        table: 'reading_logs',
+        filter: `family_id=eq.${familyId}`,
+        onChange: () => void reloadReads(),
+      }),
+    ];
+    return () => unsubs.forEach((u) => u());
+  }, [familyId, reloadChores, reloadReads]);
 
   const setRow = useCallback((id: string, state: RowState) => {
     setRowStates((prev) => ({ ...prev, [id]: state }));
