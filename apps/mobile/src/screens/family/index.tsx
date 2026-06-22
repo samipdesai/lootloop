@@ -112,20 +112,19 @@ function MenuRow({
   );
 }
 
-// Settings menu — a small sheet anchored top-right. Family & kids + Family code
-// (account/family config) and Log out. Tapping the scrim closes it.
+// Settings menu — a small sheet anchored top-right. Account/family config
+// (Family code) and Log out. Kid management lives on Home, not here. Tapping the
+// scrim closes it. (Co-parent/guardian management will slot in here later.)
 function SettingsMenu({
   open,
   top,
   onClose,
-  onFamily,
   onCode,
   onLogout,
 }: {
   open: boolean;
   top: number;
   onClose: () => void;
-  onFamily: () => void;
   onCode: () => void;
   onLogout: () => void;
 }) {
@@ -145,7 +144,6 @@ function SettingsMenu({
             elevation: 8,
           })}
         >
-          <MenuRow testID="settings-family" icon="users" label="Family & kids" onPress={onFamily} />
           <MenuRow testID="settings-code" icon="lock" label="Family code" onPress={onCode} />
           <View style={tw`my-1 h-px bg-ink-100`} />
           <MenuRow
@@ -208,10 +206,6 @@ export function FamilyOverviewScreen() {
         open={menuOpen}
         top={insets.top}
         onClose={() => setMenuOpen(false)}
-        onFamily={() => {
-          setMenuOpen(false);
-          nav.navigate('Kids');
-        }}
         onCode={() => {
           setMenuOpen(false);
           nav.navigate('FamilyCode');
