@@ -144,7 +144,10 @@ function ParentSplitView() {
           <Text style={tw`mb-3 px-3 font-display text-[22px] font-extrabold text-ink-900`}>
             LootLoop
           </Text>
-          {SECTIONS.map((s) => {
+          {/* Same 4 destinations as the iPhone tab bar. Kids + Schedule aren't
+              sidebar items — they're reached from the Home hub (kid cards /
+              quick actions), matching iPhone. */}
+          {TAB_SECTIONS.map((s) => {
             const selected = s.key === active;
             return (
               <Pressable
