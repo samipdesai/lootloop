@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { ParentTabParamList } from './types';
 import { useSizeClass } from '../hooks/useSizeClass';
 import { PlaceholderScreen } from '../screens/PlaceholderScreen';
@@ -16,7 +17,10 @@ import { FamilyOverviewScreen } from '../screens/family';
 import { Icon, type IconName } from '../components/ui/Icon';
 import tw from '../lib/tw';
 
-const SECTIONS: { key: keyof ParentTabParamList; label: string; icon: IconName }[] = [
+type Section = { key: keyof ParentTabParamList; label: string; icon: IconName };
+
+// Full section set (iPad sidebar shows all of these).
+const SECTIONS: Section[] = [
   { key: 'Home', label: 'Home', icon: 'layout-dashboard' },
   { key: 'Chores', label: 'Chores', icon: 'list-todo' },
   { key: 'Approvals', label: 'Approvals', icon: 'inbox' },
@@ -24,6 +28,11 @@ const SECTIONS: { key: keyof ParentTabParamList; label: string; icon: IconName }
   { key: 'Rewards', label: 'Rewards', icon: 'gift' },
   { key: 'Schedule', label: 'Schedule', icon: 'calendar-clock' },
 ];
+
+// iPhone bottom bar = the 4 design tabs (canvas parent nav). Kids + Schedule are
+// reached from the Home hub via the parent stack below, not as tabs.
+const TAB_KEYS: (keyof ParentTabParamList)[] = ['Home', 'Chores', 'Rewards', 'Approvals'];
+const TAB_SECTIONS: Section[] = TAB_KEYS.map((k) => SECTIONS.find((s) => s.key === k)!);
 
 // Built sections render their real screen; the rest stay placeholders until
 // their tasks land. One resolver keeps the iPhone tabs (ParentTabs) and the
@@ -58,7 +67,7 @@ function ParentTabs() {
         tabBarInactiveTintColor: '#A39CAD',
       }}
     >
-      {SECTIONS.map((s) => (
+      {TAB_SECTIONS.map((s) => (
         <Tab.Screen
           key={s.key}
           name={s.key}
@@ -73,6 +82,20 @@ function ParentTabs() {
         />
       ))}
     </Tab.Navigator>
+  );
+}
+
+// iPhone parent navigation: the 4 tabs at the root + Kids / Schedule pushed from
+// the Home hub (canvas reaches these from Family, not the tab bar).
+const ParentStack = createNativeStackNavigator();
+
+function ParentStackNav() {
+  return (
+    <ParentStack.Navigator screenOptions={{ headerShown: false }}>
+      <ParentStack.Screen name="ParentTabs" component={ParentTabs} />
+      <ParentStack.Screen name="Kids" component={KidsScreen} />
+      <ParentStack.Screen name="Schedule" component={ScheduleScreen} />
+    </ParentStack.Navigator>
   );
 }
 
@@ -118,5 +141,5 @@ function ParentSplitView() {
 
 export function ParentShell() {
   const sizeClass = useSizeClass();
-  return sizeClass === 'regular' ? <ParentSplitView /> : <ParentTabs />;
+  return sizeClass === 'regular' ? <ParentSplitView /> : <ParentStackNav />;
 }

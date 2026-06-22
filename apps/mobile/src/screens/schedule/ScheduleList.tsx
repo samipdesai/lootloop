@@ -6,9 +6,12 @@
 // ScheduleScreen; this renders the populated, sectioned list + the New affordance.
 import { useMemo, useState } from 'react';
 import { Pressable, SectionList, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 import type { ScheduleItem, KidProfile } from '@lootloop/client';
 import { useSizeClass } from '../../hooks/useSizeClass';
 import { Button } from '../../components/ui/Button';
+import { Icon } from '../../components/ui/Icon';
 import tw from '../../lib/tw';
 import { ScheduleIcon } from './ScheduleIcon';
 import { describeDays, formatTimeRange } from './schedule';
@@ -128,6 +131,9 @@ function ScheduleRow({
 
 export function ScheduleList({ items, kidsById, onNew, onEdit, onDelete }: ScheduleListProps) {
   const isRegular = useSizeClass() === 'regular';
+  const insets = useSafeAreaInsets();
+  const navigation = useNavigation();
+  const canBack = navigation.canGoBack();
 
   // Group items into one section per kid, preserving the service's kid→start_time
   // order. Unknown kid_ids (roster lag) fall under an "Unassigned" section.
@@ -154,16 +160,47 @@ export function ScheduleList({ items, kidsById, onNew, onEdit, onDelete }: Sched
       keyExtractor={(item) => item.id}
       style={tw`flex-1 bg-surface-page`}
       contentContainerStyle={tw.style(
-        'gap-3 px-5 pb-10 pt-4',
+        'gap-3 px-5 pb-10',
         isRegular ? 'mx-auto w-full max-w-[720px]' : null,
+        { paddingTop: insets.top + 12 },
       )}
       stickySectionHeadersEnabled={false}
       ListHeaderComponent={
         <View style={tw`mb-1 flex-row items-center justify-between`}>
-          <Text style={tw`font-display text-[28px] font-extrabold text-ink-900`}>Schedule</Text>
-          <Button size="sm" onPress={onNew} accessibilityLabel="New item">
-            ＋ New
-          </Button>
+          <View style={tw`flex-row items-center gap-2`}>
+            {canBack ? (
+              <Pressable
+                testID="parent-back"
+                accessibilityRole="button"
+                accessibilityLabel="Back"
+                onPress={() => navigation.goBack()}
+                hitSlop={8}
+                style={tw`h-10 w-10 items-center justify-center rounded-full bg-surface-card`}
+              >
+                <Icon name="chevron-left" size={22} color="#211E27" />
+              </Pressable>
+            ) : null}
+            <View>
+              <Text style={tw`font-sans text-[13px] font-extrabold uppercase tracking-wide text-[13px] text-indigo`}>
+                Parent
+              </Text>
+              <Text style={tw`font-display text-[26px] font-extrabold text-ink-900`}>Schedule</Text>
+            </View>
+          </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="New item"
+            onPress={onNew}
+            style={tw.style('h-10 w-10 items-center justify-center rounded-full bg-indigo', {
+              shadowColor: '#444CCB',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 1,
+              shadowRadius: 0,
+              elevation: 4,
+            })}
+          >
+            <Icon name="plus" size={22} color="#FFFFFF" />
+          </Pressable>
         </View>
       }
       renderSectionHeader={({ section }) => (

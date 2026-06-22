@@ -15,16 +15,21 @@ import { Icon, type IconName } from '../../components/ui/Icon';
 import { CoinBadge } from '../../components/ui/money';
 import tw from '../../lib/tw';
 
+// Quick actions surface the non-tab destinations (Kids, Schedule) + common
+// shortcuts. `tab` is the route name (tab or pushed stack screen) to navigate to.
 const ACTIONS: { id: string; label: string; icon: IconName; tile: string; fg: string; tab: string }[] = [
   { id: 'bonus', label: 'Give bonus', icon: 'star', tile: 'bg-coin-soft', fg: '#8A6400', tab: 'Kids' },
   { id: 'chore', label: 'New chore', icon: 'plus', tile: 'bg-indigo-soft', fg: '#5B63E6', tab: 'Chores' },
-  { id: 'approve', label: 'Approvals', icon: 'inbox', tile: 'bg-mint-soft', fg: '#0A6A46', tab: 'Approvals' },
+  { id: 'schedule', label: 'Schedule', icon: 'calendar-clock', tile: 'bg-mint-soft', fg: '#0A6A46', tab: 'Schedule' },
   { id: 'rewards', label: 'Rewards', icon: 'gift', tile: 'bg-orange-soft', fg: '#8A4309', tab: 'Rewards' },
 ];
 
-function KidCard({ kid, first }: { kid: KidWithBalance; first: boolean }) {
+function KidCard({ kid, first, onPress }: { kid: KidWithBalance; first: boolean; onPress: () => void }) {
   return (
-    <View
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={kid.display_name}
       style={tw.style('flex-1 items-center gap-2 rounded-card bg-surface-card px-3 py-4', {
         shadowColor: 'rgba(32,36,58,1)',
         shadowOffset: { width: 0, height: 2 },
@@ -38,7 +43,7 @@ function KidCard({ kid, first }: { kid: KidWithBalance; first: boolean }) {
         {kid.display_name}
       </Text>
       <CoinBadge amount={kid.wallet_balance} size="sm" tone="soft" />
-    </View>
+    </Pressable>
   );
 }
 
@@ -125,7 +130,7 @@ export function FamilyOverviewScreen() {
       {kids.length > 0 ? (
         <View style={tw`flex-row gap-3`}>
           {kids.map((k, i) => (
-            <KidCard key={k.id} kid={k} first={i === 0} />
+            <KidCard key={k.id} kid={k} first={i === 0} onPress={() => nav.navigate('Kids')} />
           ))}
         </View>
       ) : (

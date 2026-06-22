@@ -7,6 +7,7 @@
 import { useState } from 'react';
 import { FlatList, Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 import type { KidProfile } from '@lootloop/client';
 import { useSizeClass } from '../../hooks/useSizeClass';
 import { Button } from '../../components/ui/Button';
@@ -140,6 +141,8 @@ export function KidList({
 }: KidListProps) {
   const isRegular = useSizeClass() === 'regular';
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation();
+  const canBack = navigation.canGoBack();
 
   return (
     <FlatList
@@ -154,11 +157,25 @@ export function KidList({
       ListHeaderComponent={
         <View style={tw`mb-1 gap-4`}>
           <View style={tw`flex-row items-center justify-between`}>
-            <View>
-              <Text style={tw`font-sans text-[13px] font-extrabold uppercase tracking-wide text-[13px] text-indigo`}>
-                Parent
-              </Text>
-              <Text style={tw`font-display text-[26px] font-extrabold text-ink-900`}>Kids</Text>
+            <View style={tw`flex-row items-center gap-2`}>
+              {canBack ? (
+                <Pressable
+                  testID="parent-back"
+                  accessibilityRole="button"
+                  accessibilityLabel="Back"
+                  onPress={() => navigation.goBack()}
+                  hitSlop={8}
+                  style={tw`h-10 w-10 items-center justify-center rounded-full bg-surface-card`}
+                >
+                  <Icon name="chevron-left" size={22} color="#211E27" />
+                </Pressable>
+              ) : null}
+              <View>
+                <Text style={tw`font-sans text-[13px] font-extrabold uppercase tracking-wide text-[13px] text-indigo`}>
+                  Parent
+                </Text>
+                <Text style={tw`font-display text-[26px] font-extrabold text-ink-900`}>Kids</Text>
+              </View>
             </View>
             <Pressable
               accessibilityRole="button"

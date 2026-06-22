@@ -1,7 +1,7 @@
-# Maestro PARENT golden-path flow: email/password login → Family overview (#19).
-# Verifies the parent Home shows the kid roster + quick actions. Targets the
-# iPhone layout. Seed with seed-parent-flow.sql (run-parent-flow.sh does both,
-# and ensures the parent auth user exists first).
+# Maestro PARENT golden-path flow: email/password login → the 4-tab parent app
+# (Home/Chores/Rewards/Approvals, matching the canvas) + the Home-hub pushes
+# (Schedule, Kids → Give bonus). Targets iPhone. Seed with seed-parent-flow.sql
+# (run-parent-flow.sh does both + ensures the parent auth user).
 appId: org.reactjs.native.example.mobile
 tags:
   - parent
@@ -18,40 +18,62 @@ tags:
 - tapOn:
     id: 'login-password'
 - inputText: 'Maestro1!'
-# Dismiss the keyboard (it can cover the Log in button) by tapping the title.
-- tapOn: 'Welcome back'
+- tapOn: 'Welcome back' # dismiss keyboard (can cover Log in)
 - tapOn: 'Log in'
+- tapOn:
+    text: 'Not Now' # iOS save-password prompt
+    optional: true
 
-# iOS offers to save the password after login — dismiss it if it appears.
+# Home — Family overview (#19).
+- assertVisible: 'Family'
+# The save-password dialog can appear late and cover the kid card — dismiss again.
 - tapOn:
     text: 'Not Now'
     optional: true
-
-# Lands on the parent Home — Family overview (#19): header, kid roster, actions.
-- assertVisible: 'Family'
 - assertVisible: 'Ava'
 - assertVisible: 'Quick actions'
-- assertVisible: 'Give bonus'
 
-# Manage chores (#21): tap the Chores tab (2nd of 6 parent tabs ≈ 25% width).
+# 4 tabs (evenly spaced ≈ 12.5 / 37.5 / 62.5 / 87.5% width, ≈96% height).
+# Chores (#21) — 2nd tab.
 - tapOn:
-    point: '25%,96%'
+    point: '37%,94%'
+    retryTapIfNoChange: true
+    waitToSettleTimeoutMs: 1200
 - assertVisible: 'Chores'
 - assertVisible: 'Feed the dog'
 - assertVisible:
     id: 'new-chore'
-
-# Approvals (#22): tap the Approvals tab (3rd of 6 ≈ 42% width); the pending
-# "Feed the dog" completion shows in the review queue.
+# Rewards (#22-store) — 3rd tab.
 - tapOn:
-    point: '42%,96%'
+    point: '62%,94%'
+    retryTapIfNoChange: true
+    waitToSettleTimeoutMs: 1200
+- assertVisible: 'Rewards'
+- assertVisible: 'Ice cream Sundae'
+# Approvals (#22) — 4th tab.
+- tapOn:
+    point: '88%,94%'
+    retryTapIfNoChange: true
+    waitToSettleTimeoutMs: 1200
 - assertVisible: 'Approvals'
 - assertVisible: 'Feed the dog'
 
-# Kids roster (#15) → Give bonus (#23): Kids tab (4th of 6 ≈ 58% width).
+# Back Home, then the Home-hub pushes.
 - tapOn:
-    point: '58%,96%'
-- assertVisible: 'Kids'
+    point: '12%,94%'
+    retryTapIfNoChange: true
+    waitToSettleTimeoutMs: 1200
+- assertVisible: 'Family'
+
+# Schedule (#36) — pushed from the Home quick action, then back.
+- tapOn: 'Schedule'
+- assertVisible: 'Homework time'
+- tapOn:
+    id: 'parent-back'
+- assertVisible: 'Family'
+
+# Kids → Give bonus (#23) — pushed from the Home quick action.
+- tapOn: 'Give bonus'
 - assertVisible: 'Ava'
 - tapOn: 'Give bonus'
-- assertVisible: 'Award bonus points to Ava.*' # the bonus form for Ava (#23)
+- assertVisible: 'Award bonus points to Ava.*'
