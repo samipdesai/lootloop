@@ -3,6 +3,7 @@
 // component tree, branched on useSizeClass().
 import { useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { ParentTabParamList } from './types';
@@ -112,6 +113,7 @@ type Frame = { section: DetailKey; params?: Record<string, unknown> };
 // to the detail screens via ParentSplitNavContext (so the kid cards / quick
 // actions / settings menu can navigate just like they do on iPhone).
 function ParentSplitView() {
+  const insets = useSafeAreaInsets();
   const [stack, setStack] = useState<Frame[]>([{ section: 'Home' }]);
   const top = stack[stack.length - 1];
   const active = top.section;
@@ -134,7 +136,11 @@ function ParentSplitView() {
   return (
     <ParentSplitNavContext.Provider value={nav}>
       <View style={tw`flex-1 flex-row bg-surface-page`}>
-        <View style={tw`w-64 gap-1 border-r border-ink-200 bg-surface-card px-3 py-6`}>
+        <View
+          style={tw.style('w-64 gap-1 border-r border-ink-200 bg-surface-card px-3 pb-6', {
+            paddingTop: insets.top + 16,
+          })}
+        >
           <Text style={tw`mb-3 px-3 font-display text-[22px] font-extrabold text-ink-900`}>
             LootLoop
           </Text>
