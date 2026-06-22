@@ -19,7 +19,7 @@ import { useSizeClass } from '../../hooks/useSizeClass';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Icon, type IconName } from '../../components/ui/Icon';
-import { BalancePill, CoinBadge } from '../../components/ui/money';
+import { BalancePill, CoinBadge, CoinGlyph } from '../../components/ui/money';
 import { Looty } from '../../components/ui/BrandMark';
 import { Segmented } from '../../components/ui/Segmented';
 import tw from '../../lib/tw';
@@ -67,8 +67,8 @@ function TransferCard({
   const canSubmit = valid && !overdraft && !busy;
   const localError = overdraft
     ? direction === 'deposit'
-      ? `You only have 🪙 ${fmt(balances.wallet)} in your wallet.`
-      : `You only have 🪙 ${fmt(balances.savings)} in savings.`
+      ? `You only have ${fmt(balances.wallet)} in your wallet.`
+      : `You only have ${fmt(balances.savings)} in savings.`
     : '';
   const submit = () => {
     if (!canSubmit) return;
@@ -151,11 +151,19 @@ function HistoryRow({ txn }: { txn: SavingsTransaction }) {
           {relativeDate(txn.created_at)}
         </Text>
       </View>
-      <Text
-        style={tw.style('font-number text-[15px] font-extrabold', positive ? 'text-mint-ink' : 'text-ink-700')}
-      >
-        {positive ? '+' : '−'}🪙 {fmt(Math.abs(txn.amount))}
-      </Text>
+      <View style={tw`flex-row items-center gap-1`}>
+        <Text
+          style={tw.style('font-number text-[15px] font-extrabold', positive ? 'text-mint-ink' : 'text-ink-700')}
+        >
+          {positive ? '+' : '−'}
+        </Text>
+        <CoinGlyph size={15} />
+        <Text
+          style={tw.style('font-number text-[15px] font-extrabold', positive ? 'text-mint-ink' : 'text-ink-700')}
+        >
+          {fmt(Math.abs(txn.amount))}
+        </Text>
+      </View>
     </View>
   );
 }

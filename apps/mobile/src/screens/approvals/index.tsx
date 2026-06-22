@@ -313,13 +313,13 @@ export function ApprovalsScreen() {
           {activeCount === 0 ? (
             <EmptyQueue tab={tab} />
           ) : (
-            <View style={tw.style('flex-row flex-wrap', isRegular ? '-mx-2' : '')}>
+            // Single column on both size classes: the iPad split-view detail pane
+            // is only ~560pt wide (sidebar takes the rest), so a two-up grid left
+            // each card too narrow for its side-by-side action buttons.
+            <View>
               {tab === 'chores'
                 ? chores.map((item) => (
-                    <View
-                      key={item.id}
-                      style={tw.style(isRegular ? 'w-1/2 px-2 pb-4' : 'w-full pb-3')}
-                    >
+                    <View key={item.id} style={tw`w-full pb-3`}>
                       <ChoreRow
                         item={item}
                         state={rowStates[item.id] ?? { kind: 'idle' }}
@@ -329,10 +329,7 @@ export function ApprovalsScreen() {
                     </View>
                   ))
                 : reads.map((item) => (
-                    <View
-                      key={item.id}
-                      style={tw.style(isRegular ? 'w-1/2 px-2 pb-4' : 'w-full pb-3')}
-                    >
+                    <View key={item.id} style={tw`w-full pb-3`}>
                       <ReadingRow
                         item={item}
                         state={rowStates[item.id] ?? { kind: 'idle' }}

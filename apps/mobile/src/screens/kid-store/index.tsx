@@ -92,9 +92,13 @@ function RewardCard({
 
         {confirming ? (
           <View style={tw`gap-2`}>
-            <Text style={tw`font-sans text-[13px] font-bold text-ink-700`}>
-              Buy for 🪙 {fmt(reward.cost)}?
-            </Text>
+            <View style={tw`flex-row items-center gap-1`}>
+              <Text style={tw`font-sans text-[13px] font-bold text-ink-700`}>Buy for</Text>
+              <CoinGlyph size={14} />
+              <Text style={tw`font-sans text-[13px] font-bold text-ink-700`}>
+                {fmt(reward.cost)}?
+              </Text>
+            </View>
             <View style={tw`flex-row items-center gap-2`}>
               <Button size="sm" variant="mint" loading={busy} disabled={busy} onPress={onConfirm}>
                 Yes
@@ -111,7 +115,9 @@ function RewardCard({
         ) : (
           <View style={tw`flex-row items-center gap-1`}>
             <Icon name="lock" size={13} color="#A39CAD" />
-            <Text style={tw`font-sans text-[13px] font-bold text-ink-400`}>Need 🪙 {need} more</Text>
+            <Text style={tw`font-sans text-[13px] font-bold text-ink-400`}>Need</Text>
+            <CoinGlyph size={13} />
+            <Text style={tw`font-sans text-[13px] font-bold text-ink-400`}>{need} more</Text>
           </View>
         )}
 
