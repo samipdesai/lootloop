@@ -1,0 +1,34 @@
+# Maestro PARENT golden-path flow: email/password login → Family overview (#19).
+# Verifies the parent Home shows the kid roster + quick actions. Targets the
+# iPhone layout. Seed with seed-parent-flow.sql (run-parent-flow.sh does both,
+# and ensures the parent auth user exists first).
+appId: org.reactjs.native.example.mobile
+tags:
+  - parent
+  - golden-path
+---
+- launchApp:
+    clearState: true
+- assertVisible: 'Welcome back'
+
+# Parent login: email + password → Log in.
+- tapOn:
+    id: 'login-email'
+- inputText: 'parent@maestro.test'
+- tapOn:
+    id: 'login-password'
+- inputText: 'Maestro1!'
+# Dismiss the keyboard (it can cover the Log in button) by tapping the title.
+- tapOn: 'Welcome back'
+- tapOn: 'Log in'
+
+# iOS offers to save the password after login — dismiss it if it appears.
+- tapOn:
+    text: 'Not Now'
+    optional: true
+
+# Lands on the parent Home — Family overview (#19): header, kid roster, actions.
+- assertVisible: 'Family'
+- assertVisible: 'Ava'
+- assertVisible: 'Quick actions'
+- assertVisible: 'Give bonus'
