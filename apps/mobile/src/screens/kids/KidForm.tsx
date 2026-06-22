@@ -19,7 +19,6 @@ import { supabase } from '../../lib/supabase';
 import { useSizeClass } from '../../hooks/useSizeClass';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
-import { Card } from '../../components/ui/Card';
 import { Tabs } from '../../components/ui/Tabs';
 import { FormError } from '../auth/AuthScreen';
 import tw from '../../lib/tw';
@@ -212,7 +211,7 @@ export function KidForm({ kid, onSaved, onCancel }: KidFormProps) {
         }}
         keyboardShouldPersistTaps="handled"
       >
-        {isRegular ? <Card>{body}</Card> : body}
+        {isRegular ? <View style={tw`w-full max-w-[480px]`}>{body}</View> : body}
       </ScrollView>
     </KeyboardAvoidingView>
   );

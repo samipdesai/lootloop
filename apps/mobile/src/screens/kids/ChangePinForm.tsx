@@ -17,7 +17,6 @@ import { supabase } from '../../lib/supabase';
 import { useSizeClass } from '../../hooks/useSizeClass';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
-import { Card } from '../../components/ui/Card';
 import { FormError } from '../auth/AuthScreen';
 import tw from '../../lib/tw';
 import { PIN_MAX, sanitizePin, validatePin } from './pin';
@@ -112,7 +111,7 @@ export function ChangePinForm({ kid, onSaved, onCancel }: ChangePinFormProps) {
         }}
         keyboardShouldPersistTaps="handled"
       >
-        {isRegular ? <Card>{body}</Card> : body}
+        {isRegular ? <View style={tw`w-full max-w-[480px]`}>{body}</View> : body}
       </ScrollView>
     </KeyboardAvoidingView>
   );

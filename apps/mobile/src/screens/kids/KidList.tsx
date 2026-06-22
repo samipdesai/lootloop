@@ -7,11 +7,11 @@
 import { useState } from 'react';
 import { FlatList, Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
 import type { KidProfile } from '@lootloop/client';
 import { useSizeClass } from '../../hooks/useSizeClass';
 import { Button } from '../../components/ui/Button';
 import { Icon, type IconName } from '../../components/ui/Icon';
+import { useParentNav } from '../../navigation/ParentNav';
 import tw from '../../lib/tw';
 import { ageModeBadge } from './ageMode';
 // (FamilyCodePanel moved to the Settings → Family code screen.)
@@ -159,7 +159,7 @@ export function KidList({
 }: KidListProps) {
   const isRegular = useSizeClass() === 'regular';
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation();
+  const navigation = useParentNav();
   const canBack = navigation.canGoBack();
 
   return (

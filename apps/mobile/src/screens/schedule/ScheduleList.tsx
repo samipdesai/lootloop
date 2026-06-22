@@ -7,11 +7,11 @@
 import { useMemo, useState } from 'react';
 import { Pressable, SectionList, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
 import type { ScheduleItem, KidProfile } from '@lootloop/client';
 import { useSizeClass } from '../../hooks/useSizeClass';
 import { Button } from '../../components/ui/Button';
 import { Icon } from '../../components/ui/Icon';
+import { useParentNav } from '../../navigation/ParentNav';
 import tw from '../../lib/tw';
 import { ScheduleIcon } from './ScheduleIcon';
 import { describeDays, formatTimeRange } from './schedule';
@@ -132,7 +132,7 @@ function ScheduleRow({
 export function ScheduleList({ items, kidsById, onNew, onEdit, onDelete }: ScheduleListProps) {
   const isRegular = useSizeClass() === 'regular';
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation();
+  const navigation = useParentNav();
   const canBack = navigation.canGoBack();
 
   // Group items into one section per kid, preserving the service's kid→start_time

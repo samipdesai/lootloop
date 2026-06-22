@@ -6,13 +6,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
 import { listKidsWithBalances, signOut, subscribeToTable, type KidWithBalance } from '@lootloop/client';
 import { supabase } from '../../lib/supabase';
 import { useSizeClass } from '../../hooks/useSizeClass';
 import { Avatar } from '../../components/ui/Avatar';
 import { Icon, type IconName } from '../../components/ui/Icon';
 import { CoinBadge } from '../../components/ui/money';
+import { useParentNav } from '../../navigation/ParentNav';
 import tw from '../../lib/tw';
 
 // Quick actions surface the non-tab destinations (Kids, Schedule) + common
@@ -160,7 +160,7 @@ function SettingsMenu({
 }
 
 export function FamilyOverviewScreen() {
-  const nav = useNavigation<{ navigate: (s: string, params?: object) => void }>();
+  const nav = useParentNav();
   const isRegular = useSizeClass() === 'regular';
   const insets = useSafeAreaInsets();
   const [menuOpen, setMenuOpen] = useState(false);

@@ -3,14 +3,14 @@
 // (show / copy / regenerate) is reused from the kids surface.
 import { ScrollView, Text, View, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
 import { Icon } from '../../components/ui/Icon';
 import { FamilyCodePanel } from '../kids/FamilyCodePanel';
+import { useParentNav } from '../../navigation/ParentNav';
 import tw from '../../lib/tw';
 
 export function FamilyCodeScreen() {
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation();
+  const navigation = useParentNav();
   return (
     <ScrollView
       style={tw`flex-1 bg-surface-page`}

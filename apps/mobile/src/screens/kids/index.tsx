@@ -7,13 +7,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Modal, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRoute } from '@react-navigation/native';
 import { listKids, deleteKid, type KidProfile } from '@lootloop/client';
 import { supabase } from '../../lib/supabase';
 import { Button } from '../../components/ui/Button';
 import { Icon } from '../../components/ui/Icon';
 import { FormError } from '../auth/AuthScreen';
 import tw from '../../lib/tw';
+import { useParentParams } from '../../navigation/ParentNav';
 import { KidList } from './KidList';
 import { KidForm } from './KidForm';
 import { ChangePinForm } from './ChangePinForm';
@@ -38,9 +38,9 @@ function CenteredState({ top, children }: { top: number; children: React.ReactNo
 
 export function KidsScreen() {
   const insets = useSafeAreaInsets();
-  const route = useRoute();
+  const params = useParentParams();
   // Opened with { create: true } from the Home "Add kid" tile → start on the form.
-  const startCreate = (route.params as { create?: boolean } | undefined)?.create ?? false;
+  const startCreate = (params as { create?: boolean } | undefined)?.create ?? false;
   const [kids, setKids] = useState<KidProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');

@@ -1,7 +1,7 @@
 // Parent shell (#10). Adaptive: ParentTabs on compact (iPhone), ParentSplitView
 // on regular (iPad). Screens are placeholders filled by later tasks. One
 // component tree, branched on useSizeClass().
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -16,6 +16,7 @@ import { ScheduleScreen } from '../screens/schedule';
 import { FamilyOverviewScreen } from '../screens/family';
 import { FamilyCodeScreen } from '../screens/family/FamilyCodeScreen';
 import { Icon, type IconName } from '../components/ui/Icon';
+import { ParentSplitNavContext, type ParentNav } from './ParentNav';
 import tw from '../lib/tw';
 
 type Section = { key: keyof ParentTabParamList; label: string; icon: IconName };
@@ -101,43 +102,70 @@ function ParentStackNav() {
   );
 }
 
-// iPad split-view: persistent sidebar of sections + detail pane. Lightweight
-// local-state implementation (no nested navigator needed for placeholders).
+// A detail section the split view can show: any sidebar section, plus FamilyCode
+// (reached from the Home settings menu, not a sidebar item).
+type DetailKey = keyof ParentTabParamList | 'FamilyCode';
+type Frame = { section: DetailKey; params?: Record<string, unknown> };
+
+// iPad split-view: persistent sidebar of sections + detail pane. There's no
+// React Navigation navigator here, so we keep a tiny section stack and expose it
+// to the detail screens via ParentSplitNavContext (so the kid cards / quick
+// actions / settings menu can navigate just like they do on iPhone).
 function ParentSplitView() {
-  const [active, setActive] = useState<keyof ParentTabParamList>('Home');
+  const [stack, setStack] = useState<Frame[]>([{ section: 'Home' }]);
+  const top = stack[stack.length - 1];
+  const active = top.section;
+
+  const nav = useMemo<ParentNav>(
+    () => ({
+      navigate: (section, params) =>
+        setStack((s) => [...s, { section: section as DetailKey, params }]),
+      goBack: () => setStack((s) => (s.length > 1 ? s.slice(0, -1) : s)),
+      canGoBack: () => stack.length > 1,
+      params: top.params,
+    }),
+    [stack.length, top.params],
+  );
+
+  // Sidebar taps reset the stack to that section (a fresh root, no back stack).
+  const select = (section: keyof ParentTabParamList) => setStack([{ section }]);
   const activeLabel = SECTIONS.find((s) => s.key === active)?.label ?? 'Home';
 
   return (
-    <View style={tw`flex-1 flex-row bg-surface-page`}>
-      <View style={tw`w-64 gap-1 border-r border-ink-200 bg-surface-card px-3 py-6`}>
-        <Text style={tw`mb-3 px-3 font-display text-[22px] font-extrabold text-ink-900`}>
-          LootLoop
-        </Text>
-        {SECTIONS.map((s) => {
-          const selected = s.key === active;
-          return (
-            <Pressable
-              key={s.key}
-              accessibilityRole="button"
-              accessibilityState={{ selected }}
-              onPress={() => setActive(s.key)}
-              style={tw.style(
-                'flex-row items-center gap-2.5 rounded-md px-3 py-3',
-                selected ? 'bg-orange-soft' : 'bg-transparent',
-              )}
-            >
-              <Icon name={s.icon} size={20} color={selected ? '#8A4309' : '#443F4E'} />
-              <Text
-                style={tw.style('font-sans text-[16px] font-bold', selected ? 'text-orange-ink' : 'text-ink-700')}
+    <ParentSplitNavContext.Provider value={nav}>
+      <View style={tw`flex-1 flex-row bg-surface-page`}>
+        <View style={tw`w-64 gap-1 border-r border-ink-200 bg-surface-card px-3 py-6`}>
+          <Text style={tw`mb-3 px-3 font-display text-[22px] font-extrabold text-ink-900`}>
+            LootLoop
+          </Text>
+          {SECTIONS.map((s) => {
+            const selected = s.key === active;
+            return (
+              <Pressable
+                key={s.key}
+                accessibilityRole="button"
+                accessibilityState={{ selected }}
+                onPress={() => select(s.key)}
+                style={tw.style(
+                  'flex-row items-center gap-2.5 rounded-md px-3 py-3',
+                  selected ? 'bg-orange-soft' : 'bg-transparent',
+                )}
               >
-                {s.label}
-              </Text>
-            </Pressable>
-          );
-        })}
+                <Icon name={s.icon} size={20} color={selected ? '#8A4309' : '#443F4E'} />
+                <Text
+                  style={tw.style('font-sans text-[16px] font-bold', selected ? 'text-orange-ink' : 'text-ink-700')}
+                >
+                  {s.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+        <View style={tw`flex-1`}>
+          {active === 'FamilyCode' ? <FamilyCodeScreen /> : renderSection(active, activeLabel)}
+        </View>
       </View>
-      <View style={tw`flex-1`}>{renderSection(active, activeLabel)}</View>
-    </View>
+    </ParentSplitNavContext.Provider>
   );
 }
 
