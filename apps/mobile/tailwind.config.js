@@ -5,10 +5,10 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        orange: { DEFAULT: '#F4720E', soft: '#FFEEDB', strong: '#D85F06', ink: '#8A4309' },
-        mint: { DEFAULT: '#16B97D', soft: '#D7F6E9', strong: '#0E9E68', ink: '#0A6A46' },
-        indigo: { DEFAULT: '#5B63E6', soft: '#E7E8FD', strong: '#444CCB', ink: '#2C3196' },
-        coin: { DEFAULT: '#FFC93C', soft: '#FFF3CC', strong: '#F0B315', ink: '#8A6400' },
+        orange: { DEFAULT: '#F4720E', soft: '#FFEEDB', 200: '#FFC988', strong: '#D85F06', ink: '#8A4309' },
+        mint: { DEFAULT: '#16B97D', soft: '#D7F6E9', 200: '#88E4C0', strong: '#0E9E68', ink: '#0A6A46' },
+        indigo: { DEFAULT: '#5B63E6', soft: '#E7E8FD', 200: '#B7BAF7', strong: '#444CCB', ink: '#2C3196' },
+        coin: { DEFAULT: '#FFC93C', soft: '#FFF3CC', 200: '#FFE08A', strong: '#F0B315', ink: '#8A6400' },
         ink: {
           900: '#211E27',
           800: '#2F2B38',
