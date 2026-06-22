@@ -7,6 +7,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRoute } from '@react-navigation/native';
 import { listKids, deleteKid, type KidProfile } from '@lootloop/client';
 import { supabase } from '../../lib/supabase';
 import { Button } from '../../components/ui/Button';
@@ -18,7 +19,6 @@ import { KidForm } from './KidForm';
 import { ChangePinForm } from './ChangePinForm';
 import { AwardBonusForm } from './AwardBonusForm';
 import { PointHistory } from './PointHistory';
-import { FamilyCodePanel } from './FamilyCodePanel';
 
 type ScreenView =
   | { mode: 'list' }
@@ -38,10 +38,13 @@ function CenteredState({ top, children }: { top: number; children: React.ReactNo
 
 export function KidsScreen() {
   const insets = useSafeAreaInsets();
+  const route = useRoute();
+  // Opened with { create: true } from the Home "Add kid" tile → start on the form.
+  const startCreate = (route.params as { create?: boolean } | undefined)?.create ?? false;
   const [kids, setKids] = useState<KidProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
-  const [view, setView] = useState<ScreenView>({ mode: 'list' });
+  const [view, setView] = useState<ScreenView>(startCreate ? { mode: 'create' } : { mode: 'list' });
   const [rowError, setRowError] = useState('');
   // Inline confirmation banner after a bonus award (no blocking Alert.alert).
   const [rowNote, setRowNote] = useState('');
@@ -154,9 +157,6 @@ export function KidsScreen() {
               </Button>
             </View>
           </View>
-          {/* The device code is needed before a kid can sign in, so surface it
-              even with an empty roster. */}
-          <FamilyCodePanel />
         </View>
       </CenteredState>
     );

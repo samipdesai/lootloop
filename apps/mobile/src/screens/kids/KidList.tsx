@@ -14,7 +14,7 @@ import { Button } from '../../components/ui/Button';
 import { Icon } from '../../components/ui/Icon';
 import tw from '../../lib/tw';
 import { ageModeBadge } from './ageMode';
-import { FamilyCodePanel } from './FamilyCodePanel';
+// (FamilyCodePanel moved to the Settings → Family code screen.)
 
 interface KidListProps {
   kids: KidProfile[];
@@ -192,7 +192,6 @@ export function KidList({
               <Icon name="plus" size={22} color="#FFFFFF" />
             </Pressable>
           </View>
-          <FamilyCodePanel />
         </View>
       }
       renderItem={({ item }) => (

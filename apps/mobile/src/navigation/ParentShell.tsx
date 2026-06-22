@@ -14,6 +14,7 @@ import { KidsScreen } from '../screens/kids';
 import { RewardsScreen } from '../screens/rewards';
 import { ScheduleScreen } from '../screens/schedule';
 import { FamilyOverviewScreen } from '../screens/family';
+import { FamilyCodeScreen } from '../screens/family/FamilyCodeScreen';
 import { Icon, type IconName } from '../components/ui/Icon';
 import tw from '../lib/tw';
 
@@ -95,6 +96,7 @@ function ParentStackNav() {
       <ParentStack.Screen name="ParentTabs" component={ParentTabs} />
       <ParentStack.Screen name="Kids" component={KidsScreen} />
       <ParentStack.Screen name="Schedule" component={ScheduleScreen} />
+      <ParentStack.Screen name="FamilyCode" component={FamilyCodeScreen} />
     </ParentStack.Navigator>
   );
 }

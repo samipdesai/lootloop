@@ -47,6 +47,24 @@ function KidCard({ kid, first, onPress }: { kid: KidWithBalance; first: boolean;
   );
 }
 
+// Dashed "+ Add kid" tile that sits alongside the kid cards on the Family hub.
+function AddKidTile({ onPress }: { onPress: () => void }) {
+  return (
+    <Pressable
+      testID="add-kid"
+      accessibilityRole="button"
+      accessibilityLabel="Add kid"
+      onPress={onPress}
+      style={tw`flex-1 items-center justify-center gap-2 rounded-card border-2 border-dashed border-ink-300 px-3 py-4`}
+    >
+      <View style={tw`h-12 w-12 items-center justify-center rounded-full bg-indigo-soft`}>
+        <Icon name="plus" size={24} color="#5B63E6" />
+      </View>
+      <Text style={tw`font-display text-[14px] font-extrabold text-ink-700`}>Add kid</Text>
+    </Pressable>
+  );
+}
+
 function ActionCard({ label, icon, tile, fg, onPress }: (typeof ACTIONS)[number] & { onPress: () => void }) {
   return (
     <Pressable
@@ -67,17 +85,48 @@ function ActionCard({ label, icon, tile, fg, onPress }: (typeof ACTIONS)[number]
   );
 }
 
-// Settings menu — a small sheet anchored top-right (Log out now; room for more
-// account settings later). Tapping the scrim closes it.
+// One row in the settings sheet.
+function MenuRow({
+  testID,
+  icon,
+  label,
+  color = '#211E27',
+  onPress,
+}: {
+  testID: string;
+  icon: IconName;
+  label: string;
+  color?: string;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      testID={testID}
+      accessibilityRole="button"
+      onPress={onPress}
+      style={tw`flex-row items-center gap-3 rounded-md px-3 py-3`}
+    >
+      <Icon name={icon} size={20} color={color} />
+      <Text style={tw.style('font-display text-[15px] font-extrabold', { color })}>{label}</Text>
+    </Pressable>
+  );
+}
+
+// Settings menu — a small sheet anchored top-right. Family & kids + Family code
+// (account/family config) and Log out. Tapping the scrim closes it.
 function SettingsMenu({
   open,
   top,
   onClose,
+  onFamily,
+  onCode,
   onLogout,
 }: {
   open: boolean;
   top: number;
   onClose: () => void;
+  onFamily: () => void;
+  onCode: () => void;
   onLogout: () => void;
 }) {
   return (
@@ -85,13 +134,9 @@ function SettingsMenu({
       <View style={tw`flex-1`}>
         {/* Scrim sits BEHIND the menu (sibling, not parent) so the menu's own
             taps aren't swallowed by the backdrop's press handler. */}
-        <Pressable
-          accessibilityLabel="Close menu"
-          style={tw`absolute inset-0`}
-          onPress={onClose}
-        />
+        <Pressable accessibilityLabel="Close menu" style={tw`absolute inset-0`} onPress={onClose} />
         <View
-          style={tw.style('absolute right-4 w-52 gap-1 rounded-card bg-surface-card p-2', {
+          style={tw.style('absolute right-4 w-56 gap-0.5 rounded-card bg-surface-card p-2', {
             top: top + 52,
             shadowColor: 'rgba(32,36,58,1)',
             shadowOffset: { width: 0, height: 8 },
@@ -100,15 +145,16 @@ function SettingsMenu({
             elevation: 8,
           })}
         >
-          <Pressable
+          <MenuRow testID="settings-family" icon="users" label="Family & kids" onPress={onFamily} />
+          <MenuRow testID="settings-code" icon="lock" label="Family code" onPress={onCode} />
+          <View style={tw`my-1 h-px bg-ink-100`} />
+          <MenuRow
             testID="parent-logout"
-            accessibilityRole="button"
+            icon="log-out"
+            label="Log out"
+            color="#B11216"
             onPress={onLogout}
-            style={tw`flex-row items-center gap-3 rounded-md px-3 py-3`}
-          >
-            <Icon name="log-out" size={20} color="#B11216" />
-            <Text style={tw`font-display text-[15px] font-extrabold text-danger-ink`}>Log out</Text>
-          </Pressable>
+          />
         </View>
       </View>
     </Modal>
@@ -116,7 +162,7 @@ function SettingsMenu({
 }
 
 export function FamilyOverviewScreen() {
-  const nav = useNavigation<{ navigate: (s: string) => void }>();
+  const nav = useNavigation<{ navigate: (s: string, params?: object) => void }>();
   const isRegular = useSizeClass() === 'regular';
   const insets = useSafeAreaInsets();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -162,6 +208,14 @@ export function FamilyOverviewScreen() {
         open={menuOpen}
         top={insets.top}
         onClose={() => setMenuOpen(false)}
+        onFamily={() => {
+          setMenuOpen(false);
+          nav.navigate('Kids');
+        }}
+        onCode={() => {
+          setMenuOpen(false);
+          nav.navigate('FamilyCode');
+        }}
         onLogout={() => {
           setMenuOpen(false);
           void signOut(supabase);
@@ -205,18 +259,25 @@ export function FamilyOverviewScreen() {
       ) : null}
 
       {kids.length > 0 ? (
-        <View style={tw`flex-row gap-3`}>
+        <View style={tw`flex-row flex-wrap gap-3`}>
           {kids.map((k, i) => (
             <KidCard key={k.id} kid={k} first={i === 0} onPress={() => nav.navigate('Kids')} />
           ))}
+          <AddKidTile onPress={() => nav.navigate('Kids', { create: true })} />
         </View>
       ) : (
-        <View style={tw`items-center gap-2 rounded-card bg-surface-card px-6 py-10`}>
+        <Pressable
+          onPress={() => nav.navigate('Kids', { create: true })}
+          style={tw`items-center gap-2 rounded-card bg-surface-card px-6 py-10`}
+        >
           <Icon name="smile" size={40} color="#A39CAD" />
           <Text style={tw`text-center font-display text-[16px] font-extrabold text-ink-800`}>
-            No kids yet — add one from the Kids tab.
+            Add your first kid
           </Text>
-        </View>
+          <Text style={tw`text-center font-sans text-[13px] font-bold text-ink-400`}>
+            Tap to set up a child profile.
+          </Text>
+        </Pressable>
       )}
 
       <Text style={tw`mt-1 font-sans text-[13px] font-extrabold uppercase tracking-wide text-[13px] text-ink-400`}>
