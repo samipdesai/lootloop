@@ -21,7 +21,7 @@ insert into profiles (id, family_id, role, display_name, pin_hash, age_mode)
 values (
   'aaaaaaaa-0000-0000-0000-000000000002',
   'aaaaaaaa-0000-0000-0000-000000000001',
-  'kid', 'Ava', crypt('1234', gen_salt('bf', 10)), 'simple'
+  'kid', 'Ava', crypt('1234', gen_salt('bf', 10)), 'detailed'
 );
 
 -- A chore assigned to Ava + today's materialized instance (My Chores reads
@@ -34,10 +34,14 @@ values (
   'aaaaaaaa-0000-0000-0000-000000000002', true
 );
 
+-- The app reads "today" from the DEVICE's LOCAL date (todayISO() in
+-- MyChoresScreen), but this seed runs in the DB whose current_date is UTC. In the
+-- evening Pacific (and other offsets) those differ by a day, hiding the chore.
+-- Materialize the instance for yesterday/today/tomorrow (UTC) so exactly one row
+-- matches the device's local today on any timezone — the app filters to that one.
 insert into chore_instances (id, family_id, chore_id, due_date, points)
-values (
-  'aaaaaaaa-0000-0000-0000-000000000004',
-  'aaaaaaaa-0000-0000-0000-000000000001',
-  'aaaaaaaa-0000-0000-0000-000000000003',
-  current_date, 10
-);
+select gen_random_uuid(),
+       'aaaaaaaa-0000-0000-0000-000000000001',
+       'aaaaaaaa-0000-0000-0000-000000000003',
+       d, 10
+from (values (current_date - 1), (current_date), (current_date + 1)) as t(d);

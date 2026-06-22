@@ -1,7 +1,7 @@
 # Maestro kid STORE golden path (task #47 / M3): family-code login → Store tab →
 # buy a reward → balance drops (celebration #26 fires) → reward now unaffordable.
-# Runs on iPhone AND iPad sims (same flow). Seed with seed-store-flow.sql first.
-# Bundle id is the bare-RN default.
+# Targets the iPhone bottom-tab layout (tab switch taps the bar by position).
+# Seed with seed-store-flow.sql first. Bundle id is the bare-RN default.
 appId: org.reactjs.native.example.mobile
 tags:
   - kid
@@ -28,10 +28,11 @@ tags:
 - inputText: '1234'
 - tapOn: 'Log in'
 
-# Kid shell lands on Home (dashboard); switch to the Store tab (#23). Tap by
-# testID (set in KidShell) — iOS tab-bar a11y bounds are unreliable to tap by text.
+# Kid shell lands on Home; switch to the Store tab (#23). iOS react-navigation tab
+# buttons ignore Maestro's id/text tap — tap by position. 5 evenly-spaced tabs →
+# Store is the 3rd (≈50% width, ≈96% height).
 - tapOn:
-    id: 'tab-Store'
+    point: '50%,96%'
 - assertVisible: 'Your loot'
 - assertVisible: 'Ice cream Sundae'
 

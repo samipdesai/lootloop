@@ -1,7 +1,7 @@
 # Maestro kid reading + savings golden path (task #47 / M4): login → Reading tab
 # → log a book (#27, appears in the list) → Savings tab → deposit to savings
-# (#32, lands in history). Runs on iPhone AND iPad. Seed with
-# seed-reading-savings-flow.sql first.
+# (#32, lands in history). Targets the iPhone bottom-tab layout (tab switches tap
+# the bar by position). Seed with seed-reading-savings-flow.sql first.
 appId: org.reactjs.native.example.mobile
 tags:
   - kid
@@ -26,9 +26,11 @@ tags:
 - inputText: '1234'
 - tapOn: 'Log in'
 
-# Reading (#27/#30): log a book → it appears in the list.
+# Reading (#27/#30): log a book → it appears in the list. iOS tab buttons ignore
+# Maestro's id/text tap — tap the bar by position. 5 evenly-spaced tabs → Reading
+# is the 4th (≈70% width, ≈96% height).
 - tapOn:
-    id: 'tab-Reading'
+    point: '70%,96%'
 - tapOn:
     id: 'reading-title-input'
 - inputText: "Charlotte's Web"
@@ -39,9 +41,9 @@ tags:
 - assertVisible: "Charlotte's Web" # the new log row (Pending)
 
 # Savings (#31/#32/#33): deposit 40 (default direction is Deposit) → it lands in
-# the savings history.
+# the savings history. Savings is the 5th tab (≈90% width, ≈96% height).
 - tapOn:
-    id: 'tab-Savings'
+    point: '90%,96%'
 - tapOn:
     id: 'savings-amount-input'
 - inputText: '40'
