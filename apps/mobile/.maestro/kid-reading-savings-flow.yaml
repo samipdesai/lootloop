@@ -37,6 +37,9 @@ tags:
 - tapOn:
     id: 'reading-minutes-input'
 - inputText: '20'
+# Dismiss the number-pad (it covers the Log button below the form) by tapping the
+# form heading — a non-input tap dismisses the keyboard on iOS.
+- tapOn: 'Log your reading'
 - tapOn: '.*Log reading.*' # button label is "＋ Log reading"
 - assertVisible: "Charlotte's Web" # the new log row (Pending)
 
