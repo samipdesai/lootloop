@@ -14,14 +14,15 @@ import { MyChoresScreen } from '../screens/kid-chores/MyChoresScreen';
 import { KidStoreScreen } from '../screens/kid-store';
 import { KidReadingScreen } from '../screens/kid-reading';
 import { KidSavingsScreen } from '../screens/kid-savings';
+import { Icon, type IconName } from '../components/ui/Icon';
 import tw from '../lib/tw';
 
-const SECTIONS: { key: keyof KidTabParamList; label: string; icon: string }[] = [
-  { key: 'Home', label: 'Home', icon: '🏠' },
-  { key: 'Chores', label: 'Chores', icon: '🧹' },
-  { key: 'Store', label: 'Store', icon: '🎁' },
-  { key: 'Reading', label: 'Reading', icon: '📚' },
-  { key: 'Savings', label: 'Savings', icon: '🐷' },
+const SECTIONS: { key: keyof KidTabParamList; label: string; icon: IconName }[] = [
+  { key: 'Home', label: 'Home', icon: 'house' },
+  { key: 'Chores', label: 'Chores', icon: 'list-todo' },
+  { key: 'Store', label: 'Store', icon: 'gift' },
+  { key: 'Reading', label: 'Reading', icon: 'book-open' },
+  { key: 'Savings', label: 'Savings', icon: 'piggy-bank' },
 ];
 
 function renderSection(key: keyof KidTabParamList) {
@@ -51,8 +52,10 @@ function KidTabs() {
           options={{
             tabBarLabel: s.label,
             tabBarButtonTestID: `tab-${s.key}`,
+            tabBarActiveTintColor: '#F4720E',
+            tabBarInactiveTintColor: '#A39CAD',
             tabBarIcon: ({ focused }) => (
-              <Text style={tw.style('text-[18px]', focused ? '' : 'opacity-60')}>{s.icon}</Text>
+              <Icon name={s.icon} size={24} color={focused ? '#F4720E' : '#A39CAD'} />
             ),
           }}
           children={() => renderSection(s.key)}
@@ -82,7 +85,7 @@ function KidSplitView() {
                 selected ? 'bg-orange-soft' : 'bg-transparent',
               )}
             >
-              <Text style={tw`text-[18px]`}>{s.icon}</Text>
+              <Icon name={s.icon} size={22} color={selected ? '#8A4309' : '#443F4E'} />
               <Text
                 style={tw.style(
                   'font-sans text-[16px] font-bold',
