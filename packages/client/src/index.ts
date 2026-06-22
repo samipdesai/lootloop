@@ -10,3 +10,4 @@ export * from './rewards';
 export * from './points';
 export * from './reading';
 export * from './savings';
+export * from './schedule';
