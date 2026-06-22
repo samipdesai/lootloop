@@ -84,7 +84,15 @@ function RewardCard({
       </View>
       <View style={tw`gap-3 px-4 pb-4 pt-3.5`}>
         <View style={tw`gap-2`}>
-          <Text numberOfLines={2} style={tw`font-display text-[16px] font-extrabold text-ink-900`}>
+          {/* Fixed two-line height so the price + Buy button align across cards
+              regardless of whether the title wraps to one line or two. */}
+          <Text
+            numberOfLines={2}
+            style={tw.style('font-display text-[16px] font-extrabold text-ink-900', {
+              lineHeight: 21,
+              height: 42,
+            })}
+          >
             {reward.title}
           </Text>
           <CoinBadge amount={reward.cost} size="sm" tone="soft" />
