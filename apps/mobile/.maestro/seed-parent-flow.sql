@@ -36,3 +36,16 @@ values (
   'aaaaaaaa-0000-0000-0000-000000000010', 'aaaaaaaa-0000-0000-0000-000000000001',
   'Feed the dog', 15, 'assigned', 'aaaaaaaa-0000-0000-0000-000000000002', true, 'dog'
 );
+
+-- Today's instance + a pending completion from Ava, so the Approval queue (#22)
+-- has a card to review.
+insert into chore_instances (id, family_id, chore_id, due_date, points)
+values (
+  'aaaaaaaa-0000-0000-0000-000000000011', 'aaaaaaaa-0000-0000-0000-000000000001',
+  'aaaaaaaa-0000-0000-0000-000000000010', current_date, 15
+);
+insert into chore_completions (id, family_id, chore_instance_id, kid_id, status, submitted_at)
+values (
+  'aaaaaaaa-0000-0000-0000-000000000012', 'aaaaaaaa-0000-0000-0000-000000000001',
+  'aaaaaaaa-0000-0000-0000-000000000011', 'aaaaaaaa-0000-0000-0000-000000000002', 'pending', now()
+);

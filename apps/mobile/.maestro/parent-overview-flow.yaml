@@ -40,3 +40,10 @@ tags:
 - assertVisible: 'Feed the dog'
 - assertVisible:
     id: 'new-chore'
+
+# Approvals (#22): tap the Approvals tab (3rd of 6 ≈ 42% width); the pending
+# "Feed the dog" completion shows in the review queue.
+- tapOn:
+    point: '42%,96%'
+- assertVisible: 'Approvals'
+- assertVisible: 'Feed the dog'

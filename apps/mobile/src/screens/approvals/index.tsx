@@ -33,6 +33,8 @@ import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { Tabs } from '../../components/ui/Tabs';
+import { Icon } from '../../components/ui/Icon';
+import { CoinBadge } from '../../components/ui/money';
 import tw from '../../lib/tw';
 import { initial, readDate, relativeTime } from './format';
 
@@ -288,9 +290,14 @@ export function ApprovalsScreen() {
         contentContainerStyle={tw.style('px-5 py-6', isRegular ? 'items-center' : '')}
       >
         <View style={tw.style('w-full', isRegular ? 'max-w-[860px]' : '')}>
-          <Text style={tw`mb-1 font-display text-[26px] font-extrabold text-ink-900`}>
-            Approvals
-          </Text>
+          <View style={tw`mb-1 flex-row items-center gap-2.5`}>
+            <Text style={tw`font-display text-[26px] font-extrabold text-ink-900`}>Approvals</Text>
+            {total > 0 ? (
+              <View style={tw`h-6 min-w-6 items-center justify-center rounded-pill bg-orange px-2`}>
+                <Text style={tw`font-display text-[14px] font-extrabold text-white`}>{total}</Text>
+              </View>
+            ) : null}
+          </View>
           <Text style={tw`mb-4 font-sans text-[15px] font-semibold text-ink-500`}>
             {total} waiting for review
           </Text>
@@ -358,7 +365,7 @@ function ChoreRow({
     <Card>
       <View style={tw`flex-row items-center gap-3`}>
         <View style={tw`h-12 w-12 items-center justify-center rounded-md bg-coin-soft`}>
-          <Text style={tw`text-[22px]`}>{item.chore_icon ?? '✅'}</Text>
+          <Icon name="circle-check-big" size={22} color="#8A6400" />
         </View>
         <View style={tw`flex-1`}>
           <Text
@@ -374,12 +381,7 @@ function ChoreRow({
             </Text>
           </View>
         </View>
-        <View style={tw`flex-row items-center gap-1 rounded-pill bg-coin-soft px-3 py-1.5`}>
-          <Text style={tw`text-[13px]`}>🪙</Text>
-          <Text style={tw`font-number text-[15px] font-extrabold text-coin-ink`}>
-            {item.points}
-          </Text>
-        </View>
+        <CoinBadge amount={item.points} size="sm" tone="soft" />
       </View>
 
       <View style={tw`mt-3 flex-row items-center gap-3`}>
@@ -449,7 +451,7 @@ function ReadingRow({
     <Card>
       <View style={tw`flex-row items-center gap-3`}>
         <View style={tw`h-12 w-12 items-center justify-center rounded-md bg-indigo-soft`}>
-          <Text style={tw`text-[22px]`}>📚</Text>
+          <Icon name="book-open" size={22} color="#444CCB" />
         </View>
         <View style={tw`flex-1`}>
           <Text
@@ -564,9 +566,9 @@ function EmptyQueue({ tab }: { tab: TabValue }) {
   const reading = tab === 'reading';
   return (
     <View style={tw`items-center px-4 py-12`}>
-      <Text style={tw`text-[44px]`}>{reading ? '📚' : '🎉'}</Text>
+      <Icon name={reading ? 'book-open' : 'circle-check-big'} size={44} color="#A39CAD" />
       <Text style={tw`mt-3 text-center font-display text-[22px] font-extrabold text-ink-900`}>
-        {reading ? 'No reading entries waiting 📚' : 'All caught up'}
+        {reading ? 'No reading entries waiting' : 'All caught up'}
       </Text>
       <Text style={tw`mt-1 text-center font-sans text-[15px] font-semibold text-ink-500`}>
         {reading ? 'Reading logs to review will show up here.' : 'Nothing to approve right now.'}
@@ -611,7 +613,7 @@ function ToastStack({ toasts }: { toasts: Toast[] }) {
             t.tone === 'mint' ? 'bg-mint' : 'bg-ink-800',
           )}
         >
-          <Text style={tw`text-[14px]`}>{t.tone === 'mint' ? '🪙' : '↩️'}</Text>
+          <Icon name={t.tone === 'mint' ? 'check' : 'repeat'} size={15} color="#FFFFFF" />
           <Text style={tw`font-display text-[14px] font-bold text-white`}>{t.message}</Text>
         </View>
       ))}
