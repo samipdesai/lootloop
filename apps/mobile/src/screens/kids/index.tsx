@@ -15,6 +15,7 @@ import { Icon } from '../../components/ui/Icon';
 import { FormError } from '../auth/AuthScreen';
 import tw from '../../lib/tw';
 import { KidList } from './KidList';
+import { KidActionsSheet } from './KidActionsSheet';
 import { KidForm } from './KidForm';
 import { ChangePinForm } from './ChangePinForm';
 import { AwardBonusForm } from './AwardBonusForm';
@@ -48,6 +49,8 @@ export function KidsScreen() {
   const [rowError, setRowError] = useState('');
   // Inline confirmation banner after a bonus award (no blocking Alert.alert).
   const [rowNote, setRowNote] = useState('');
+  // Kid whose actions sheet is open (tap a roster card → sheet).
+  const [actionsKid, setActionsKid] = useState<KidProfile | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -179,18 +182,42 @@ export function KidsScreen() {
       <KidList
         kids={kids}
         onNew={() => setView({ mode: 'create' })}
-        onEdit={(kid) => setView({ mode: 'edit', kid })}
-        onChangePin={(kid) => setView({ mode: 'pin', kid })}
-        onGiveBonus={(kid) => {
+        onSelect={(kid) => {
           setRowNote('');
-          setView({ mode: 'bonus', kid });
+          setActionsKid(kid);
         }}
-        onHistory={(kid) => {
-          setRowNote('');
-          setView({ mode: 'history', kid });
-        }}
-        onDelete={handleDelete}
       />
+      {actionsKid ? (
+        <KidActionsSheet
+          kid={actionsKid}
+          onClose={() => setActionsKid(null)}
+          onGiveBonus={() => {
+            const kid = actionsKid;
+            setActionsKid(null);
+            setView({ mode: 'bonus', kid });
+          }}
+          onHistory={() => {
+            const kid = actionsKid;
+            setActionsKid(null);
+            setView({ mode: 'history', kid });
+          }}
+          onChangePin={() => {
+            const kid = actionsKid;
+            setActionsKid(null);
+            setView({ mode: 'pin', kid });
+          }}
+          onEdit={() => {
+            const kid = actionsKid;
+            setActionsKid(null);
+            setView({ mode: 'edit', kid });
+          }}
+          onDelete={async () => {
+            const kid = actionsKid;
+            await handleDelete(kid);
+            setActionsKid(null);
+          }}
+        />
+      ) : null}
     </View>
   );
 }

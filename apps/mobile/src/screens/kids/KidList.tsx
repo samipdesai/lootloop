@@ -4,13 +4,11 @@
 // empty / error states are handled by the parent KidsScreen; this renders the
 // populated roster + the New affordance. One component tree; the regular (iPad)
 // size class centres the column and widens it.
-import { useState } from 'react';
 import { FlatList, Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { KidProfile } from '@lootloop/client';
 import { useSizeClass } from '../../hooks/useSizeClass';
-import { Button } from '../../components/ui/Button';
 import { Icon } from '../../components/ui/Icon';
 import tw from '../../lib/tw';
 import { ageModeBadge } from './ageMode';
@@ -19,11 +17,7 @@ import { ageModeBadge } from './ageMode';
 interface KidListProps {
   kids: KidProfile[];
   onNew: () => void;
-  onEdit: (kid: KidProfile) => void;
-  onChangePin: (kid: KidProfile) => void;
-  onGiveBonus: (kid: KidProfile) => void;
-  onHistory: (kid: KidProfile) => void;
-  onDelete: (kid: KidProfile) => Promise<void>;
+  onSelect: (kid: KidProfile) => void;
 }
 
 function Avatar({ kid }: { kid: KidProfile }) {
@@ -35,36 +29,14 @@ function Avatar({ kid }: { kid: KidProfile }) {
   );
 }
 
-function KidRow({
-  kid,
-  onEdit,
-  onChangePin,
-  onGiveBonus,
-  onHistory,
-  onDelete,
-}: {
-  kid: KidProfile;
-  onEdit: () => void;
-  onChangePin: () => void;
-  onGiveBonus: () => void;
-  onHistory: () => void;
-  onDelete: () => Promise<void>;
-}) {
-  const [confirming, setConfirming] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-
-  const handleDelete = async () => {
-    setDeleting(true);
-    await onDelete();
-    // On success the row unmounts; on error the parent surfaces it and the row
-    // stays — reset so the user can retry.
-    setDeleting(false);
-    setConfirming(false);
-  };
-
+// Clean tappable roster card — tapping opens the per-kid actions sheet.
+function KidRow({ kid, onSelect }: { kid: KidProfile; onSelect: () => void }) {
   return (
-    <View
-      style={tw.style('rounded-card bg-surface-card p-4', {
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={kid.display_name}
+      onPress={onSelect}
+      style={tw.style('flex-row items-center gap-3 rounded-card bg-surface-card p-4', {
         shadowColor: 'rgba(32,36,58,1)',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.08,
@@ -72,73 +44,25 @@ function KidRow({
         elevation: 3,
       })}
     >
-      <View style={tw`flex-row items-center gap-3`}>
-        <Avatar kid={kid} />
-        <View style={tw`flex-1`}>
-          <Text style={tw`font-display text-[16px] font-extrabold text-ink-900`}>
-            {kid.display_name}
-          </Text>
-          <View style={tw`mt-1.5 flex-row`}>
-            <View style={tw`rounded-pill bg-indigo-soft px-2.5 py-1`}>
-              <Text style={tw`font-sans text-[12px] font-extrabold text-indigo-ink`}>
-                {ageModeBadge(kid.age_mode)}
-              </Text>
-            </View>
+      <Avatar kid={kid} />
+      <View style={tw`min-w-0 flex-1`}>
+        <Text numberOfLines={1} style={tw`font-display text-[16px] font-extrabold text-ink-900`}>
+          {kid.display_name}
+        </Text>
+        <View style={tw`mt-1.5 flex-row`}>
+          <View style={tw`rounded-pill bg-indigo-soft px-2.5 py-1`}>
+            <Text style={tw`font-sans text-[12px] font-extrabold text-indigo-ink`}>
+              {ageModeBadge(kid.age_mode)}
+            </Text>
           </View>
         </View>
       </View>
-
-      <View style={tw`mt-3 flex-row flex-wrap items-center justify-end gap-2`}>
-        {confirming ? (
-          <>
-            <Text style={tw`mr-auto font-sans text-[13px] font-bold text-ink-700`}>
-              Delete {kid.display_name}?
-            </Text>
-            <Button size="sm" variant="ghost" disabled={deleting} onPress={() => setConfirming(false)}>
-              Keep
-            </Button>
-            <Button size="sm" loading={deleting} onPress={handleDelete}>
-              Delete
-            </Button>
-          </>
-        ) : (
-          <>
-            <Button size="sm" variant="ghost" onPress={onGiveBonus}>
-              Give bonus
-            </Button>
-            <Button size="sm" variant="ghost" onPress={onHistory}>
-              History
-            </Button>
-            <Button size="sm" variant="ghost" onPress={onEdit}>
-              Edit
-            </Button>
-            <Button size="sm" variant="ghost" onPress={onChangePin}>
-              Change PIN
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              accessibilityLabel={`Delete ${kid.display_name}`}
-              onPress={() => setConfirming(true)}
-            >
-              Delete
-            </Button>
-          </>
-        )}
-      </View>
-    </View>
+      <Icon name="chevron-right" size={22} color="#A39CAD" />
+    </Pressable>
   );
 }
 
-export function KidList({
-  kids,
-  onNew,
-  onEdit,
-  onChangePin,
-  onGiveBonus,
-  onHistory,
-  onDelete,
-}: KidListProps) {
+export function KidList({ kids, onNew, onSelect }: KidListProps) {
   const isRegular = useSizeClass() === 'regular';
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
@@ -194,16 +118,7 @@ export function KidList({
           </View>
         </View>
       }
-      renderItem={({ item }) => (
-        <KidRow
-          kid={item}
-          onEdit={() => onEdit(item)}
-          onChangePin={() => onChangePin(item)}
-          onGiveBonus={() => onGiveBonus(item)}
-          onHistory={() => onHistory(item)}
-          onDelete={() => onDelete(item)}
-        />
-      )}
+      renderItem={({ item }) => <KidRow kid={item} onSelect={() => onSelect(item)} />}
     />
   );
 }
