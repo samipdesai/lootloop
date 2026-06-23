@@ -36,13 +36,12 @@ tags:
 - inputText: '1234'
 - tapOn: 'Log in'
 
-# Kid split-view lands on Home; the wallet hero shows the "Wallet" label + the
-# SEEDED starting balance.
-- assertVisible: 'Wallet'
-- assertVisible: '500'
+# Kid split-view lands on Home; the wallet hero is a button whose a11y label
+# announces the balance — assert the seeded starting balance via that label.
+- assertVisible: 'Wallet balance 500 points'
 
 # Park on Home; the harness fires the approval over psql mid-wait (the web Approve
 # effect). The wallet realtime subscription re-loads Home → balance becomes 575.
-- assertVisible:
-    text: '575'
+- extendedWaitUntil:
+    visible: 'Wallet balance 575 points'
     timeout: 60000

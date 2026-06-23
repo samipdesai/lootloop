@@ -49,15 +49,15 @@ tags:
 - inputText: '1234'
 - tapOn: 'Log in'
 
-# Kid shell lands on Home (dashboard). The wallet hero (BalancePill) shows the
-# "Wallet" label + the SEEDED starting balance — confirm both before the credit.
-- assertVisible: 'Wallet'
-- assertVisible: '500'
+# Kid shell lands on Home (dashboard). The wallet hero is a button whose a11y
+# label announces the balance (the inner BalancePill Text is collapsed into it),
+# so we assert the seeded starting balance via that label before the credit.
+- assertVisible: 'Wallet balance 500 points'
 
 # Park on Home and wait for the realtime push. The harness fires
 # award_points_on_approval(...) over psql mid-wait (the web Approve effect): the
 # wallet realtime subscription re-loads Home and the balance becomes 575. No tap,
 # no pull-to-refresh — a generous timeout absorbs the sleep + realtime latency.
-- assertVisible:
-    text: '575'
+- extendedWaitUntil:
+    visible: 'Wallet balance 575 points'
     timeout: 60000

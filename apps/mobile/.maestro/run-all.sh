@@ -108,12 +108,16 @@ CROSS_PARENT_PROFILE_ID="aaaaaaaa-0000-0000-0000-000000000004"
 approve_cross_device() {
   docker exec -i "$DB_CONTAINER" psql -U postgres -v ON_ERROR_STOP=1 <<SQL >/dev/null 2>&1
 begin;
-set local role authenticated;
+-- Resolve the parent's auth uid + set the JWT claim while still superuser: the
+-- authenticated role can't SELECT auth.users. THEN drop to authenticated so the
+-- SECURITY DEFINER fn self-authorizes against the claim (the local GUC survives
+-- the role switch within the txn).
 select set_config(
   'request.jwt.claims',
   json_build_object('sub', (select id from auth.users where email = 'parent@maestro.test'))::text,
   true
 );
+set local role authenticated;
 select award_points_on_approval('$CROSS_COMPLETION_ID', '$CROSS_PARENT_PROFILE_ID');
 commit;
 SQL
@@ -124,7 +128,7 @@ SQL
 # is parked on Home — proving the balance updates live via realtime (no kid action,
 # no refresh). CROSS_APPROVE_DELAY seconds covers login + reaching Home before the
 # credit fires; the flow's 575 assertion has a 60s timeout to absorb it + latency.
-CROSS_APPROVE_DELAY="${CROSS_APPROVE_DELAY:-22}"
+CROSS_APPROVE_DELAY="${CROSS_APPROVE_DELAY:-35}"
 run_cross_device_flow() {
   local udid="$1" flow="$2" label="$3" attempt
   bold "▶ $label"
