@@ -42,7 +42,13 @@ jobs:
         with:
           version: latest
       - run: supabase start
+      # Unit + jest-integration suites (the latter hit the running Supabase).
+      # --coverage --ci also enforces the 70% thresholds wired into the
+      # domain + mobile jest configs (M6 #48), so a coverage drop fails here.
       - run: pnpm -r test --coverage --ci
+      # SQL integration suite (#45): cross-family RLS isolation for every table +
+      # atomic-fn idempotency, run against the same fresh local Supabase.
+      - run: pnpm test:integration
       - run: supabase stop
         if: always()
       - uses: actions/upload-artifact@v4
