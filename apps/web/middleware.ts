@@ -15,9 +15,19 @@ const AUTH_ROUTES = [
 // Routes a logged-out user may view (onboarding excluded — spec §7).
 const PUBLIC_ROUTES = ['/login', '/signup', '/forgot-password', '/confirm'];
 
+// Fully public marketing/legal routes (M7 #55, #53). These render for anyone —
+// logged-out or logged-in, onboarded or not — and must never trigger an auth or
+// onboarding redirect. Checked first, before any session work.
+const MARKETING_ROUTES = ['/coming-soon', '/privacy', '/terms'];
+
 // Refreshes the Supabase session on every request (the standard @supabase/ssr
 // updateSession pattern) and gates routes by session + profile state (spec §7).
 export async function middleware(request: NextRequest) {
+  // Public marketing/legal pages bypass all auth gating.
+  if (MARKETING_ROUTES.some(r => request.nextUrl.pathname.startsWith(r))) {
+    return NextResponse.next({ request });
+  }
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient<Database>(
