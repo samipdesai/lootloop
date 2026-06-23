@@ -34,3 +34,38 @@ export function deleteFamily(client: LootLoopClient): InvokeResult {
     body: { action: 'delete_family' },
   });
 }
+
+// Classify a leaveFamily() error as the LAST-PARENT case (403 { error:
+// "last_parent" }). functions.invoke surfaces non-2xx as a FunctionsHttpError
+// whose `context` is the raw Response — reading its JSON body is the only way to
+// distinguish the 403 last-parent guard from a generic failure. Kept here (not in
+// the screen) so the HTTP/Edge-Function shape stays inside the backend-aware
+// package (portability rule). Returns false for network errors / non-403s.
+export async function isLastParentError(error: FunctionsError | null): Promise<boolean> {
+  const res: unknown = error?.context;
+  if (!(res instanceof Response) || res.status !== 403) return false;
+  try {
+    const body = (await res.clone().json()) as { error?: unknown };
+    return body.error === 'last_parent';
+  } catch {
+    return false;
+  }
+}
+
+// The signed-in parent's family name + kid count, for the delete-confirm screen
+// (#52). RLS-scoped: families is visible only for id = auth_family_id(), and the
+// kids head-count is restricted to the caller's family. maybeSingle stays
+// null-safe before onboarding completes (mirrors getFamilyCode).
+export async function getFamilySummary(
+  client: LootLoopClient,
+): Promise<{ data: { name: string; kid_count: number } | null; error: unknown }> {
+  const [familyRes, kidsRes] = await Promise.all([
+    client.from('families').select('name').maybeSingle(),
+    // Kids are profiles with role='kid' (see listKids in chores.ts). RLS scopes
+    // the count to the caller's family; head:true fetches the count only.
+    client.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'kid'),
+  ]);
+  if (familyRes.error || !familyRes.data) return { data: null, error: familyRes.error };
+  if (kidsRes.error) return { data: null, error: kidsRes.error };
+  return { data: { name: familyRes.data.name, kid_count: kidsRes.count ?? 0 }, error: null };
+}

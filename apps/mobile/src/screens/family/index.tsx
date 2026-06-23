@@ -120,12 +120,14 @@ function SettingsMenu({
   top,
   onClose,
   onCode,
+  onAccount,
   onLogout,
 }: {
   open: boolean;
   top: number;
   onClose: () => void;
   onCode: () => void;
+  onAccount: () => void;
   onLogout: () => void;
 }) {
   return (
@@ -145,6 +147,7 @@ function SettingsMenu({
           })}
         >
           <MenuRow testID="settings-code" icon="lock" label="Family code" onPress={onCode} />
+          <MenuRow testID="settings-account" icon="trash-2" label="Account" onPress={onAccount} />
           <View style={tw`my-1 h-px bg-ink-100`} />
           <MenuRow
             testID="parent-logout"
@@ -209,6 +212,10 @@ export function FamilyOverviewScreen() {
         onCode={() => {
           setMenuOpen(false);
           nav.navigate('FamilyCode');
+        }}
+        onAccount={() => {
+          setMenuOpen(false);
+          nav.navigate('Account');
         }}
         onLogout={() => {
           setMenuOpen(false);

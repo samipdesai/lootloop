@@ -16,6 +16,7 @@ import { RewardsScreen } from '../screens/rewards';
 import { ScheduleScreen } from '../screens/schedule';
 import { FamilyOverviewScreen } from '../screens/family';
 import { FamilyCodeScreen } from '../screens/family/FamilyCodeScreen';
+import { AccountScreen } from '../screens/family/AccountScreen';
 import { Icon, type IconName } from '../components/ui/Icon';
 import { ParentSplitNavContext, type ParentNav } from './ParentNav';
 import tw from '../lib/tw';
@@ -99,13 +100,14 @@ function ParentStackNav() {
       <ParentStack.Screen name="Kids" component={KidsScreen} />
       <ParentStack.Screen name="Schedule" component={ScheduleScreen} />
       <ParentStack.Screen name="FamilyCode" component={FamilyCodeScreen} />
+      <ParentStack.Screen name="Account" component={AccountScreen} />
     </ParentStack.Navigator>
   );
 }
 
 // A detail section the split view can show: any sidebar section, plus FamilyCode
-// (reached from the Home settings menu, not a sidebar item).
-type DetailKey = keyof ParentTabParamList | 'FamilyCode';
+// and Account (reached from the Home settings menu, not sidebar items).
+type DetailKey = keyof ParentTabParamList | 'FamilyCode' | 'Account';
 type Frame = { section: DetailKey; params?: Record<string, unknown> };
 
 // iPad split-view: persistent sidebar of sections + detail pane. There's no
@@ -172,7 +174,13 @@ function ParentSplitView() {
           })}
         </View>
         <View style={tw`flex-1`}>
-          {active === 'FamilyCode' ? <FamilyCodeScreen /> : renderSection(active, activeLabel)}
+          {active === 'FamilyCode' ? (
+            <FamilyCodeScreen />
+          ) : active === 'Account' ? (
+            <AccountScreen />
+          ) : (
+            renderSection(active, activeLabel)
+          )}
         </View>
       </View>
     </ParentSplitNavContext.Provider>
