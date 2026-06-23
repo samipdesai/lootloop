@@ -2,7 +2,7 @@
 # the iPad split-view sidebar (a plain Pressable, tappable by testID) instead of
 # the iPhone bottom tab bar. Login screens are identical across form factors.
 # Run with: maestro --device <iPad-udid> test kid-chore-flow.ipad.yaml
-appId: org.reactjs.native.example.mobile
+appId: com.lootloop.app
 tags:
   - kid
   - ipad
