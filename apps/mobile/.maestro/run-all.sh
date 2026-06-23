@@ -93,6 +93,58 @@ ensure_parent_user() {
 FAILED=()
 PASSED=0
 
+# Fire the SAME atomic function the web parent "Approve" button calls, over the
+# postgres superuser connection. Used by the cross-device realtime flow: Maestro
+# only drives the mobile (kid) app, so the parent-side approval is simulated here.
+#
+# award_points_on_approval is SECURITY DEFINER and self-authorizes the CALLER via
+# auth_role()/auth_family_id() (it reads auth.uid()/auth.jwt()). As the bare
+# superuser those are null and the call is rejected — so we wrap it in a txn that
+# sets `role authenticated` + a JWT `sub` claim resolving to the seeded parent
+# profile's auth user (parent@maestro.test), exactly like the SQL function tests do.
+# Completion + reviewer (parent profile) ids are the fixed ones in the seed.
+CROSS_COMPLETION_ID="aaaaaaaa-0000-0000-0000-000000000006"
+CROSS_PARENT_PROFILE_ID="aaaaaaaa-0000-0000-0000-000000000004"
+approve_cross_device() {
+  docker exec -i "$DB_CONTAINER" psql -U postgres -v ON_ERROR_STOP=1 <<SQL >/dev/null 2>&1
+begin;
+set local role authenticated;
+select set_config(
+  'request.jwt.claims',
+  json_build_object('sub', (select id from auth.users where email = 'parent@maestro.test'))::text,
+  true
+);
+select award_points_on_approval('$CROSS_COMPLETION_ID', '$CROSS_PARENT_PROFILE_ID');
+commit;
+SQL
+}
+
+# run_cross_device_flow <udid> <flow.yaml> <label>
+# Like run_flow, but BACKGROUNDS the parent approval so it lands while the kid app
+# is parked on Home — proving the balance updates live via realtime (no kid action,
+# no refresh). CROSS_APPROVE_DELAY seconds covers login + reaching Home before the
+# credit fires; the flow's 575 assertion has a 60s timeout to absorb it + latency.
+CROSS_APPROVE_DELAY="${CROSS_APPROVE_DELAY:-22}"
+run_cross_device_flow() {
+  local udid="$1" flow="$2" label="$3" attempt
+  bold "▶ $label"
+  for attempt in 1 2; do
+    seed "seed-cross-device-flow.sql"
+    # Background the out-of-band approval; it fires CROSS_APPROVE_DELAY s after we
+    # launch the flow, i.e. while the kid is parked on Home awaiting the push.
+    ( sleep "$CROSS_APPROVE_DELAY"; approve_cross_device ) &
+    local bg_pid=$!
+    if maestro --device "$udid" test "$DIR/$flow"; then
+      kill "$bg_pid" 2>/dev/null || true; wait "$bg_pid" 2>/dev/null || true
+      grn "  ✓ $label$([ "$attempt" -eq 2 ] && echo ' (retry)')"
+      PASSED=$((PASSED + 1)); return
+    fi
+    kill "$bg_pid" 2>/dev/null || true; wait "$bg_pid" 2>/dev/null || true
+    [ "$attempt" -eq 1 ] && { red "  … $label failed — rebooting + retrying"; reboot_sim "$udid"; }
+  done
+  red "  ✗ $label"; FAILED+=("$label")
+}
+
 # Reboot a sim and wait until it's usable again (relaunch the app so it
 # reconnects to Metro). Used between retry attempts to get a fresh Maestro driver.
 reboot_sim() { # <udid>
@@ -132,6 +184,9 @@ for dev in "$IPHONE_UDID|iPhone|" "$IPAD_UDID|iPad|.ipad"; do
   run_flow "$udid" seed-store-flow.sql          "kid-store-flow${suffix}.yaml"           "$name · kid · store"
   run_flow "$udid" seed-reading-savings-flow.sql "kid-reading-savings-flow${suffix}.yaml" "$name · kid · reading+savings"
   ensure_parent_user
+  # Cross-device realtime: the parent auth user (ensured above) backs the seed's
+  # parent profile + the out-of-band approval the harness fires mid-flow.
+  run_cross_device_flow "$udid" "cross-device-approval-flow${suffix}.yaml" "$name · kid · cross-device realtime"
   run_flow "$udid" seed-parent-flow.sql         "parent-overview-flow${suffix}.yaml"     "$name · parent · overview"
 done
 
