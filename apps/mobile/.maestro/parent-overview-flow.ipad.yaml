@@ -1,10 +1,12 @@
-# Maestro PARENT golden-path flow: email/password login → the 4-tab parent app
-# (Home/Chores/Rewards/Approvals, matching the canvas) + the Home-hub pushes
-# (Schedule, Kids → Give bonus). Targets iPhone. Seed with seed-parent-flow.sql
-# (run-parent-flow.sh does both + ensures the parent auth user).
+# Maestro PARENT golden-path flow — iPad. Same coverage as parent-overview-flow
+# .yaml but drives the iPad split-view sidebar (testID ptab-<Section>) instead of
+# the iPhone bottom tab bar. Kids + Schedule are reached from the Home hub, same
+# as iPhone. Seed with seed-parent-flow.sql (run-parent-flow.sh ensures the user).
+# Run with: maestro --device <iPad-udid> test parent-overview-flow.ipad.yaml
 appId: org.reactjs.native.example.mobile
 tags:
   - parent
+  - ipad
   - golden-path
 ---
 - launchApp:
@@ -20,42 +22,35 @@ tags:
 - inputText: 'Maestro1!'
 - tapOn: 'Welcome back' # dismiss keyboard (can cover Log in)
 - tapOn: 'Log in'
-- tapOn:
-    text: 'Not Now' # iOS save-password prompt
-    optional: true
 
-# Home — Family overview (#19).
-- assertVisible: 'Family'
-# The save-password dialog can appear late and cover the kid card — dismiss again.
-- tapOn:
-    text: 'Not Now'
-    optional: true
+# Home — Family overview. The iOS "Save Password?" system alert (un-dismissable by
+# Maestro on iPad) is suppressed by run-all.sh's preflight (AutoFill disabled), so
+# we can wait directly for the home. extendedWaitUntil rides out the async login.
+- extendedWaitUntil:
+    visible: 'Family'
+    timeout: 15000
 - assertVisible: 'Ava'
 - assertVisible: 'Quick actions'
 
-# The 4 bottom tabs carry tabBarButtonTestID ptab-<Section> and respond to id
-# taps (more reliable than positional taps on the tab bar).
-# Chores (#21).
+# Sidebar sections (Home/Chores/Rewards/Approvals) — testID ptab-<Section>.
 - tapOn:
     id: 'ptab-Chores'
 - assertVisible: 'Feed the dog'
 - assertVisible:
     id: 'new-chore'
-# Rewards (#22-store).
 - tapOn:
     id: 'ptab-Rewards'
 - assertVisible: 'Ice cream Sundae'
-# Approvals (#22).
 - tapOn:
     id: 'ptab-Approvals'
 - assertVisible: 'Feed the dog'
 
-# Back Home, then the Home-hub pushes.
+# Back Home, then the Home-hub pushes (Kids + Schedule are not sidebar items).
 - tapOn:
     id: 'ptab-Home'
 - assertVisible: 'Family'
 
-# Schedule (#36) — pushed from the Home quick action, then back.
+# Schedule — pushed from the Home quick action, then back.
 - tapOn: 'Schedule'
 - assertVisible: 'Homework time'
 - tapOn:
@@ -63,7 +58,7 @@ tags:
 - assertVisible: 'Family'
 
 # Kids → the Home "Give bonus" quick action lands on the roster; the kid card's
-# "Bonus" action opens the award-points form (#23).
+# "Bonus" action opens the award-points form.
 - tapOn: 'Give bonus'
 - assertVisible: 'Ava'
 - tapOn: 'Bonus'

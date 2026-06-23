@@ -28,11 +28,9 @@ tags:
 - inputText: '1234'
 - tapOn: 'Log in'
 
-# Kid shell lands on Home; switch to the Store tab (#23). iOS react-navigation tab
-# buttons ignore Maestro's id/text tap — tap by position. 5 evenly-spaced tabs →
-# Store is the 3rd (≈50% width, ≈96% height).
+# Kid shell lands on Home; switch to the Store tab (#23) via its tab-Store testID.
 - tapOn:
-    point: '50%,96%'
+    id: 'tab-Store'
 - assertVisible: 'Store'
 - assertVisible: 'Ice cream Sundae'
 

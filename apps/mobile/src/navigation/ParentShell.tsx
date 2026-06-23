@@ -152,6 +152,7 @@ function ParentSplitView() {
             return (
               <Pressable
                 key={s.key}
+                testID={`ptab-${s.key}`}
                 accessibilityRole="button"
                 accessibilityState={{ selected }}
                 onPress={() => select(s.key)}

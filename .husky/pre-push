@@ -1,0 +1,5 @@
+# Full E2E matrix before code leaves the machine: {kid, parent} × {iPhone, iPad}
+# Maestro golden-path flows. Needs local Supabase + Metro up and the app
+# installed on both sims; the runner fails fast with guidance if not.
+# Skip (e.g. docs-only or no-sim push): git push --no-verify
+apps/mobile/.maestro/run-all.sh

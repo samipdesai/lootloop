@@ -27,10 +27,9 @@ tags:
 - tapOn: 'Log in'
 
 # Reading (#27/#30): log a book → it appears in the list. iOS tab buttons ignore
-# Maestro's id/text tap — tap the bar by position. 5 evenly-spaced tabs → Reading
-# is the 4th (≈70% width, ≈96% height).
+# the bottom tabs respond to their tab-<Section> testID.
 - tapOn:
-    point: '70%,96%'
+    id: 'tab-Reading'
 - tapOn:
     id: 'reading-title-input'
 - inputText: "Charlotte's Web"
@@ -44,9 +43,9 @@ tags:
 - assertVisible: "Charlotte's Web" # the new log row (Pending)
 
 # Savings (#31/#32/#33): deposit 40 (default direction is Deposit) → it lands in
-# the savings history. Savings is the 5th tab (≈90% width, ≈96% height).
+# the savings history. Switch via the tab-Savings testID.
 - tapOn:
-    point: '90%,96%'
+    id: 'tab-Savings'
 - tapOn:
     id: 'savings-amount-input'
 - inputText: '40'
