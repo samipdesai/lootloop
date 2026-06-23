@@ -41,6 +41,19 @@ export const NAV_ITEMS: NavItem[] = [
     ),
   },
   {
+    href: '/rewards',
+    label: 'Rewards',
+    icon: (
+      <svg {...iconProps} aria-hidden="true">
+        <path d="M20 12v9H4v-9" />
+        <rect x="2" y="7" width="20" height="5" rx="1.5" />
+        <path d="M12 7V21" />
+        <path d="M12 7S10.5 3 8 3a2.5 2.5 0 0 0 0 5h4" />
+        <path d="M12 7s1.5-4 4-4a2.5 2.5 0 0 1 0 5h-4" />
+      </svg>
+    ),
+  },
+  {
     href: '/approvals',
     label: 'Approvals',
     icon: (
@@ -58,19 +71,6 @@ export const NAV_ITEMS: NavItem[] = [
         <path d="M3.5 20a5.5 5.5 0 0 1 11 0" />
         <path d="M16 7.5a3 3 0 0 1 0 5.6" />
         <path d="M17 20a5.5 5.5 0 0 0-2.5-4.6" />
-      </svg>
-    ),
-  },
-  {
-    href: '/rewards',
-    label: 'Rewards',
-    icon: (
-      <svg {...iconProps} aria-hidden="true">
-        <path d="M20 12v9H4v-9" />
-        <rect x="2" y="7" width="20" height="5" rx="1.5" />
-        <path d="M12 7V21" />
-        <path d="M12 7S10.5 3 8 3a2.5 2.5 0 0 0 0 5h4" />
-        <path d="M12 7s1.5-4 4-4a2.5 2.5 0 0 1 0 5h-4" />
       </svg>
     ),
   },
