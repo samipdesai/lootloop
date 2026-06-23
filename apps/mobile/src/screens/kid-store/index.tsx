@@ -9,18 +9,17 @@ import { ActivityIndicator, FlatList, Text, View } from 'react-native';
 import {
   getKidWallet,
   listActiveRewards,
-  purchaseReward,
   subscribeToTable,
   type Reward,
 } from '@lootloop/client';
 import { useKidSession } from '../../stores/kidSession';
 import { useSizeClass } from '../../hooks/useSizeClass';
+import { useShellNav } from '../../navigation/shellNav';
 import { Button } from '../../components/ui/Button';
 import { Icon } from '../../components/ui/Icon';
 import { CoinBadge, CoinGlyph } from '../../components/ui/money';
 import tw from '../../lib/tw';
 import { canAfford, shortfall } from './affordability';
-import { Celebration } from './Celebration';
 
 const fmt = (n: number) => n.toLocaleString('en-US');
 
@@ -47,21 +46,11 @@ function WalletChip({ balance }: { balance: number | null }) {
 function RewardCard({
   reward,
   balance,
-  busy,
-  confirming,
-  error,
-  onAskBuy,
-  onCancel,
-  onConfirm,
+  onBuy,
 }: {
   reward: Reward;
   balance: number | null;
-  busy: boolean;
-  confirming: boolean;
-  error: boolean;
-  onAskBuy: () => void;
-  onCancel: () => void;
-  onConfirm: () => void;
+  onBuy: () => void;
 }) {
   const affordable = canAfford(balance, reward.cost);
   const need = shortfall(balance, reward.cost);
@@ -98,26 +87,8 @@ function RewardCard({
           <CoinBadge amount={reward.cost} size="sm" tone="soft" />
         </View>
 
-        {confirming ? (
-          <View style={tw`gap-2`}>
-            <View style={tw`flex-row items-center gap-1`}>
-              <Text style={tw`font-sans text-[13px] font-bold text-ink-700`}>Buy for</Text>
-              <CoinGlyph size={14} />
-              <Text style={tw`font-sans text-[13px] font-bold text-ink-700`}>
-                {fmt(reward.cost)}?
-              </Text>
-            </View>
-            <View style={tw`flex-row items-center gap-2`}>
-              <Button size="sm" variant="mint" loading={busy} disabled={busy} onPress={onConfirm}>
-                Yes
-              </Button>
-              <Button size="sm" variant="ghost" disabled={busy} onPress={onCancel}>
-                No
-              </Button>
-            </View>
-          </View>
-        ) : affordable ? (
-          <Button size="sm" block onPress={onAskBuy}>
+        {affordable ? (
+          <Button size="sm" block onPress={onBuy}>
             Buy
           </Button>
         ) : (
@@ -128,12 +99,6 @@ function RewardCard({
             <Text style={tw`font-sans text-[13px] font-bold text-ink-400`}>{need} more</Text>
           </View>
         )}
-
-        {error ? (
-          <Text style={tw`font-sans text-[12px] font-bold text-danger-ink`}>
-            Couldn&apos;t buy that — try again.
-          </Text>
-        ) : null}
       </View>
     </View>
   );
@@ -142,15 +107,12 @@ function RewardCard({
 export function KidStoreScreen() {
   const { client, profile } = useKidSession();
   const isRegular = useSizeClass() === 'regular';
+  const nav = useShellNav();
   const numColumns = isRegular ? 3 : 2;
 
   const [rewards, setRewards] = useState<Reward[] | null>(null);
   const [balance, setBalance] = useState<number | null>(null);
   const [loadError, setLoadError] = useState('');
-  const [confirmId, setConfirmId] = useState<string | null>(null);
-  const [busyId, setBusyId] = useState<string | null>(null);
-  const [errorId, setErrorId] = useState<string | null>(null);
-  const [celebrate, setCelebrate] = useState(0);
 
   const load = useCallback(async () => {
     if (!client || !profile) return;
@@ -188,21 +150,6 @@ export function KidStoreScreen() {
     ];
     return () => unsubs.forEach((u) => u());
   }, [client, profile, load]);
-
-  const buy = async (reward: Reward) => {
-    if (!client || !profile || busyId) return;
-    setBusyId(reward.id);
-    setErrorId(null);
-    const { error } = await purchaseReward(client, reward.id, profile.id);
-    setBusyId(null);
-    if (error) {
-      setErrorId(reward.id);
-      return;
-    }
-    setConfirmId(null);
-    setCelebrate((n) => n + 1);
-    await load();
-  };
 
   if (rewards === null) {
     return (
@@ -249,21 +196,19 @@ export function KidStoreScreen() {
           <RewardCard
             reward={item}
             balance={balance}
-            busy={busyId === item.id}
-            confirming={confirmId === item.id}
-            error={errorId === item.id}
-            onAskBuy={() => {
-              setErrorId(null);
-              setConfirmId(item.id);
-            }}
-            onCancel={() => setConfirmId(null)}
-            onConfirm={() => void buy(item)}
+            onBuy={() =>
+              nav.navigate('ConfirmPurchase', {
+                rewardId: item.id,
+                title: item.title,
+                cost: item.cost,
+                emoji: item.emoji,
+              })
+            }
           />
         )}
         refreshing={false}
         onRefresh={() => void load()}
       />
-      <Celebration token={celebrate} />
     </View>
   );
 }

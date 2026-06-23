@@ -5,10 +5,10 @@
 // transfer_to_savings (atomic, self-authed, overdraft-rejecting). (The canvas
 // pushes Move loot / Interest to screens 16/17; kept inline until the kid stack.)
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, FlatList, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   getKidWallet,
-  transferToSavings,
   listSavingsTransactions,
   subscribeToTable,
   type SavingsTransaction,
@@ -16,107 +16,41 @@ import {
 import { projectInterest } from '@lootloop/domain';
 import { useKidSession } from '../../stores/kidSession';
 import { useSizeClass } from '../../hooks/useSizeClass';
+import { useShellNav } from '../../navigation/shellNav';
 import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
 import { Icon, type IconName } from '../../components/ui/Icon';
 import { BalancePill, CoinBadge, CoinGlyph } from '../../components/ui/money';
 import { Looty } from '../../components/ui/BrandMark';
-import { Segmented } from '../../components/ui/Segmented';
 import tw from '../../lib/tw';
 import { relativeDate } from './format';
 
-type Direction = 'deposit' | 'withdraw';
 interface Balances {
   wallet: number;
   savings: number;
 }
 const fmt = (n: number) => n.toLocaleString('en-US');
 
-// Next-month interest teaser (mint row, trending-up). projectInterest(savings, 0)
-// = what THIS balance earns next month at the 5%/month teaching rate.
-function InterestRow({ savings }: { savings: number }) {
+// Next-month interest teaser (mint row, trending-up) — taps through to the
+// Interest & history screen (#17). projectInterest(savings, 0) = what THIS
+// balance earns next month at the 5%/month teaching rate.
+function InterestRow({ savings, onPress }: { savings: number; onPress: () => void }) {
   const next = projectInterest(savings, 0);
   return (
-    <View style={tw`flex-row items-center justify-between rounded-lg bg-mint-soft px-4 py-3`}>
+    <Pressable
+      testID="interest-row"
+      accessibilityRole="button"
+      onPress={onPress}
+      style={tw`flex-row items-center justify-between rounded-lg bg-mint-soft px-4 py-3`}
+    >
       <View style={tw`flex-row items-center gap-2`}>
         <Icon name="trending-up" size={20} color="#0A6A46" />
         <Text style={tw`font-sans text-[14px] font-extrabold text-mint-ink`}>Earns next month</Text>
       </View>
-      <CoinBadge amount={next} size="sm" tone="plain" sign />
-    </View>
-  );
-}
-
-function TransferCard({
-  balances,
-  busy,
-  error,
-  onSubmit,
-}: {
-  balances: Balances;
-  busy: boolean;
-  error: string;
-  onSubmit: (amount: number, direction: Direction) => void;
-}) {
-  const [direction, setDirection] = useState<Direction>('deposit');
-  const [raw, setRaw] = useState('');
-  const amount = Number.parseInt(raw, 10);
-  const valid = Number.isInteger(amount) && amount > 0;
-  const source = direction === 'deposit' ? balances.wallet : balances.savings;
-  const overdraft = valid && amount > source;
-  const canSubmit = valid && !overdraft && !busy;
-  const localError = overdraft
-    ? direction === 'deposit'
-      ? `You only have ${fmt(balances.wallet)} in your wallet.`
-      : `You only have ${fmt(balances.savings)} in savings.`
-    : '';
-  const submit = () => {
-    if (!canSubmit) return;
-    onSubmit(amount, direction);
-    setRaw('');
-  };
-  return (
-    <View
-      style={tw.style('gap-3 rounded-card bg-surface-card p-4', {
-        shadowColor: 'rgba(32,36,58,1)',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 6,
-        elevation: 2,
-      })}
-    >
-      <Text style={tw`font-display text-[18px] font-extrabold text-ink-900`}>Move your loot</Text>
-      <Segmented
-        value={direction}
-        onChange={setDirection}
-        options={[
-          { key: 'deposit', label: 'Deposit ↓' },
-          { key: 'withdraw', label: 'Withdraw ↑' },
-        ]}
-      />
-      <Text style={tw`-mt-1 font-sans text-[12px] font-bold text-ink-400`}>
-        {direction === 'deposit' ? 'Wallet → Savings' : 'Savings → Wallet'}
-      </Text>
-      <Input
-        testID="savings-amount-input"
-        label="Amount"
-        keyboardType="number-pad"
-        placeholder="0"
-        value={raw}
-        onChangeText={(t) => setRaw(t.replace(/[^0-9]/g, ''))}
-        error={localError || error || undefined}
-        editable={!busy}
-      />
-      <Button
-        variant="mint"
-        block
-        loading={busy}
-        disabled={!canSubmit}
-        onPress={submit}
-      >
-        {direction === 'deposit' ? 'Deposit to savings' : 'Withdraw to wallet'}
-      </Button>
-    </View>
+      <View style={tw`flex-row items-center gap-2`}>
+        <CoinBadge amount={next} size="sm" tone="plain" sign />
+        <Icon name="chevron-right" size={18} color="#0A6A46" />
+      </View>
+    </Pressable>
   );
 }
 
@@ -171,12 +105,12 @@ function HistoryRow({ txn }: { txn: SavingsTransaction }) {
 export function KidSavingsScreen() {
   const { client, profile } = useKidSession();
   const isRegular = useSizeClass() === 'regular';
+  const insets = useSafeAreaInsets();
+  const nav = useShellNav();
 
   const [balances, setBalances] = useState<Balances | null>(null);
   const [history, setHistory] = useState<SavingsTransaction[] | null>(null);
   const [loadError, setLoadError] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [transferError, setTransferError] = useState('');
 
   const load = useCallback(async () => {
     if (!client || !profile) return;
@@ -216,19 +150,6 @@ export function KidSavingsScreen() {
     return () => unsubs.forEach((u) => u());
   }, [client, profile, load]);
 
-  const transfer = async (amount: number, direction: Direction) => {
-    if (!client || !profile || busy) return;
-    setBusy(true);
-    setTransferError('');
-    const { error } = await transferToSavings(client, profile.id, amount, direction);
-    setBusy(false);
-    if (error) {
-      setTransferError("That didn't work — check the amount and try again.");
-      return;
-    }
-    await load();
-  };
-
   const header = useMemo(
     () => (
       <View style={tw`gap-3.5 pb-1`}>
@@ -237,14 +158,8 @@ export function KidSavingsScreen() {
           <Looty size={76} />
         </View>
         <BalancePill amount={balances?.savings ?? 0} label="In savings" tone="mint" />
-        {balances ? <InterestRow savings={balances.savings} /> : null}
         {balances ? (
-          <TransferCard
-            balances={balances}
-            busy={busy}
-            error={transferError}
-            onSubmit={(a, d) => void transfer(a, d)}
-          />
+          <InterestRow savings={balances.savings} onPress={() => nav.navigate('Interest')} />
         ) : null}
         {loadError ? (
           <View style={tw`rounded-md bg-danger-soft px-4 py-3`}>
@@ -257,7 +172,7 @@ export function KidSavingsScreen() {
       </View>
     ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [balances, busy, transferError, loadError],
+    [balances, loadError],
   );
 
   if (balances === null && history === null) {
@@ -290,6 +205,12 @@ export function KidSavingsScreen() {
         refreshing={false}
         onRefresh={() => void load()}
       />
+      {/* Fixed "Move loot" action → pushed Move loot screen (#16). */}
+      <View style={tw.style('border-t border-ink-100 bg-surface-page px-5 pt-3', { paddingBottom: insets.bottom + 10 })}>
+        <Button testID="move-loot-cta" variant="mint" block size="lg" onPress={() => nav.navigate('MoveLoot')}>
+          Move loot
+        </Button>
+      </View>
     </View>
   );
 }

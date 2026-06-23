@@ -7,8 +7,8 @@
 // the kid native-stack lands.)
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  createReadingLog,
   listKidReadingLogs,
   getReadingStreak,
   subscribeToTable,
@@ -16,8 +16,8 @@ import {
 } from '@lootloop/client';
 import { useKidSession } from '../../stores/kidSession';
 import { useSizeClass } from '../../hooks/useSizeClass';
+import { useShellNav } from '../../navigation/shellNav';
 import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
 import { Icon } from '../../components/ui/Icon';
 import { StreakMeter } from '../../components/ui/money';
 import tw from '../../lib/tw';
@@ -26,9 +26,7 @@ import {
   minutesLabel,
   statusBadge,
   readOnLabel,
-  validateLogForm,
   type BadgeTone,
-  type LogFormErrors,
 } from './reading';
 
 interface ScreenData {
@@ -60,71 +58,6 @@ function StatCard({ label, value }: { label: string; value: string }) {
         {label}
       </Text>
       <Text style={tw`mt-0.5 font-display text-[26px] font-extrabold text-ink-900`}>{value}</Text>
-    </View>
-  );
-}
-
-function LogForm({
-  onSubmit,
-  submitting,
-}: {
-  onSubmit: (bookTitle: string, minutes: number) => Promise<boolean>;
-  submitting: boolean;
-}) {
-  const [bookTitle, setBookTitle] = useState('');
-  const [minutes, setMinutes] = useState('');
-  const [errors, setErrors] = useState<LogFormErrors>({});
-
-  const handleSubmit = async () => {
-    const result = validateLogForm({ bookTitle, minutes });
-    setErrors(result.errors);
-    if (!result.valid) return;
-    const ok = await onSubmit(result.values.bookTitle, result.values.minutes);
-    if (ok) {
-      setBookTitle('');
-      setMinutes('');
-      setErrors({});
-    }
-  };
-
-  return (
-    <View
-      style={tw.style('gap-3 rounded-card bg-surface-card p-5', {
-        shadowColor: 'rgba(32,36,58,1)',
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.1,
-        shadowRadius: 20,
-        elevation: 6,
-      })}
-    >
-      <View style={tw`flex-row items-center gap-2`}>
-        <Icon name="book-open" size={20} color="#444CCB" />
-        <Text style={tw`font-display text-[18px] font-extrabold text-ink-900`}>Log your reading</Text>
-      </View>
-      <Input
-        testID="reading-title-input"
-        label="Book title"
-        placeholder="What did you read?"
-        value={bookTitle}
-        onChangeText={setBookTitle}
-        maxLength={200}
-        autoCapitalize="words"
-        error={errors.bookTitle}
-        editable={!submitting}
-      />
-      <Input
-        testID="reading-minutes-input"
-        label="Minutes"
-        placeholder="How many minutes?"
-        value={minutes}
-        onChangeText={(t) => setMinutes(t.replace(/[^0-9]/g, ''))}
-        keyboardType="number-pad"
-        error={errors.minutes}
-        editable={!submitting}
-      />
-      <Button block loading={submitting} disabled={submitting} onPress={() => void handleSubmit()}>
-        ＋ Log reading
-      </Button>
     </View>
   );
 }
@@ -172,9 +105,10 @@ function LogRow({ log }: { log: ReadingLog }) {
 export function KidReadingScreen() {
   const { client, profile } = useKidSession();
   const isRegular = useSizeClass() === 'regular';
+  const insets = useSafeAreaInsets();
+  const nav = useShellNav();
   const [data, setData] = useState<ScreenData | null>(null);
   const [error, setError] = useState('');
-  const [submitting, setSubmitting] = useState(false);
 
   const load = useCallback(async () => {
     if (!client || !profile) return;
@@ -213,25 +147,6 @@ export function KidReadingScreen() {
     return () => unsubs.forEach((u) => u());
   }, [client, profile, load]);
 
-  const handleLog = async (bookTitle: string, minutes: number): Promise<boolean> => {
-    if (!client || !profile || submitting) return false;
-    setSubmitting(true);
-    setError('');
-    const { error: err } = await createReadingLog(client, {
-      family_id: profile.family_id,
-      kid_id: profile.id,
-      book_title: bookTitle,
-      minutes,
-    });
-    setSubmitting(false);
-    if (err) {
-      setError("Couldn't save that. Try again.");
-      return false;
-    }
-    await load();
-    return true;
-  };
-
   if (data === null) {
     return (
       <View style={tw`flex-1 items-center justify-center bg-surface-page`}>
@@ -257,7 +172,6 @@ export function KidReadingScreen() {
               <StatCard label="Longest streak" value={`${data.longest} ${data.longest === 1 ? 'day' : 'days'}`} />
               <StatCard label="This week" value={`${weekMinutes(data.logs)} min`} />
             </View>
-            <LogForm onSubmit={handleLog} submitting={submitting} />
             {error ? (
               <View style={tw`rounded-card bg-danger-soft px-4 py-3`}>
                 <Text style={tw`font-sans text-[14px] font-bold text-danger-ink`}>{error}</Text>
@@ -282,6 +196,12 @@ export function KidReadingScreen() {
         refreshing={false}
         onRefresh={() => void load()}
       />
+      {/* Fixed "Log today's reading" action → pushed Log reading screen (#14). */}
+      <View style={tw.style('border-t border-ink-100 bg-surface-page px-5 pt-3', { paddingBottom: insets.bottom + 10 })}>
+        <Button testID="log-reading-cta" block size="lg" onPress={() => nav.navigate('LogReading')}>
+          ＋ Log today&apos;s reading
+        </Button>
+      </View>
     </View>
   );
 }

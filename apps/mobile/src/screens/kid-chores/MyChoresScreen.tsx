@@ -4,7 +4,7 @@
 // "Assigned to you" list. Claiming/completing go through the kid-session service
 // (RLS scopes writes to the kid's own completions).
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native';
 import {
   listKidChores,
   claimChore,
@@ -14,6 +14,7 @@ import {
   type LootLoopClient,
 } from '@lootloop/client';
 import { useKidSession } from '../../stores/kidSession';
+import { useShellNav } from '../../navigation/shellNav';
 import { Button } from '../../components/ui/Button';
 import { Icon, type IconName } from '../../components/ui/Icon';
 import { CoinBadge } from '../../components/ui/money';
@@ -55,18 +56,23 @@ function ChoreCard({
   claimable,
   onClaim,
   onComplete,
+  onOpen,
 }: {
   chore: KidChore;
   busy: boolean;
   claimable: boolean;
   onClaim: () => void;
   onComplete: () => void;
+  onOpen: () => void;
 }) {
   const bucket = bucketOf(chore);
   const rejected = chore.status === 'rejected';
   const tileBg = claimable ? 'bg-surface-card' : 'bg-indigo-soft';
   return (
-    <View
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={chore.title}
+      onPress={onOpen}
       style={tw.style(
         `flex-row items-center gap-3 rounded-card px-3.5 py-3.5 ${claimable ? 'bg-indigo-soft' : 'bg-surface-card'}`,
         claimable
@@ -120,13 +126,14 @@ function ChoreCard({
           Done
         </Button>
       )}
-    </View>
+    </Pressable>
   );
 }
 
 export function MyChoresScreen() {
   const { client, profile } = useKidSession();
   const isRegular = useSizeClass() === 'regular';
+  const nav = useShellNav();
   const [tab, setTab] = useState<Bucket>('todo');
   const [chores, setChores] = useState<KidChore[] | null>(null);
   const [error, setError] = useState('');
@@ -199,6 +206,7 @@ export function MyChoresScreen() {
       busy={busyId === item.instance_id}
       onClaim={() => runAction(item, claimChore)}
       onComplete={() => runAction(item, completeChore)}
+      onOpen={() => nav.navigate('ChoreDetail', { chore: item })}
     />
   );
 

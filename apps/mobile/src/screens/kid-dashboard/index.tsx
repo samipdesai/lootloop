@@ -5,7 +5,6 @@
 // it to the signed-in kid. Adaptive: single column on iPhone, centered on iPad.
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
 import {
   getKidWallet,
   getReadingStreak,
@@ -18,6 +17,7 @@ import {
 } from '@lootloop/client';
 import { useKidSession } from '../../stores/kidSession';
 import { useSizeClass } from '../../hooks/useSizeClass';
+import { useShellNav } from '../../navigation/shellNav';
 import { Button } from '../../components/ui/Button';
 import { Icon, type IconName } from '../../components/ui/Icon';
 import { BalancePill, CoinBadge, ProgressBar, StreakMeter } from '../../components/ui/money';
@@ -141,7 +141,7 @@ function ChoreRow({
 
 export function KidDashboardScreen() {
   const { client, profile } = useKidSession();
-  const nav = useNavigation<{ navigate: (s: string) => void }>();
+  const nav = useShellNav();
   const isRegular = useSizeClass() === 'regular';
   const [data, setData] = useState<DashboardData | null>(null);
   const [error, setError] = useState('');
@@ -241,7 +241,14 @@ export function KidDashboardScreen() {
                 <Text style={tw`font-sans text-[14px] font-bold text-danger-ink`}>{error}</Text>
               </View>
             ) : null}
-            <BalancePill amount={data.walletBalance} label="Wallet" tone="orange" />
+            <Pressable
+              testID="wallet-pill"
+              accessibilityRole="button"
+              accessibilityLabel="Wallet history"
+              onPress={() => nav.navigate('WalletHistory')}
+            >
+              <BalancePill amount={data.walletBalance} label="Wallet" tone="orange" />
+            </Pressable>
             <View style={tw`flex-row gap-3`}>
               <ShortcutCard
                 icon="piggy-bank"
@@ -263,6 +270,25 @@ export function KidDashboardScreen() {
               />
             </View>
             <StreakMeter days={data.streak} goal={7} />
+            <Pressable
+              testID="schedule-card"
+              accessibilityRole="button"
+              accessibilityLabel="Today's schedule"
+              onPress={() => nav.navigate('TodaySchedule')}
+              style={tw.style('flex-row items-center gap-3 rounded-card bg-surface-card px-4 py-3.5', {
+                shadowColor: 'rgba(32,36,58,1)',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.08,
+                shadowRadius: 6,
+                elevation: 2,
+              })}
+            >
+              <View style={tw`h-10 w-10 items-center justify-center rounded-md bg-mint-soft`}>
+                <Icon name="calendar-clock" size={22} color="#0A6A46" />
+              </View>
+              <Text style={tw`flex-1 font-display text-[15px] font-extrabold text-ink-900`}>Today&apos;s schedule</Text>
+              <Icon name="chevron-right" size={20} color="#A39CAD" />
+            </Pressable>
             <View style={tw`mt-1 flex-row items-center justify-between`}>
               <Text style={tw`font-display text-[19px] font-extrabold text-ink-900`}>
                 Today&apos;s chores

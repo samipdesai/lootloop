@@ -40,10 +40,25 @@ tags:
     id: 'tab-Chores'
 - assertVisible: 'Make your bed'
 
-# Complete it (#16) → moves to the pending/awaiting-approval state. Tap the Done
-# button by id (the screen also has a "Done" segment tab — avoid the text clash),
-# then switch to the Pending tab and confirm the chore moved there.
+# Open the chore → Chore detail (#09) → Mark done (#16) → it moves to pending.
+# Then switch to the Pending tab and confirm the chore moved there.
+- tapOn: 'Make your bed'
+- assertVisible: 'Mark done'
 - tapOn:
     id: 'chore-done'
 - tapOn: 'Pending'
 - assertVisible: 'Make your bed'
+
+# Home → Wallet history (#10) and Today's schedule (#18), pushed from the Home hub.
+- tapOn:
+    id: 'tab-Home'
+- tapOn:
+    id: 'wallet-pill'
+- assertVisible: 'Wallet'
+- tapOn:
+    id: 'kid-back'
+- tapOn:
+    id: 'schedule-card'
+- assertVisible: 'My day'
+- tapOn:
+    id: 'kid-back'

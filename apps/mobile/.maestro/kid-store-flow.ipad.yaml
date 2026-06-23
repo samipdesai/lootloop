@@ -26,12 +26,14 @@ tags:
 - inputText: '1234'
 - tapOn: 'Log in'
 
-# Store tab (sidebar) → buy a reward → it becomes unaffordable.
+# Store tab (sidebar) → Buy → Confirm purchase screen (#12) → Buy it → it becomes
+# unaffordable.
 - tapOn:
     id: 'tab-Store'
 - assertVisible: 'Store'
 - assertVisible: 'Ice cream Sundae'
 - tapOn: 'Buy'
-- assertVisible: 'Buy for.*'
-- tapOn: 'Yes'
+- assertVisible: 'Buy this reward?'
+- tapOn:
+    id: 'confirm-buy'
 - assertVisible: 'Need.*'

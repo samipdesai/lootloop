@@ -26,33 +26,41 @@ tags:
 - inputText: '1234'
 - tapOn: 'Log in'
 
-# Reading (#27/#30): log a book → it appears in the list. iOS tab buttons ignore
-# the bottom tabs respond to their tab-<Section> testID.
+# Reading (#27/#30): the Reading tab → "Log today's reading" pushes the Log
+# reading screen (#14) → log a book → back on Reading it appears in the list.
 - tapOn:
     id: 'tab-Reading'
+- tapOn:
+    id: 'log-reading-cta'
 - tapOn:
     id: 'reading-title-input'
 - inputText: "Charlotte's Web"
 - tapOn:
     id: 'reading-minutes-input'
 - inputText: '20'
-# Dismiss the number-pad (it covers the Log button below the form) by tapping the
-# form heading — a non-input tap dismisses the keyboard on iOS.
-- tapOn: 'Log your reading'
-- tapOn: '.*Log reading.*' # button label is "＋ Log reading"
-- assertVisible: "Charlotte's Web" # the new log row (Pending)
+# Dismiss the number-pad (it covers the Log button) by tapping the heading.
+- tapOn: 'What did you read?'
+- tapOn:
+    id: 'log-reading-submit'
+- assertVisible: "Charlotte's Web" # back on Reading, the new log row (Pending)
 
-# Savings (#31/#32/#33): deposit 40 (default direction is Deposit) → it lands in
-# the savings history. Switch via the tab-Savings testID.
+# Savings (#31/#32/#33): the Savings tab → "Move loot" pushes the Move loot screen
+# (#16) → deposit 40 → back on Savings it lands in the history.
 - tapOn:
     id: 'tab-Savings'
 - tapOn:
+    id: 'move-loot-cta'
+- tapOn:
     id: 'savings-amount-input'
 - inputText: '40'
-# Dismiss the number-pad (it covers the input-gated Deposit button on iPhone) by
-# tapping the card title — the FlatList dismisses the keyboard on a non-input tap.
-# (Maestro's hideKeyboard is unreliable on iOS sims.) This also lets the
-# enabled-state re-render settle before we tap.
-- tapOn: 'Move your loot'
+# Dismiss the number-pad (it covers the Deposit button) by tapping the heading.
+- tapOn: 'Move loot'
 - tapOn: 'Deposit to savings'
 - assertVisible: 'Deposit' # the new "Deposit" history row (exact label)
+
+# Interest & history (#17): the "Earns next month" row pushes the Interest screen.
+- tapOn:
+    id: 'interest-row'
+- assertVisible: 'How interest works'
+- tapOn:
+    id: 'kid-back'

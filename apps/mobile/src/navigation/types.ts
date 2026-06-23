@@ -48,3 +48,16 @@ export type KidTabParamList = {
   Reading: undefined;
   Savings: undefined;
 };
+
+// Kid native-stack: the tab shell as root + the pushed detail screens (canvas
+// 09/10/12/14/16/17/18). On iPad these render in the split-view detail pane.
+export type KidStackParamList = {
+  KidHome: undefined;
+  ChoreDetail: { chore: import('@lootloop/client').KidChore };
+  WalletHistory: undefined;
+  LogReading: undefined;
+  MoveLoot: undefined;
+  Interest: undefined;
+  ConfirmPurchase: { rewardId: string; title: string; cost: number; emoji: string | null };
+  TodaySchedule: undefined;
+};

@@ -26,25 +26,37 @@ tags:
 - inputText: '1234'
 - tapOn: 'Log in'
 
-# Reading (sidebar): log a book → it appears in the list.
+# Reading (sidebar) → "Log today's reading" pushes the Log reading screen (#14).
 - tapOn:
     id: 'tab-Reading'
+- tapOn:
+    id: 'log-reading-cta'
 - tapOn:
     id: 'reading-title-input'
 - inputText: "Charlotte's Web"
 - tapOn:
     id: 'reading-minutes-input'
 - inputText: '20'
-- tapOn: 'Log your reading' # dismiss the number-pad
-- tapOn: '.*Log reading.*'
+- tapOn: 'What did you read?' # dismiss the number-pad
+- tapOn:
+    id: 'log-reading-submit'
 - assertVisible: "Charlotte's Web"
 
-# Savings (sidebar): deposit 40 → lands in the savings history.
+# Savings (sidebar) → "Move loot" pushes the Move loot screen (#16) → deposit 40.
 - tapOn:
     id: 'tab-Savings'
 - tapOn:
+    id: 'move-loot-cta'
+- tapOn:
     id: 'savings-amount-input'
 - inputText: '40'
-- tapOn: 'Move your loot' # dismiss the number-pad
+- tapOn: 'Move loot' # dismiss the number-pad
 - tapOn: 'Deposit to savings'
 - assertVisible: 'Deposit'
+
+# Interest & history (#17): the "Earns next month" row pushes the Interest screen.
+- tapOn:
+    id: 'interest-row'
+- assertVisible: 'How interest works'
+- tapOn:
+    id: 'kid-back'
