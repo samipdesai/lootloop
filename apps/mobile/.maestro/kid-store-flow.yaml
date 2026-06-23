@@ -28,20 +28,19 @@ tags:
 - inputText: '1234'
 - tapOn: 'Log in'
 
-# Kid shell lands on Home; switch to the Store tab (#23). iOS react-navigation tab
-# buttons ignore Maestro's id/text tap — tap by position. 5 evenly-spaced tabs →
-# Store is the 3rd (≈50% width, ≈96% height).
+# Kid shell lands on Home; switch to the Store tab (#23) via its tab-Store testID.
 - tapOn:
-    point: '50%,96%'
-- assertVisible: 'Your loot'
+    id: 'tab-Store'
+- assertVisible: 'Store'
 - assertVisible: 'Ice cream Sundae'
 
-# Buy it (#24): Buy → inline confirm → Yes.
+# Buy it (#24): Buy → Confirm purchase screen (#12) → Buy it → celebrate → back.
 - tapOn: 'Buy'
-- assertVisible: 'Buy for.*' # the "Buy for 🪙 70?" confirm prompt
-- tapOn: 'Yes'
+- assertVisible: 'Buy this reward?'
+- tapOn:
+    id: 'confirm-buy'
 
-# After purchase the balance dropped 100→30 (celebration #26 fired transiently),
-# so the 70-cost reward is now unaffordable — a durable confirmation the spend
-# went through and affordability re-evaluated.
+# After purchase the balance dropped 100→30 (celebration #26 fired, then the
+# screen returned), so the 70-cost reward is now unaffordable — a durable
+# confirmation the spend went through and affordability re-evaluated.
 - assertVisible: 'Need.*' # "Need 🪙 40 more"

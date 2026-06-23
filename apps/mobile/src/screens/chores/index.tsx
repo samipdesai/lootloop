@@ -5,11 +5,12 @@
 // rendered here so the surface is never blank. One component tree; child
 // components branch on size class where it improves layout.
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { ActivityIndicator, Modal, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { listChores, listKids, deleteChore, type Chore, type KidProfile } from '@lootloop/client';
 import { supabase } from '../../lib/supabase';
 import { Button } from '../../components/ui/Button';
+import { Icon } from '../../components/ui/Icon';
 import { FormError } from '../auth/AuthScreen';
 import tw from '../../lib/tw';
 import { ChoreList } from './ChoreList';
@@ -82,30 +83,13 @@ export function ChoresScreen() {
     setChores((prev) => prev.filter((c) => c.id !== chore.id));
   }, []);
 
-  // --- Form modes -------------------------------------------------------------
-  if (view.mode === 'create') {
-    return (
-      <ChoreForm
-        kids={kids}
-        onSaved={handleSaved}
-        onCancel={() => setView({ mode: 'list' })}
-      />
-    );
-  }
-  if (view.mode === 'edit') {
-    return (
-      <ChoreForm
-        chore={view.chore}
-        kids={kids}
-        onSaved={handleSaved}
-        onCancel={() => setView({ mode: 'list' })}
-      />
-    );
-  }
+  const closeForm = () => setView({ mode: 'list' });
 
-  // --- List mode states -------------------------------------------------------
+  // --- Base: the list (loading / error / empty / populated). The create/edit
+  //     form renders in a page-sheet modal ON TOP, so editing slides up. --------
+  let base: React.ReactNode;
   if (loading) {
-    return (
+    base = (
       <CenteredState top={insets.top}>
         <ActivityIndicator size="large" color="#F4720E" />
         <Text style={tw`mt-4 font-sans text-[15px] font-semibold text-ink-500`}>
@@ -113,10 +97,8 @@ export function ChoresScreen() {
         </Text>
       </CenteredState>
     );
-  }
-
-  if (loadError) {
-    return (
+  } else if (loadError) {
+    base = (
       <CenteredState top={insets.top}>
         <View style={tw`w-full max-w-[420px] gap-4`}>
           <FormError message={loadError} />
@@ -126,12 +108,10 @@ export function ChoresScreen() {
         </View>
       </CenteredState>
     );
-  }
-
-  if (chores.length === 0) {
-    return (
+  } else if (chores.length === 0) {
+    base = (
       <CenteredState top={insets.top}>
-        <Text style={tw`text-[40px]`}>🧹</Text>
+        <Icon name="list-todo" size={40} color="#A39CAD" />
         <Text style={tw`mt-3 text-center font-display text-[20px] font-extrabold text-ink-900`}>
           No chores yet
         </Text>
@@ -145,22 +125,44 @@ export function ChoresScreen() {
         </View>
       </CenteredState>
     );
+  } else {
+    base = (
+      <View style={tw`flex-1 bg-surface-page`} pointerEvents="box-none">
+        {rowError ? (
+          <View style={tw.style('px-5', { paddingTop: insets.top + 8 })}>
+            <FormError message={rowError} />
+          </View>
+        ) : null}
+        <ChoreList
+          chores={chores}
+          kidsById={kidsById}
+          onNew={() => setView({ mode: 'create' })}
+          onEdit={(chore) => setView({ mode: 'edit', chore })}
+          onDelete={handleDelete}
+        />
+      </View>
+    );
   }
 
   return (
-    <View style={tw`flex-1 bg-surface-page`} pointerEvents="box-none">
-      {rowError ? (
-        <View style={tw.style('px-5', { paddingTop: insets.top + 8 })}>
-          <FormError message={rowError} />
+    <View style={tw`flex-1 bg-surface-page`}>
+      {base}
+      {/* Create/edit form as a native page-sheet (smooth slide up/down). */}
+      <Modal
+        visible={view.mode !== 'list'}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={closeForm}
+      >
+        <View style={tw`flex-1 bg-surface-page`}>
+          {view.mode === 'create' ? (
+            <ChoreForm kids={kids} onSaved={handleSaved} onCancel={closeForm} />
+          ) : null}
+          {view.mode === 'edit' ? (
+            <ChoreForm chore={view.chore} kids={kids} onSaved={handleSaved} onCancel={closeForm} />
+          ) : null}
         </View>
-      ) : null}
-      <ChoreList
-        chores={chores}
-        kidsById={kidsById}
-        onNew={() => setView({ mode: 'create' })}
-        onEdit={(chore) => setView({ mode: 'edit', chore })}
-        onDelete={handleDelete}
-      />
+      </Modal>
     </View>
   );
 }

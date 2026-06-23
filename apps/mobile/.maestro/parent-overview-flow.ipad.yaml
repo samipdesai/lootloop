@@ -1,0 +1,65 @@
+# Maestro PARENT golden-path flow — iPad. Same coverage as parent-overview-flow
+# .yaml but drives the iPad split-view sidebar (testID ptab-<Section>) instead of
+# the iPhone bottom tab bar. Kids + Schedule are reached from the Home hub, same
+# as iPhone. Seed with seed-parent-flow.sql (run-parent-flow.sh ensures the user).
+# Run with: maestro --device <iPad-udid> test parent-overview-flow.ipad.yaml
+appId: org.reactjs.native.example.mobile
+tags:
+  - parent
+  - ipad
+  - golden-path
+---
+- launchApp:
+    clearState: true
+- assertVisible: 'Welcome back'
+
+# Parent login: email + password → Log in.
+- tapOn:
+    id: 'login-email'
+- inputText: 'parent@maestro.test'
+- tapOn:
+    id: 'login-password'
+- inputText: 'Maestro1!'
+- tapOn: 'Welcome back' # dismiss keyboard (can cover Log in)
+- tapOn: 'Log in'
+
+# Home — Family overview. The iOS "Save Password?" system alert (un-dismissable by
+# Maestro on iPad) is suppressed by run-all.sh's preflight (AutoFill disabled), so
+# we can wait directly for the home. extendedWaitUntil rides out the async login.
+- extendedWaitUntil:
+    visible: 'Family'
+    timeout: 15000
+- assertVisible: 'Ava'
+- assertVisible: 'Quick actions'
+
+# Sidebar sections (Home/Chores/Rewards/Approvals) — testID ptab-<Section>.
+- tapOn:
+    id: 'ptab-Chores'
+- assertVisible: 'Feed the dog'
+- assertVisible:
+    id: 'new-chore'
+- tapOn:
+    id: 'ptab-Rewards'
+- assertVisible: 'Ice cream Sundae'
+- tapOn:
+    id: 'ptab-Approvals'
+- assertVisible: 'Feed the dog'
+
+# Back Home, then the Home-hub pushes (Kids + Schedule are not sidebar items).
+- tapOn:
+    id: 'ptab-Home'
+- assertVisible: 'Family'
+
+# Schedule — pushed from the Home quick action, then back.
+- tapOn: 'Schedule'
+- assertVisible: 'Homework time'
+- tapOn:
+    id: 'parent-back'
+- assertVisible: 'Family'
+
+# Kids → the Home "Give bonus" quick action lands on the roster; the kid card's
+# "Bonus" action opens the award-points form.
+- tapOn: 'Give bonus'
+- assertVisible: 'Ava'
+- tapOn: 'Bonus'
+- assertVisible: 'Award bonus points to Ava.*'

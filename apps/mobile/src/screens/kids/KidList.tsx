@@ -5,13 +5,16 @@
 // populated roster + the New affordance. One component tree; the regular (iPad)
 // size class centres the column and widens it.
 import { useState } from 'react';
-import { FlatList, Text, View } from 'react-native';
+import { FlatList, Pressable, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { KidProfile } from '@lootloop/client';
 import { useSizeClass } from '../../hooks/useSizeClass';
 import { Button } from '../../components/ui/Button';
+import { Icon, type IconName } from '../../components/ui/Icon';
+import { useParentNav } from '../../navigation/ParentNav';
 import tw from '../../lib/tw';
 import { ageModeBadge } from './ageMode';
-import { FamilyCodePanel } from './FamilyCodePanel';
+// (FamilyCodePanel moved to the Settings → Family code screen.)
 
 interface KidListProps {
   kids: KidProfile[];
@@ -29,6 +32,35 @@ function Avatar({ kid }: { kid: KidProfile }) {
     <View style={tw`h-12 w-12 items-center justify-center rounded-pill bg-mint-soft`}>
       <Text style={tw`font-display text-[20px] font-extrabold text-mint-ink`}>{initial}</Text>
     </View>
+  );
+}
+
+// One labeled icon action in the card's action row.
+function ActionButton({
+  icon,
+  label,
+  tint,
+  fg,
+  onPress,
+}: {
+  icon: IconName;
+  label: string;
+  tint: string;
+  fg: string;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      onPress={onPress}
+      style={tw`flex-1 items-center gap-1.5`}
+    >
+      <View style={tw.style(`h-11 w-11 items-center justify-center rounded-full ${tint}`)}>
+        <Icon name={icon} size={20} color={fg} />
+      </View>
+      <Text style={tw`font-sans text-[11px] font-bold text-ink-500`}>{label}</Text>
+    </Pressable>
   );
 }
 
@@ -61,7 +93,7 @@ function KidRow({
 
   return (
     <View
-      style={tw.style('rounded-card bg-surface-card p-4', {
+      style={tw.style('gap-3.5 rounded-card bg-surface-card p-4', {
         shadowColor: 'rgba(32,36,58,1)',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.08,
@@ -69,10 +101,11 @@ function KidRow({
         elevation: 3,
       })}
     >
+      {/* Header: avatar + name + age band */}
       <View style={tw`flex-row items-center gap-3`}>
         <Avatar kid={kid} />
-        <View style={tw`flex-1`}>
-          <Text style={tw`font-display text-[16px] font-extrabold text-ink-900`}>
+        <View style={tw`min-w-0 flex-1`}>
+          <Text numberOfLines={1} style={tw`font-display text-[17px] font-extrabold text-ink-900`}>
             {kid.display_name}
           </Text>
           <View style={tw`mt-1.5 flex-row`}>
@@ -85,44 +118,32 @@ function KidRow({
         </View>
       </View>
 
-      <View style={tw`mt-3 flex-row flex-wrap items-center justify-end gap-2`}>
-        {confirming ? (
-          <>
-            <Text style={tw`mr-auto font-sans text-[13px] font-bold text-ink-700`}>
-              Delete {kid.display_name}?
-            </Text>
-            <Button size="sm" variant="ghost" disabled={deleting} onPress={() => setConfirming(false)}>
+      <View style={tw`h-px bg-ink-100`} />
+
+      {confirming ? (
+        <View style={tw`gap-3`}>
+          <Text style={tw`font-sans text-[14px] font-bold text-ink-700`}>
+            Remove {kid.display_name}? This deletes their profile and history.
+          </Text>
+          <View style={tw`flex-row gap-3`}>
+            <Button size="sm" variant="ghost" block disabled={deleting} onPress={() => setConfirming(false)}>
               Keep
             </Button>
-            <Button size="sm" loading={deleting} onPress={handleDelete}>
-              Delete
+            <Button size="sm" block loading={deleting} onPress={handleDelete}>
+              Remove
             </Button>
-          </>
-        ) : (
-          <>
-            <Button size="sm" variant="ghost" onPress={onGiveBonus}>
-              Give bonus
-            </Button>
-            <Button size="sm" variant="ghost" onPress={onHistory}>
-              History
-            </Button>
-            <Button size="sm" variant="ghost" onPress={onEdit}>
-              Edit
-            </Button>
-            <Button size="sm" variant="ghost" onPress={onChangePin}>
-              Change PIN
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              accessibilityLabel={`Delete ${kid.display_name}`}
-              onPress={() => setConfirming(true)}
-            >
-              Delete
-            </Button>
-          </>
-        )}
-      </View>
+          </View>
+        </View>
+      ) : (
+        // Evenly-spaced labeled icon actions (each opens its modal).
+        <View style={tw`flex-row items-start`}>
+          <ActionButton icon="star" label="Bonus" tint="bg-coin-soft" fg="#8A6400" onPress={onGiveBonus} />
+          <ActionButton icon="clock" label="History" tint="bg-indigo-soft" fg="#5B63E6" onPress={onHistory} />
+          <ActionButton icon="pencil" label="Edit" tint="bg-indigo-soft" fg="#5B63E6" onPress={onEdit} />
+          <ActionButton icon="lock" label="PIN" tint="bg-indigo-soft" fg="#5B63E6" onPress={onChangePin} />
+          <ActionButton icon="trash-2" label="Remove" tint="bg-danger-soft" fg="#B11216" onPress={() => setConfirming(true)} />
+        </View>
+      )}
     </View>
   );
 }
@@ -137,6 +158,9 @@ export function KidList({
   onDelete,
 }: KidListProps) {
   const isRegular = useSizeClass() === 'regular';
+  const insets = useSafeAreaInsets();
+  const navigation = useParentNav();
+  const canBack = navigation.canGoBack();
 
   return (
     <FlatList
@@ -144,18 +168,48 @@ export function KidList({
       keyExtractor={(k) => k.id}
       style={tw`flex-1 bg-surface-page`}
       contentContainerStyle={tw.style(
-        'gap-3 px-5 pb-10 pt-4',
+        'gap-3 px-5 pb-10',
         isRegular ? 'mx-auto w-full max-w-[720px]' : null,
+        { paddingTop: insets.top + 12 },
       )}
       ListHeaderComponent={
         <View style={tw`mb-1 gap-4`}>
           <View style={tw`flex-row items-center justify-between`}>
-            <Text style={tw`font-display text-[28px] font-extrabold text-ink-900`}>Kids</Text>
-            <Button size="sm" onPress={onNew} accessibilityLabel="New kid">
-              ＋ New
-            </Button>
+            <View style={tw`flex-row items-center gap-2`}>
+              {canBack ? (
+                <Pressable
+                  testID="parent-back"
+                  accessibilityRole="button"
+                  accessibilityLabel="Back"
+                  onPress={() => navigation.goBack()}
+                  hitSlop={8}
+                  style={tw`h-10 w-10 items-center justify-center rounded-full bg-surface-card`}
+                >
+                  <Icon name="chevron-left" size={22} color="#211E27" />
+                </Pressable>
+              ) : null}
+              <View>
+                <Text style={tw`font-sans text-[13px] font-extrabold uppercase tracking-wide text-[13px] text-indigo`}>
+                  Parent
+                </Text>
+                <Text style={tw`font-display text-[26px] font-extrabold text-ink-900`}>Kids</Text>
+              </View>
+            </View>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="New kid"
+              onPress={onNew}
+              style={tw.style('h-10 w-10 items-center justify-center rounded-full bg-indigo', {
+                shadowColor: '#444CCB',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 1,
+                shadowRadius: 0,
+                elevation: 4,
+              })}
+            >
+              <Icon name="plus" size={22} color="#FFFFFF" />
+            </Pressable>
           </View>
-          <FamilyCodePanel />
         </View>
       }
       renderItem={({ item }) => (

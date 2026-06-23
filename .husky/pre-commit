@@ -1,1 +1,5 @@
+# Fast gates on every commit: lint (staged, autofix) → typecheck → unit tests.
+# The heavy E2E matrix runs on push (.husky/pre-push). Skip: git commit --no-verify
 pnpm exec lint-staged
+pnpm -r typecheck
+pnpm -r test

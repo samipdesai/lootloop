@@ -1,10 +1,10 @@
-// Kid: My Chores (#15) + claim/complete flow (#16). Shows today's chores the kid
-// can do — their assigned chores plus shared (claimable) ones — grouped into
-// To-do / Waiting for approval / Done. Claiming a shared chore and marking any
-// chore done both go through the kid-session service (RLS scopes writes to the
-// kid's own completions). Mirrors the design's kid Chores screen.
+// Kid: My Chores (#15) + claim/complete flow (#16), rebuilt to match the design
+// canvas (08 · My chores): a "Chores" title, a To-do / Pending / Done segmented
+// control, and within To-do an "Up for grabs" (claimable shared) section over an
+// "Assigned to you" list. Claiming/completing go through the kid-session service
+// (RLS scopes writes to the kid's own completions).
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native';
 import {
   listKidChores,
   claimChore,
@@ -14,12 +14,14 @@ import {
   type LootLoopClient,
 } from '@lootloop/client';
 import { useKidSession } from '../../stores/kidSession';
+import { useShellNav } from '../../navigation/shellNav';
 import { Button } from '../../components/ui/Button';
+import { Icon, type IconName } from '../../components/ui/Icon';
+import { CoinBadge } from '../../components/ui/money';
+import { Segmented } from '../../components/ui/Segmented';
 import { useSizeClass } from '../../hooks/useSizeClass';
-import { useAgeModeTheme, type AgeModeTheme } from '../../theme/ageMode';
 import tw from '../../lib/tw';
 
-// Local calendar date (YYYY-MM-DD) — chores are due on a local day.
 function todayISO(): string {
   const d = new Date();
   const m = `${d.getMonth() + 1}`.padStart(2, '0');
@@ -28,115 +30,111 @@ function todayISO(): string {
 }
 
 type Bucket = 'todo' | 'pending' | 'done';
-
 function bucketOf(c: KidChore): Bucket {
   if (c.status === 'approved') return 'done';
   if (c.status === 'pending') return 'pending';
-  return 'todo'; // null (not started), 'claimed', or 'rejected'
+  return 'todo';
+}
+
+const CHORE_ICONS = new Set(['bed', 'dog', 'utensils', 'book-open', 'trash-2', 'sparkles', 'list-todo']);
+function choreIcon(c: KidChore): IconName {
+  return (c.icon && CHORE_ICONS.has(c.icon) ? c.icon : 'list-todo') as IconName;
+}
+
+// Section label (uppercase, faint) used above chore groups.
+function SectionLabel({ children }: { children: string }) {
+  return (
+    <Text style={tw`mb-2.5 mt-0.5 font-sans text-[13px] font-extrabold uppercase tracking-wide text-ink-400`}>
+      {children}
+    </Text>
+  );
 }
 
 function ChoreCard({
   chore,
   busy,
-  theme,
+  claimable,
   onClaim,
   onComplete,
+  onOpen,
 }: {
   chore: KidChore;
   busy: boolean;
-  theme: AgeModeTheme;
+  claimable: boolean;
   onClaim: () => void;
   onComplete: () => void;
+  onOpen: () => void;
 }) {
   const bucket = bucketOf(chore);
-  const needsClaim = chore.assignment === 'shared' && chore.completion_id == null;
   const rejected = chore.status === 'rejected';
-
-  // Age-mode: scale the icon tile + emoji, chore-title type, button height and
-  // card radius with the band. The tile/emoji are sized off a 44/20px base.
-  const tileSize = Math.round(44 * theme.iconScale);
-  const emojiSize = Math.round(20 * theme.iconScale);
-  const playful = theme.gamification === 'high';
-
+  const tileBg = claimable ? 'bg-surface-card' : 'bg-indigo-soft';
   return (
-    <View
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={chore.title}
+      onPress={onOpen}
       style={tw.style(
-        `flex-row items-center gap-3 rounded-${theme.cardRadius} bg-surface-card px-4 py-3.5`,
-        { minHeight: theme.touchTarget },
+        `flex-row items-center gap-3 rounded-card px-3.5 py-3.5 ${claimable ? 'bg-indigo-soft' : 'bg-surface-card'}`,
+        claimable
+          ? null
+          : {
+              shadowColor: 'rgba(32,36,58,1)',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.08,
+              shadowRadius: 6,
+              elevation: 2,
+            },
       )}
     >
-      <View
-        style={tw.style('items-center justify-center rounded-lg bg-indigo-soft', {
-          width: tileSize,
-          height: tileSize,
-        })}
-      >
-        <Text style={{ fontSize: emojiSize }}>{bucket === 'done' ? '✅' : '🧹'}</Text>
+      <View style={tw.style(`h-11 w-11 items-center justify-center rounded-md ${tileBg}`)}>
+        <Icon name={bucket === 'done' ? 'circle-check-big' : choreIcon(chore)} size={22} color="#5B63E6" />
       </View>
-      <View style={tw`min-w-0 flex-1`}>
+      <View style={tw`min-w-0 flex-1 gap-1`}>
         <Text
           numberOfLines={1}
           style={tw.style(
-            'font-display font-extrabold text-ink-900',
+            'font-display text-[15px] font-extrabold text-ink-900',
             bucket === 'done' ? 'text-ink-400 line-through' : '',
-            { fontSize: theme.bodySize },
           )}
         >
           {chore.title}
         </Text>
         <View style={tw`flex-row items-center gap-2`}>
-          <Text
-            style={tw.style('font-display font-extrabold text-coin-ink', {
-              fontSize: theme.captionSize + 1,
-            })}
-          >
-            🪙 {chore.points}
-          </Text>
-          {chore.assignment === 'shared' ? (
-            <Text
-              style={tw.style('font-sans font-bold text-indigo-strong', {
-                fontSize: theme.captionSize,
-              })}
-            >
-              shared
-            </Text>
-          ) : null}
+          <CoinBadge amount={chore.points} size="sm" tone="plain" />
           {rejected ? (
-            <Text
-              style={tw.style('font-sans font-bold text-danger-ink', {
-                fontSize: theme.captionSize,
-              })}
-            >
-              try again
-            </Text>
+            <Text style={tw`font-sans text-[12px] font-bold text-danger-ink`}>try again</Text>
           ) : null}
         </View>
       </View>
       {bucket === 'pending' ? (
-        <Text
-          style={tw.style('font-sans font-bold text-coin-ink', { fontSize: theme.captionSize + 1 })}
-        >
-          {playful ? 'Waiting…' : 'Pending'}
-        </Text>
+        <Text style={tw`font-sans text-[13px] font-bold text-coin-ink`}>Pending</Text>
       ) : bucket === 'done' ? (
-        <Text style={{ fontSize: Math.round(22 * theme.iconScale) }}>{playful ? '🎉' : '✔️'}</Text>
-      ) : needsClaim ? (
-        <Button size="sm" variant="ghost" loading={busy} disabled={busy} onPress={onClaim}>
+        <Icon name="circle-check-big" size={22} color="#16B97D" />
+      ) : claimable ? (
+        <Button size="sm" variant="indigo" loading={busy} disabled={busy} onPress={onClaim}>
           Claim
         </Button>
       ) : (
-        <Button size="sm" loading={busy} disabled={busy} onPress={onComplete}>
-          {playful ? 'Done!' : 'Mark done'}
+        <Button
+          testID="chore-done"
+          size="sm"
+          variant="mint"
+          loading={busy}
+          disabled={busy}
+          onPress={onComplete}
+        >
+          Done
         </Button>
       )}
-    </View>
+    </Pressable>
   );
 }
 
 export function MyChoresScreen() {
   const { client, profile } = useKidSession();
   const isRegular = useSizeClass() === 'regular';
-  const t = useAgeModeTheme();
+  const nav = useShellNav();
+  const [tab, setTab] = useState<Bucket>('todo');
   const [chores, setChores] = useState<KidChore[] | null>(null);
   const [error, setError] = useState('');
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -157,10 +155,6 @@ export function MyChoresScreen() {
     void load();
   }, [load]);
 
-  // Realtime (#41): when a parent approves/rejects this kid's chore the completion
-  // row changes — re-load so the chore moves out of To-do live. We also watch
-  // chore_instances (family-scoped) so newly-generated instances appear without a
-  // manual refresh. The kid client is already realtime-authed (createKidClient).
   useEffect(() => {
     if (!client || !profile) return;
     const unsubs = [
@@ -201,59 +195,71 @@ export function MyChoresScreen() {
     );
   }
 
-  const todo = chores.filter((c) => bucketOf(c) === 'todo');
-  const pending = chores.filter((c) => bucketOf(c) === 'pending');
-  const done = chores.filter((c) => bucketOf(c) === 'done');
-  const ordered = [...todo, ...pending, ...done];
+  const inTab = chores.filter((c) => bucketOf(c) === tab);
+  const grabs = tab === 'todo' ? inTab.filter((c) => c.assignment === 'shared' && c.completion_id == null) : [];
+  const mine = tab === 'todo' ? inTab.filter((c) => !(c.assignment === 'shared' && c.completion_id == null)) : inTab;
+
+  const card = (item: KidChore, claimable: boolean) => (
+    <ChoreCard
+      chore={item}
+      claimable={claimable}
+      busy={busyId === item.instance_id}
+      onClaim={() => runAction(item, claimChore)}
+      onComplete={() => runAction(item, completeChore)}
+      onOpen={() => nav.navigate('ChoreDetail', { chore: item })}
+    />
+  );
 
   return (
     <View style={tw`flex-1 bg-surface-page`}>
       <FlatList
-        data={ordered}
+        data={mine}
         keyExtractor={(c) => c.instance_id}
-        contentContainerStyle={tw.style('px-4 py-4', isRegular ? 'mx-auto w-full max-w-[640px]' : '', {
-          gap: t.gap,
-        })}
+        contentContainerStyle={tw.style(
+          'gap-2.5 px-4 py-4',
+          isRegular ? 'mx-auto w-full max-w-[640px]' : '',
+        )}
         ListHeaderComponent={
-          error ? (
-            <View style={tw`mb-2 rounded-md bg-danger-soft px-4 py-3`}>
-              <Text style={tw`font-sans text-[14px] font-bold text-danger-ink`}>{error}</Text>
+          <View style={tw`gap-4`}>
+            <Text style={tw`font-display text-[26px] font-extrabold text-ink-900`}>Chores</Text>
+            <Segmented
+              value={tab}
+              onChange={setTab}
+              options={[
+                { key: 'todo', label: 'To-do' },
+                { key: 'pending', label: 'Pending' },
+                { key: 'done', label: 'Done' },
+              ]}
+            />
+            {error ? (
+              <View style={tw`rounded-md bg-danger-soft px-4 py-3`}>
+                <Text style={tw`font-sans text-[14px] font-bold text-danger-ink`}>{error}</Text>
+              </View>
+            ) : null}
+            {grabs.length > 0 ? (
+              <View>
+                <SectionLabel>Up for grabs</SectionLabel>
+                <View style={tw`gap-2.5`}>{grabs.map((c) => <View key={c.instance_id}>{card(c, true)}</View>)}</View>
+              </View>
+            ) : null}
+            {tab === 'todo' && mine.length > 0 ? <SectionLabel>Assigned to you</SectionLabel> : null}
+          </View>
+        }
+        ListEmptyComponent={
+          grabs.length === 0 ? (
+            <View style={tw`mt-2 items-center gap-2 rounded-card bg-surface-card px-6 py-12`}>
+              <Icon name="circle-check-big" size={40} color="#16B97D" />
+              <Text style={tw`text-center font-display text-[16px] font-extrabold text-ink-800`}>
+                {tab === 'todo'
+                  ? 'Nothing to do — you crushed it!'
+                  : tab === 'pending'
+                    ? 'Nothing waiting for approval.'
+                    : 'No finished chores yet.'}
+              </Text>
             </View>
           ) : null
         }
-        ListEmptyComponent={
-          <View
-            style={tw.style(`items-center gap-2 rounded-${t.cardRadius} bg-surface-card px-6 py-12`)}
-          >
-            <Text
-              style={tw.style({
-                fontSize: t.gamification === 'high' ? 64 : t.gamification === 'low' ? 32 : 44,
-              })}
-            >
-              {t.gamification === 'low' ? '✅' : '🎉'}
-            </Text>
-            <Text
-              style={tw.style('text-center font-display font-extrabold text-ink-800', {
-                fontSize: t.headingSize,
-              })}
-            >
-              {t.gamification === 'high'
-                ? 'All done — you crushed it! 🎉'
-                : t.gamification === 'low'
-                  ? 'No chores left today.'
-                  : 'Nothing to do today — you crushed it!'}
-            </Text>
-          </View>
-        }
-        renderItem={({ item }) => (
-          <ChoreCard
-            chore={item}
-            busy={busyId === item.instance_id}
-            theme={t}
-            onClaim={() => runAction(item, claimChore)}
-            onComplete={() => runAction(item, completeChore)}
-          />
-        )}
+        renderItem={({ item }) => card(item, false)}
         refreshing={false}
         onRefresh={() => void load()}
       />

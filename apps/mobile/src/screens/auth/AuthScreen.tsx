@@ -14,6 +14,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSizeClass } from '../../hooks/useSizeClass';
 import { Card } from '../../components/ui/Card';
+import { Logomark } from '../../components/ui/BrandMark';
 import tw from '../../lib/tw';
 
 interface AuthScreenProps {
@@ -27,11 +28,10 @@ interface AuthScreenProps {
 }
 
 function Brandmark({ large }: { large: boolean }) {
-  // Wordmark brandmark (spec allows wordmark-only; Looty SVG asset wiring is a
-  // later polish pass once react-native-svg lands). iPad gets larger chrome.
+  // Logomark (loop + coin) over the wordmark. iPad gets larger chrome.
   return (
     <View style={tw`items-center gap-2`}>
-      <Text style={tw.style(large ? 'text-[56px]' : 'text-[44px]')}>🪙</Text>
+      <Logomark size={large ? 64 : 52} />
       <Text
         style={tw.style('font-display font-extrabold text-ink-900', large ? 'text-[32px]' : 'text-[28px]')}
       >

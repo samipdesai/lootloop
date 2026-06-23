@@ -1,0 +1,62 @@
+# Maestro kid reading + savings golden path — iPad. iPad split-view sidebar
+# (testID taps). Seed with seed-reading-savings-flow.sql first.
+# Run with: maestro --device <iPad-udid> test kid-reading-savings-flow.ipad.yaml
+appId: org.reactjs.native.example.mobile
+tags:
+  - kid
+  - ipad
+  - golden-path
+---
+- launchApp:
+    clearState: true
+- assertVisible: 'Welcome back'
+
+# Kid login: family code → roster → PIN.
+- tapOn: 'Kid signing in? Use your family code'
+- assertVisible: 'Enter your family code'
+- tapOn:
+    id: 'kid-code-input'
+- inputText: 'MAESTRO7'
+- tapOn: 'Continue'
+- assertVisible: "Who's here?"
+- tapOn: 'Sign in as Ava'
+- assertVisible: 'Log in'
+- tapOn:
+    id: 'kid-pin-input'
+- inputText: '1234'
+- tapOn: 'Log in'
+
+# Reading (sidebar) → "Log today's reading" pushes the Log reading screen (#14).
+- tapOn:
+    id: 'tab-Reading'
+- tapOn:
+    id: 'log-reading-cta'
+- tapOn:
+    id: 'reading-title-input'
+- inputText: "Charlotte's Web"
+- tapOn:
+    id: 'reading-minutes-input'
+- inputText: '20'
+- tapOn: 'What did you read?' # dismiss the number-pad
+- tapOn:
+    id: 'log-reading-submit'
+- assertVisible: "Charlotte's Web"
+
+# Savings (sidebar) → "Move loot" pushes the Move loot screen (#16) → deposit 40.
+- tapOn:
+    id: 'tab-Savings'
+- tapOn:
+    id: 'move-loot-cta'
+- tapOn:
+    id: 'savings-amount-input'
+- inputText: '40'
+- tapOn: 'Move loot' # dismiss the number-pad
+- tapOn: 'Deposit to savings'
+- assertVisible: 'Deposit'
+
+# Interest & history (#17): the "Earns next month" row pushes the Interest screen.
+- tapOn:
+    id: 'interest-row'
+- assertVisible: 'How interest works'
+- tapOn:
+    id: 'kid-back'

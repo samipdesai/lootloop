@@ -1,11 +1,23 @@
-// Tonal rounded icon tile for a schedule row. Mirrors the chores ChoreIcon: a
-// 44px rounded tile showing the first two letters of the stored lucide icon name
-// (a clock glyph when no icon is set). lucide isn't a mobile dependency yet.
-import { Text, View } from 'react-native';
+// Tonal rounded icon tile for a schedule row — renders the item's Lucide icon
+// (stored as a lucide id), falling back to a clock. 44px rounded mint tile.
+import { View } from 'react-native';
+import { Icon, type IconName } from '../../components/ui/Icon';
 import tw from '../../lib/tw';
 
+const SCHEDULE_ICONS = new Set<string>([
+  'clock',
+  'utensils',
+  'book-open',
+  'book',
+  'bed',
+  'calendar-clock',
+  'star',
+  'bell',
+  'sparkles',
+]);
+
 export function ScheduleIcon({ icon, muted = false }: { icon: string | null; muted?: boolean }) {
-  const label = icon ? icon.slice(0, 2).toUpperCase() : null;
+  const name: IconName = icon && SCHEDULE_ICONS.has(icon) ? (icon as IconName) : 'clock';
   return (
     <View
       accessible={false}
@@ -14,14 +26,7 @@ export function ScheduleIcon({ icon, muted = false }: { icon: string | null; mut
         muted ? 'bg-ink-100' : 'bg-mint-soft',
       )}
     >
-      <Text
-        style={tw.style(
-          'font-display text-[15px] font-extrabold',
-          muted ? 'text-ink-400' : 'text-mint-ink',
-        )}
-      >
-        {label ?? '🕑'}
-      </Text>
+      <Icon name={name} size={22} color={muted ? '#A39CAD' : '#0A6A46'} />
     </View>
   );
 }

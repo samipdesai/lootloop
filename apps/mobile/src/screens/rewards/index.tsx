@@ -9,7 +9,8 @@
 //
 // No Alert.alert (blocks the JS bridge) — errors render inline as banners.
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Modal, ScrollView, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   deleteReward,
   getMyParentProfile,
@@ -24,6 +25,7 @@ import { supabase } from '../../lib/supabase';
 import { useSizeClass } from '../../hooks/useSizeClass';
 import { Button } from '../../components/ui/Button';
 import { Tabs } from '../../components/ui/Tabs';
+import { Icon } from '../../components/ui/Icon';
 import { FormError } from '../auth/AuthScreen';
 import tw from '../../lib/tw';
 import { RewardForm } from './RewardForm';
@@ -42,6 +44,7 @@ const TABS = [
 
 export function RewardsScreen() {
   const isRegular = useSizeClass() === 'regular';
+  const insets = useSafeAreaInsets();
   const [tab, setTab] = useState<Tab>('store');
   const [storeView, setStoreView] = useState<StoreView>({ mode: 'list' });
 
@@ -161,23 +164,31 @@ export function RewardsScreen() {
     [reviewerId, rowStates],
   );
 
-  // --- Store form modes (full-screen, replace the whole surface) -------------
-  if (tab === 'store' && storeView.mode === 'create') {
-    return <RewardForm onSaved={handleSaved} onCancel={() => setStoreView({ mode: 'list' })} />;
-  }
-  if (tab === 'store' && storeView.mode === 'edit') {
-    return (
-      <RewardForm
-        reward={storeView.reward}
-        onSaved={handleSaved}
-        onCancel={() => setStoreView({ mode: 'list' })}
-      />
-    );
-  }
+  const closeForm = () => setStoreView({ mode: 'list' });
 
   return (
     <View style={tw`flex-1 bg-surface-page`}>
-      <ScrollView contentContainerStyle={tw.style('px-5 py-6', isRegular ? 'items-center' : '')}>
+      {/* Create/edit reward form as a native page-sheet (smooth slide up/down). */}
+      <Modal
+        visible={storeView.mode !== 'list'}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={closeForm}
+      >
+        <View style={tw`flex-1 bg-surface-page`}>
+          {storeView.mode === 'create' ? (
+            <RewardForm onSaved={handleSaved} onCancel={closeForm} />
+          ) : null}
+          {storeView.mode === 'edit' ? (
+            <RewardForm reward={storeView.reward} onSaved={handleSaved} onCancel={closeForm} />
+          ) : null}
+        </View>
+      </Modal>
+      <ScrollView
+        contentContainerStyle={tw.style('px-5 pb-6', isRegular ? 'items-center' : '', {
+          paddingTop: insets.top + 12,
+        })}
+      >
         <View style={tw.style('w-full', isRegular ? 'max-w-[860px]' : '')}>
           <Text style={tw`mb-4 font-display text-[28px] font-extrabold text-ink-900`}>Rewards</Text>
 
@@ -260,7 +271,7 @@ function StoreSection({
   if (rewards.length === 0) {
     return (
       <SectionState>
-        <Text style={tw`text-[40px]`}>🎁</Text>
+        <Icon name="gift" size={40} color="#A39CAD" />
         <Text style={tw`mt-3 text-center font-display text-[20px] font-extrabold text-ink-900`}>
           No rewards yet
         </Text>
@@ -326,7 +337,7 @@ function GiveSection({
   if (items.length === 0) {
     return (
       <SectionState>
-        <Text style={tw`text-[44px]`}>🎁</Text>
+        <Icon name="gift" size={44} color="#A39CAD" />
         <Text style={tw`mt-3 text-center font-display text-[20px] font-extrabold text-ink-900`}>
           Nothing to hand out
         </Text>

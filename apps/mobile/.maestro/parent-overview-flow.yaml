@@ -1,0 +1,70 @@
+# Maestro PARENT golden-path flow: email/password login → the 4-tab parent app
+# (Home/Chores/Rewards/Approvals, matching the canvas) + the Home-hub pushes
+# (Schedule, Kids → Give bonus). Targets iPhone. Seed with seed-parent-flow.sql
+# (run-parent-flow.sh does both + ensures the parent auth user).
+appId: org.reactjs.native.example.mobile
+tags:
+  - parent
+  - golden-path
+---
+- launchApp:
+    clearState: true
+- assertVisible: 'Welcome back'
+
+# Parent login: email + password → Log in.
+- tapOn:
+    id: 'login-email'
+- inputText: 'parent@maestro.test'
+- tapOn:
+    id: 'login-password'
+- inputText: 'Maestro1!'
+- tapOn: 'Welcome back' # dismiss keyboard (can cover Log in)
+- tapOn: 'Log in'
+- tapOn:
+    text: 'Not Now' # iOS save-password prompt
+    optional: true
+
+# Home — Family overview (#19).
+- assertVisible: 'Family'
+# The save-password dialog can appear late and cover the kid card — dismiss again.
+- tapOn:
+    text: 'Not Now'
+    optional: true
+- assertVisible: 'Ava'
+- assertVisible: 'Quick actions'
+
+# The 4 bottom tabs carry tabBarButtonTestID ptab-<Section> and respond to id
+# taps (more reliable than positional taps on the tab bar).
+# Chores (#21).
+- tapOn:
+    id: 'ptab-Chores'
+- assertVisible: 'Feed the dog'
+- assertVisible:
+    id: 'new-chore'
+# Rewards (#22-store).
+- tapOn:
+    id: 'ptab-Rewards'
+- assertVisible: 'Ice cream Sundae'
+# Approvals (#22).
+- tapOn:
+    id: 'ptab-Approvals'
+- assertVisible: 'Feed the dog'
+
+# Back Home, then the Home-hub pushes.
+- tapOn:
+    id: 'ptab-Home'
+- assertVisible: 'Family'
+
+# Schedule (#36) — pushed from the Home quick action, then back.
+- tapOn: 'Schedule'
+- assertVisible: 'Homework time'
+- tapOn:
+    id: 'parent-back'
+- assertVisible: 'Family'
+
+# Kids → the Home "Give bonus" quick action lands on the roster; the kid card's
+# "Bonus" action opens the award-points form (#23).
+- tapOn: 'Give bonus'
+- assertVisible: 'Ava'
+- tapOn: 'Bonus'
+- assertVisible: 'Award bonus points to Ava.*'

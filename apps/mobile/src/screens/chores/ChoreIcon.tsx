@@ -1,12 +1,26 @@
-// Tonal rounded icon tile for a chore row. lucide isn't a mobile dependency yet,
-// so we render a tile with the first two letters of the stored lucide icon name
-// as a stand-in glyph (a checkmark when no icon is set). Visual intent mirrors
-// design/ui_kits/app/Chores.jsx (44px rounded tile, indigo-soft fill).
-import { Text, View } from 'react-native';
+// Tonal rounded icon tile for a chore row — renders the chore's Lucide icon
+// (stored as a lucide id, e.g. "dog"/"bed"/"trash-2"), falling back to a check
+// when unset/unknown. 44px rounded tile, indigo-soft fill (design Chores.jsx).
+import { View } from 'react-native';
+import { Icon, type IconName } from '../../components/ui/Icon';
 import tw from '../../lib/tw';
 
+// Lucide ids we expect chores to use (kept in sync with the Icon kit map).
+const CHORE_ICONS = new Set<string>([
+  'bed',
+  'dog',
+  'utensils',
+  'book-open',
+  'book',
+  'trash-2',
+  'sparkles',
+  'list-todo',
+  'star',
+  'clock',
+]);
+
 export function ChoreIcon({ icon, muted = false }: { icon: string | null; muted?: boolean }) {
-  const label = icon ? icon.slice(0, 2).toUpperCase() : null;
+  const name: IconName = icon && CHORE_ICONS.has(icon) ? (icon as IconName) : 'circle-check-big';
   return (
     <View
       accessible={false}
@@ -15,14 +29,7 @@ export function ChoreIcon({ icon, muted = false }: { icon: string | null; muted?
         muted ? 'bg-ink-100' : 'bg-indigo-soft',
       )}
     >
-      <Text
-        style={tw.style(
-          'font-display text-[15px] font-extrabold',
-          muted ? 'text-ink-400' : 'text-indigo-strong',
-        )}
-      >
-        {label ?? '✓'}
-      </Text>
+      <Icon name={name} size={22} color={muted ? '#A39CAD' : '#444CCB'} />
     </View>
   );
 }

@@ -34,14 +34,31 @@ tags:
 - inputText: '1234'
 - tapOn: 'Log in'
 
-# Kid shell lands on Home (dashboard); switch to the Chores tab (#15). The
-# react-navigation tab button (role="tab") doesn't fire onPress for Maestro's
-# id/text tap on iOS — only a positional tap works. 5 evenly-spaced tabs:
-# Home/Chores/Store/Reading/Savings → Chores is the 2nd (≈30% width, ≈96% height).
+# Kid shell lands on Home (dashboard); switch to the Chores tab (#15). The bottom
+# tabs carry tabBarButtonTestID tab-<Section> and respond to id taps.
 - tapOn:
-    point: '30%,96%'
+    id: 'tab-Chores'
 - assertVisible: 'Make your bed'
 
-# Complete it (#16) → moves to the pending/awaiting-approval state.
-- tapOn: 'Mark done'
-- assertVisible: 'Pending'
+# Open the chore → Chore detail (#09) → Mark done (#16) → it moves to pending.
+# Then switch to the Pending tab and confirm the chore moved there.
+- tapOn: 'Make your bed'
+- assertVisible: 'Mark done'
+- tapOn:
+    id: 'chore-done'
+- tapOn: 'Pending'
+- assertVisible: 'Make your bed'
+
+# Home → Wallet history (#10) and Today's schedule (#18), pushed from the Home hub.
+- tapOn:
+    id: 'tab-Home'
+- tapOn:
+    id: 'wallet-pill'
+- assertVisible: 'Wallet'
+- tapOn:
+    id: 'kid-back'
+- tapOn:
+    id: 'schedule-card'
+- assertVisible: 'My day'
+- tapOn:
+    id: 'kid-back'

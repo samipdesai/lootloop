@@ -54,6 +54,7 @@ export function LoginScreen({ navigation }: Props) {
     >
       <View style={tw`gap-4`}>
         <Input
+          testID="login-email"
           label="Email"
           placeholder="you@example.com"
           value={email}
@@ -72,6 +73,7 @@ export function LoginScreen({ navigation }: Props) {
         />
         <View style={tw`gap-1.5`}>
           <Input
+            testID="login-password"
             label="Password"
             placeholder="Your password"
             value={password}

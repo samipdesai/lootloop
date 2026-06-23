@@ -5,9 +5,11 @@
 // ChoresScreen; this component renders the populated list + the New affordance.
 import { useState } from 'react';
 import { FlatList, Pressable, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { Chore, KidProfile } from '@lootloop/client';
 import { useSizeClass } from '../../hooks/useSizeClass';
 import { Button } from '../../components/ui/Button';
+import { Icon } from '../../components/ui/Icon';
 import tw from '../../lib/tw';
 import { ChoreIcon } from './ChoreIcon';
 import { describeRecurrence } from './recurrence';
@@ -147,6 +149,7 @@ function ChoreRow({
 
 export function ChoreList({ chores, kidsById, onNew, onEdit, onDelete }: ChoreListProps) {
   const isRegular = useSizeClass() === 'regular';
+  const insets = useSafeAreaInsets();
 
   return (
     <FlatList
@@ -154,15 +157,33 @@ export function ChoreList({ chores, kidsById, onNew, onEdit, onDelete }: ChoreLi
       keyExtractor={(c) => c.id}
       style={tw`flex-1 bg-surface-page`}
       contentContainerStyle={tw.style(
-        'gap-3 px-5 pb-10 pt-4',
+        'gap-3 px-5 pb-10',
         isRegular ? 'mx-auto w-full max-w-[720px]' : null,
+        { paddingTop: insets.top + 12 },
       )}
       ListHeaderComponent={
         <View style={tw`mb-1 flex-row items-center justify-between`}>
-          <Text style={tw`font-display text-[28px] font-extrabold text-ink-900`}>Chores</Text>
-          <Button size="sm" onPress={onNew} accessibilityLabel="New chore">
-            ＋ New
-          </Button>
+          <View>
+            <Text style={tw`font-sans text-[13px] font-extrabold uppercase tracking-wide text-[13px] text-indigo`}>
+              Parent
+            </Text>
+            <Text style={tw`font-display text-[26px] font-extrabold text-ink-900`}>Chores</Text>
+          </View>
+          <Pressable
+            testID="new-chore"
+            accessibilityRole="button"
+            accessibilityLabel="New chore"
+            onPress={onNew}
+            style={tw.style('h-10 w-10 items-center justify-center rounded-full bg-indigo', {
+              shadowColor: '#444CCB',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 1,
+              shadowRadius: 0,
+              elevation: 4,
+            })}
+          >
+            <Icon name="plus" size={22} color="#FFFFFF" />
+          </Pressable>
         </View>
       }
       renderItem={({ item }) => (
