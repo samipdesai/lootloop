@@ -1,7 +1,7 @@
 # Maestro kid store golden path — iPad. iPad split-view sidebar (testID taps)
 # instead of the iPhone bottom tab bar. Seed with seed-store-flow.sql first.
 # Run with: maestro --device <iPad-udid> test kid-store-flow.ipad.yaml
-appId: org.reactjs.native.example.mobile
+appId: com.lootloop.app
 tags:
   - kid
   - ipad

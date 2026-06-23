@@ -5,7 +5,7 @@
 #
 # Prereqs: local Supabase up + seeded; the mobile app installed on a booted sim;
 # Metro running. Bundle id is the bare-RN default below.
-appId: org.reactjs.native.example.mobile
+appId: com.lootloop.app
 tags:
   - kid
   - golden-path

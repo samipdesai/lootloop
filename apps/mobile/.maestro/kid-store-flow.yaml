@@ -2,7 +2,7 @@
 # buy a reward → balance drops (celebration #26 fires) → reward now unaffordable.
 # Targets the iPhone bottom-tab layout (tab switch taps the bar by position).
 # Seed with seed-store-flow.sql first. Bundle id is the bare-RN default.
-appId: org.reactjs.native.example.mobile
+appId: com.lootloop.app
 tags:
   - kid
   - golden-path
