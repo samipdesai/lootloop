@@ -16,4 +16,11 @@ module.exports = {
     // global.css is consumed by Metro+NativeWind at build time; stub it in Jest.
     '\\.css$': '<rootDir>/__mocks__/styleMock.js',
   },
+  // M6 #48 coverage gate. Scoped to the unit-tested logic layer (Zustand-style
+  // stores + hooks, task #44) — NOT the whole app, since screens are covered by
+  // E2E (Maestro), not unit tests. A drop below 70% here fails the run.
+  coverageThreshold: {
+    './src/stores/': { statements: 70, branches: 70, functions: 70, lines: 70 },
+    './src/hooks/': { statements: 70, branches: 70, functions: 70, lines: 70 },
+  },
 };
