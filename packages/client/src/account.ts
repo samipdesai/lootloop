@@ -1,0 +1,36 @@
+// Parent account & family deletion service (task #52). Thin wrappers over the
+// `delete-account` Edge Function (supabase/functions/delete-account), which
+// dispatches to the SECURITY DEFINER SQL functions leave_family()/delete_family()
+// (migration 009) and then removes the freed auth.users rows via the GoTrue admin
+// API. The parent's GoTrue session token is attached automatically by
+// functions.invoke, and the SQL functions self-authorize off it — these wrappers
+// add no client-side authZ. This is the ONLY backend-aware spot (portability rule:
+// no raw supabase.from/.rpc in screens).
+import type { FunctionsError } from '@supabase/supabase-js';
+import type { LootLoopClient } from './auth';
+
+export interface DeleteAccountResult {
+  ok: true;
+  action: 'leave' | 'delete_family';
+  deleted_users: number;
+}
+
+type InvokeResult = Promise<{ data: DeleteAccountResult | null; error: FunctionsError | null }>;
+
+// The calling parent leaves their family (removes only themselves). The Edge
+// Function returns a non-2xx (-> FunctionsHttpError in `error`) if the caller is
+// the LAST parent (403 last_parent) or not a parent (401) — the screen inspects
+// `error` to message the user.
+export function leaveFamily(client: LootLoopClient): InvokeResult {
+  return client.functions.invoke<DeleteAccountResult>('delete-account', {
+    body: { action: 'leave' },
+  });
+}
+
+// Any parent deletes the ENTIRE family (HARD delete; FK CASCADE wipes all
+// family-scoped data). A non-parent caller surfaces as a 401 in `error`.
+export function deleteFamily(client: LootLoopClient): InvokeResult {
+  return client.functions.invoke<DeleteAccountResult>('delete-account', {
+    body: { action: 'delete_family' },
+  });
+}
