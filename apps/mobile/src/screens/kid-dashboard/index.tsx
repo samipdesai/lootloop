@@ -244,7 +244,12 @@ export function KidDashboardScreen() {
             <Pressable
               testID="wallet-pill"
               accessibilityRole="button"
-              accessibilityLabel="Wallet history"
+              // Announce the balance (the inner BalancePill Text collapses into this
+              // button's a11y label) so VoiceOver reads the amount, not just
+              // "history" — and so the live balance is assertable in E2E (#47).
+              // Label = state, hint = action (the textbook a11y split).
+              accessibilityLabel={`Wallet balance ${data.walletBalance} points`}
+              accessibilityHint="Opens your wallet history"
               onPress={() => nav.navigate('WalletHistory')}
             >
               <BalancePill amount={data.walletBalance} label="Wallet" tone="orange" />

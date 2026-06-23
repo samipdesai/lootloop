@@ -1,0 +1,63 @@
+# Maestro CROSS-DEVICE realtime flow (task #47 / M6): a server-side approval
+# appears LIVE on the kid's device, proving the realtime subscription (task #41).
+#
+# WHY a psql trigger instead of a Maestro step: the parent "Approve" action is a
+# WEB surface — Maestro only drives the mobile (kid) app. So the harness fires the
+# SAME atomic function the web Approve button calls,
+#   award_points_on_approval('<completion_id>','<parent_profile_id>')
+# out-of-band over the postgres connection WHILE this flow is parked on Home. That
+# UPDATEs wallets.wallet_balance, which the kid's wallet realtime subscription
+# (kid-dashboard subscribeToTable 'wallets') receives and re-loads Home — no manual
+# refresh, no kid action. See run-all.sh `run_cross_device_flow` for the timing:
+# it backgrounds `( sleep N; psql ... )` just before launching this flow, so the
+# +75 credit lands mid-flow and the balance updates 500 → 575 live.
+#
+# Targets the iPhone bottom-tab layout (login lands on Home; we stay there).
+# Seed deterministic data first with seed-cross-device-flow.sql (start balance 500,
+# one pending completion worth 75 → 575 after approval).
+#
+# Prereqs: local Supabase up + seeded; the parent auth user ensured; the mobile app
+# installed on a booted sim; Metro running. Bundle id is the bare-RN default below.
+appId: com.lootloop.app
+tags:
+  - kid
+  - realtime
+  - cross-device
+  - golden-path
+---
+# Fresh app state → lands on the parent Login screen (kid entry lives there).
+- launchApp:
+    clearState: true
+- assertVisible: 'Welcome back'
+
+# Kid login: family code → roster → PIN.
+- tapOn: 'Kid signing in? Use your family code'
+- assertVisible: 'Enter your family code'
+- tapOn:
+    id: 'kid-code-input'
+- inputText: 'MAESTRO7'
+- tapOn: 'Continue'
+
+- assertVisible: "Who's here?"
+# The roster tile sets accessibilityLabel="Sign in as <name>", which on iOS
+# absorbs the child "Ava" text — so target the label, not the bare name.
+- tapOn: 'Sign in as Ava'
+
+- assertVisible: 'Log in' # PIN screen ("Hi Ava!" + PIN field)
+- tapOn:
+    id: 'kid-pin-input'
+- inputText: '1234'
+- tapOn: 'Log in'
+
+# Kid shell lands on Home (dashboard). The wallet hero is a button whose a11y
+# label announces the balance (the inner BalancePill Text is collapsed into it),
+# so we assert the seeded starting balance via that label before the credit.
+- assertVisible: 'Wallet balance 500 points'
+
+# Park on Home and wait for the realtime push. The harness fires
+# award_points_on_approval(...) over psql mid-wait (the web Approve effect): the
+# wallet realtime subscription re-loads Home and the balance becomes 575. No tap,
+# no pull-to-refresh — a generous timeout absorbs the sleep + realtime latency.
+- extendedWaitUntil:
+    visible: 'Wallet balance 575 points'
+    timeout: 60000

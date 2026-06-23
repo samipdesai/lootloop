@@ -11,9 +11,31 @@ adapts, so the same steps pass on either form factor.
 | `kid-chore-flow.yaml`           | Kid family-code login → roster → PIN → Chores tab → mark a chore done (#9 / #15 / #16)                |
 | `kid-store-flow.yaml`           | Kid login → Store tab → buy a reward → balance drops, celebration fires (#19 / #23 / #24 / #26)       |
 | `kid-reading-savings-flow.yaml` | Kid login → Reading tab → log a book → Savings tab → deposit to savings (#27 / #30 / #31 / #32 / #33) |
+| `cross-device-approval-flow.yaml` | Kid login → park on Home → a server-side parent approval lands LIVE, wallet 500 → 575 via realtime, no kid action (#41 / #47) |
 
 Each flow has a matching `seed-*.sql` (run first) that recreates a deterministic test
 family as the postgres superuser, so every run starts clean.
+
+### Cross-device realtime flow (the psql "Approve" trigger)
+
+`cross-device-approval-flow.yaml` proves the kid's realtime subscription (task #41):
+the kid app parks on Home showing the seeded balance (**500**), and the kid's wallet
+updates **live** to **575** with no tap / no pull-to-refresh.
+
+The parent "Approve" action is a **web** surface — Maestro only drives the mobile (kid)
+app — so the harness simulates it by firing the **same atomic function the web Approve
+button calls**, `award_points_on_approval(<completion_id>, <parent_profile_id>)`, over
+the postgres connection while the flow is parked on Home. `run-all.sh`'s
+`run_cross_device_flow` backgrounds `( sleep N; psql … ) &` just before launching the
+flow, so the +75 credit lands mid-flow and the wallet's realtime subscription re-loads
+Home.
+
+Because `award_points_on_approval` is `SECURITY DEFINER` and self-authorizes the caller
+(`auth_role()`/`auth_family_id()`), the bare superuser can't call it directly — the
+psql payload wraps it in a txn that `set local role authenticated` + a JWT `sub` claim
+resolving to the seeded **parent** profile's auth user (`parent@maestro.test`), exactly
+like the SQL function tests. The parent auth user is ensured (GoTrue admin API) before
+the flow runs; tune the pre-approval delay with `CROSS_APPROVE_DELAY` (default 22s).
 
 ## One-time setup
 
