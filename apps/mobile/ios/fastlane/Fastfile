@@ -19,6 +19,19 @@ platform :ios do
   # Register the App ID / bundle id in the Developer portal via the API key
   # (idempotent). The App Store Connect *app record* can't be created by the API
   # — that's done once in the ASC UI (selecting this bundle id). See #57.
+  desc "Push App Store text metadata — description, keywords, categories, URLs (#58)"
+  lane :metadata do
+    deliver(
+      api_key: asc_key,
+      app_version: "1.0",
+      skip_binary_upload: true,
+      skip_screenshots: true,
+      skip_metadata: false,
+      force: true, # no interactive HTML preview
+      run_precheck_before_submit: false,
+    )
+  end
+
   desc "Create/sync the App Store distribution cert + profile via match (#59)"
   lane :certs do
     match(
