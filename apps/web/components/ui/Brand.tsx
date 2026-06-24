@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import { Wordmark } from './Wordmark';
 
 // Brandmark: Looty mascot + LootLoop wordmark (spec §5 anatomy).
 export function Brand({ size = 96, celebrate = false }: { size?: number; celebrate?: boolean }) {
@@ -12,9 +13,7 @@ export function Brand({ size = 96, celebrate = false }: { size?: number; celebra
         priority
         className={celebrate ? 'drop-shadow-[0_12px_24px_rgba(240,179,21,0.45)]' : undefined}
       />
-      <span className="font-display text-[32px] font-extrabold leading-none text-ink-900">
-        LootLoop
-      </span>
+      <Wordmark className="font-display text-[32px] font-extrabold leading-none text-ink-900" />
     </div>
   );
 }

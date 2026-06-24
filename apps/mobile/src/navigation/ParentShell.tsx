@@ -17,6 +17,7 @@ import { ScheduleScreen } from '../screens/schedule';
 import { FamilyOverviewScreen } from '../screens/family';
 import { FamilyCodeScreen } from '../screens/family/FamilyCodeScreen';
 import { Icon, type IconName } from '../components/ui/Icon';
+import { Wordmark } from '../components/ui/BrandMark';
 import { ParentSplitNavContext, type ParentNav } from './ParentNav';
 import tw from '../lib/tw';
 
@@ -141,9 +142,7 @@ function ParentSplitView() {
             paddingTop: insets.top + 16,
           })}
         >
-          <Text style={tw`mb-3 px-3 font-display text-[22px] font-extrabold text-ink-900`}>
-            LootLoop
-          </Text>
+          <Wordmark className="mb-3 px-3 text-[22px] text-ink-900" />
           {/* Same 4 destinations as the iPhone tab bar. Kids + Schedule aren't
               sidebar items — they're reached from the Home hub (kid cards /
               quick actions), matching iPhone. */}

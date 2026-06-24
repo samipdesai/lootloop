@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 import { SidebarNav } from '@/components/dashboard/SidebarNav';
 import { BottomNav } from '@/components/dashboard/BottomNav';
 import { LogoutButton } from '@/components/dashboard/LogoutButton';
+import { Wordmark } from '@/components/ui/Wordmark';
 
 // Parent dashboard nav shell (task #10). Middleware already guarantees an
 // onboarded parent reaches these routes; we re-read the profile + family here
@@ -35,9 +36,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col gap-8 border-r border-border bg-surface-card px-5 py-7 md:flex">
         <div className="flex items-center gap-2.5 px-2">
           <Image src="/logomark.svg" alt="" width={32} height={32} priority />
-          <span className="font-display text-[22px] font-extrabold leading-none text-ink-900">
-            LootLoop
-          </span>
+          <Wordmark className="font-display text-[22px] font-extrabold leading-none text-ink-900" />
         </div>
         <SidebarNav />
       </aside>

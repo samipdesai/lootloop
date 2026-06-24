@@ -1,6 +1,6 @@
 // Loading splash while the session + parent-profile lookup resolves (#10).
-import { ActivityIndicator, Text, View } from 'react-native';
-import { Logomark } from '../components/ui/BrandMark';
+import { ActivityIndicator, View } from 'react-native';
+import { Logomark, Wordmark } from '../components/ui/BrandMark';
 import tw from '../lib/tw';
 
 export function SplashScreen() {
@@ -9,7 +9,7 @@ export function SplashScreen() {
       {/* Brand logomark (loop + coin), matching the auth screen. The previous
           🪙 emoji rendered as a grey "moon" disc on first frame. */}
       <Logomark size={64} />
-      <Text style={tw`font-display text-[28px] font-extrabold text-ink-900`}>LootLoop</Text>
+      <Wordmark className="text-[28px] text-ink-900" />
       <ActivityIndicator color="#F4720E" />
     </View>
   );
