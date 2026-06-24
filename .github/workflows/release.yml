@@ -35,7 +35,9 @@ jobs:
 
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          # Pinned (not `latest`) to avoid the rate-limited GitHub releases API
+          # lookup that intermittently fails setup. See _quality.yml.
+          version: 2.107.0
       - run: supabase start
 
       # Maestro CLI (run-all.sh adds ~/.maestro/bin to PATH).

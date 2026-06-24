@@ -43,7 +43,9 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          # Pinned (not `latest`) to avoid the rate-limited GitHub releases API
+          # lookup that intermittently fails setup. See _quality.yml.
+          version: 2.107.0
       - run: supabase start
       # Point the Next dev server (Playwright's webServer starts it on 127.0.0.1)
       # at the local Supabase stack. The anon key is read from the running stack.

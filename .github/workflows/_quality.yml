@@ -38,7 +38,10 @@ jobs:
       # the suite; domain/mobile unit tests in the same run don't need it.
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          # Pinned (not `latest`): resolving "latest" hits the GitHub releases
+          # API, which is rate-limited on shared runners and intermittently
+          # fails the job at setup. A pinned version downloads the asset directly.
+          version: 2.107.0
       - run: supabase start
       # Unit + jest-integration suites (the latter hit the running Supabase).
       # --coverage --ci also enforces the 70% thresholds wired into the
