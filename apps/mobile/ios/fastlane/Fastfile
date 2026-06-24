@@ -19,6 +19,14 @@ platform :ios do
   # Register the App ID / bundle id in the Developer portal via the API key
   # (idempotent). The App Store Connect *app record* can't be created by the API
   # — that's done once in the ASC UI (selecting this bundle id). See #57.
+  desc "List the App Store Connect app records (#57 verify)"
+  lane :list_apps do
+    asc_key
+    apps = Spaceship::ConnectAPI::App.all
+    UI.important("#{apps.count} app record(s):")
+    apps.each { |a| UI.message("  #{a.name}  [#{a.bundle_id}]  id=#{a.id}") }
+  end
+
   desc "List all bundle ids registered to this account (#57 diagnosis)"
   lane :list_bundle_ids do
     asc_key
