@@ -11,7 +11,7 @@ scan, local re-verification of the fix via the full SQL integration suite.
 |----|----------|---------|--------|
 | M-1 | **Medium** | Prod function EXECUTE grants drifted wide open (anon + authenticated can call every SECURITY DEFINER fn, incl. `service_role`-only `credit_interest`) | ✅ **FIXED on prod** (migration `010` applied + advisor-verified 2026-06-24) |
 | L-1 | Low | `set_updated_at` has a role-mutable `search_path` | ✅ Fixed in `010` (applied to prod) |
-| L-2 | Low | Auth: leaked-password protection (HaveIBeenPwned) disabled | **Requires Pro plan** — Free tier returns HTTP 402; bundle with the Pro upgrade (see #49) |
+| L-2 | Low | Auth: leaked-password protection (HaveIBeenPwned) disabled | **MITIGATED** — self-hosted HIBP k-anonymity check in `signUpParent` (no Pro needed); Supabase's built-in toggle stays deferred to the Pro upgrade |
 | — | Info | Performance: unindexed FKs, unused indexes, multiple-permissive-policies | Deferred (low priority; see below) |
 
 No critical issues. RLS is enabled and enforced on all tables; no secrets are committed.
@@ -61,14 +61,28 @@ A SECURITY-relevant hygiene gap (search_path injection vector on functions). Fix
 `010` (`alter function set_updated_at() set search_path = public, pg_temp`). All other
 functions already pin search_path.
 
-## L-2 (Low) — Leaked-password protection disabled
+## L-2 (Low) — Leaked-password protection — MITIGATED (self-hosted)
 
-Supabase Auth can reject passwords found in the HaveIBeenPwned breach corpus; it's
-currently off. **This is a Pro-plan feature** — attempting to enable it on the current
-Free tier returns `HTTP 402 Payment Required`. Enable it as part of upgrading the project
-to Pro (which also stops the 7-day idle pause and adds daily backups — see #49). Once on
-Pro: Management API `PATCH /v1/projects/<ref>/config/auth {"password_hibp_enabled": true}`,
-or dashboard → Auth. Zero app impact.
+Passwords found in the HaveIBeenPwned breach corpus should be rejected at signup.
+Supabase's built-in toggle for this is a **Pro-plan feature** — enabling it on Free
+returns `HTTP 402 Payment Required`. Rather than upgrade for one control, we query the
+**same open, keyless HIBP corpus ourselves** via the Pwned Passwords range API using
+k-anonymity (only the first 5 chars of the password's SHA-1 leave the device; the
+password and full hash never do).
+
+- **Implementation:** `packages/client/src/pwned.ts` (`checkPasswordPwned`), wired into
+  `signUpParent` so both web and mobile parent signup inherit it. SHA-1 is pure-JS (no
+  `crypto.subtle`, which is absent in React Native/Hermes) so it runs identically on every
+  surface. The check **fails open** on any network/hashing error — a third-party outage
+  can never block a legitimate signup, since this is best-effort hardening, not a hard gate.
+- **Unit tests:** `packages/client/src/pwned.test.ts` — SHA-1 vectors, k-anonymity contract
+  (asserts only the 5-char prefix is sent), suffix matching, padded-entry handling, fail-open.
+- **Residual:** kid auth uses a local PIN (not a password), so this control only ever
+  applied to the parent email+password path. **Phase 2 OAuth (Sign in with Google/Apple)
+  removes passwords entirely and supersedes this check.** Supabase's native toggle remains
+  available if/when the project moves to Pro (Management API
+  `PATCH /v1/projects/<ref>/config/auth {"password_hibp_enabled": true}`), but is no longer
+  a launch blocker.
 
 ## Accepted / by-design (no action)
 
@@ -103,7 +117,9 @@ All `INFO`/`WARN`, none security-related, low priority for launch traffic:
 1. ✅ ~~Apply `010` to prod~~ — DONE (applied + advisor-verified 2026-06-24).
 2. **Merge PR #33** — 010 is live on prod, but the PR is unmerged; merge so `main`/local/CI
    migration history includes it.
-3. **Enable leaked-password protection** — requires upgrading to **Pro** (Free returns 402).
-   Bundle with the Pro upgrade (also stops 7-day idle pause + adds daily backups, per #49).
+3. ✅ ~~Enable leaked-password protection~~ — DONE via a **self-hosted HIBP check**
+   (`packages/client/src/pwned.ts`); no Pro upgrade required. Supabase's native toggle stays
+   deferred to the Pro upgrade (which also stops the 7-day idle pause + adds backups, per #49)
+   but is no longer a launch blocker. Superseded entirely by Phase 2 OAuth.
 4. (Optional) Investigate why the remote dropped 003's grants, in case future migrations
    need the same explicit re-assertion.

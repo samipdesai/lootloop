@@ -2,6 +2,7 @@
 export { createSupabaseClient } from './supabase';
 export { checkConnection } from './connection';
 export * from './auth';
+export * from './pwned';
 export * from './chores';
 export * from './kids';
 export * from './kidSession';
