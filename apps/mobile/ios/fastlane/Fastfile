@@ -11,7 +11,7 @@ platform :ios do
     app_store_connect_api_key(
       key_id: ENV.fetch("APP_STORE_CONNECT_KEY_ID"),
       issuer_id: ENV.fetch("APP_STORE_CONNECT_ISSUER_ID"),
-      key_filepath: ENV.fetch("APP_STORE_CONNECT_API_KEY_PATH"),
+      key_filepath: ENV.fetch("LOOTLOOP_ASC_KEY_PATH"),
       set_spaceship_token: true,
     )
   end
@@ -19,6 +19,35 @@ platform :ios do
   # Register the App ID / bundle id in the Developer portal via the API key
   # (idempotent). The App Store Connect *app record* can't be created by the API
   # — that's done once in the ASC UI (selecting this bundle id). See #57.
+  desc "Create/sync the App Store distribution cert + profile via match (#59)"
+  lane :certs do
+    match(
+      type: "appstore",
+      app_identifier: "com.lootloop.mobile",
+      api_key: asc_key,
+      readonly: false,
+    )
+  end
+
+  desc "Build a signed Release .ipa and upload to TestFlight (#59)"
+  lane :beta do
+    key = asc_key
+    # Pull the App Store signing cert + profile (read-only — created by `certs`).
+    match(type: "appstore", app_identifier: "com.lootloop.mobile", api_key: key, readonly: true)
+    # Next build number = latest on TestFlight + 1 (0 for the very first upload).
+    next_build = latest_testflight_build_number(
+      api_key: key, app_identifier: "com.lootloop.mobile", initial_build_number: 0,
+    ) + 1
+    increment_build_number(build_number: next_build, xcodeproj: "mobile.xcodeproj")
+    gym(
+      workspace: "mobile.xcworkspace",
+      scheme: "mobile",
+      export_method: "app-store",
+      clean: true,
+    )
+    pilot(api_key: key, skip_waiting_for_build_processing: true)
+  end
+
   desc "List the App Store Connect app records (#57 verify)"
   lane :list_apps do
     asc_key
