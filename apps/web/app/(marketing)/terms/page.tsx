@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { Wordmark } from '../../../components/ui/Wordmark';
 
 // Terms of Service SCAFFOLD (M7 #53).
 //
@@ -155,7 +156,7 @@ export default function TermsPage() {
 
       <div className="mt-12 border-t border-border pt-6 text-sm text-ink-500">
         <Link href="/coming-soon" className="transition-colors hover:text-ink-900">
-          &larr; Back to LootLoop
+          &larr; Back to <Wordmark />
         </Link>
         <span className="px-2" aria-hidden>
           &middot;

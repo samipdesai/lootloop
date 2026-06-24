@@ -1,9 +1,13 @@
 name: PR Checks
 
+# Fast regression gate on every PR: lint, typecheck, unit + integration, web
+# build, mobile typecheck. Job names are intentionally top-level (not nested
+# under a reusable workflow) so the produced check names — lint-and-typecheck,
+# test, build-web, mobile-typecheck — match the required status checks in branch
+# protection exactly. Browser/device E2E stays off the per-PR path for speed; it
+# runs in deploy-web.yml on merge-to-main, gating the production deploy.
 on:
   pull_request:
-    branches: [main]
-  push:
     branches: [main]
 
 concurrency:
@@ -40,7 +44,10 @@ jobs:
       # the suite; domain/mobile unit tests in the same run don't need it.
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          # Pinned (not `latest`): resolving "latest" hits the GitHub releases
+          # API, which is rate-limited on shared runners and intermittently
+          # fails the job at setup. A pinned version downloads the asset directly.
+          version: 2.107.0
       - run: supabase start
       # Unit + jest-integration suites (the latter hit the running Supabase).
       # --coverage --ci also enforces the 70% thresholds wired into the

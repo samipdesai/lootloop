@@ -4,7 +4,10 @@
 //   - Coin:     the gold loot coin (currency, rewards, points)
 //   - Logomark: the "loop + coin" app logomark (auth / splash chrome)
 //   - Looty:    the coin mascot face (celebrations, empty states, kid delight)
+//   - Wordmark: the two-tone "LootLoop" text wordmark ("Loop" in brand orange)
+import { Text } from 'react-native';
 import { SvgXml } from 'react-native-svg';
+import tw from '../../lib/tw';
 
 const COIN_XML = `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
   <circle cx="24" cy="24" r="20" fill="#FFC93C"/>
@@ -47,4 +50,15 @@ export function Logomark({ size = 64 }: { size?: number }) {
 
 export function Looty({ size = 64 }: { size?: number }) {
   return <SvgXml xml={LOOTY_XML} width={size} height={size} />;
+}
+
+// Two-tone "LootLoop" wordmark: "Loot" takes the base color, "Loop" is brand
+// orange. Pass size/weight/base-color via `className` (font-display + extrabold
+// are baked in). Used in auth, splash, and the iPad parent sidebar header.
+export function Wordmark({ className }: { className?: string }) {
+  return (
+    <Text style={tw.style('font-display font-extrabold', className ?? '')}>
+      Loot<Text style={tw`text-orange`}>Loop</Text>
+    </Text>
+  );
 }

@@ -1,0 +1,135 @@
+name: Deploy Web (gated)
+
+# Production pipeline for the web app. On every push to main it runs the FULL
+# regression — lint/typecheck, unit + integration, web build, mobile typecheck,
+# PLUS the Playwright web E2E — and only deploys to Vercel prod if every one of
+# those jobs passes (`deploy` declares `needs:` on all of them). Red test = no
+# deploy, full stop.
+#
+# These jobs mirror pr-checks.yml on purpose (self-contained workflows, stable
+# top-level check names) — the small duplication is deliberate.
+#
+# The deploy step is gated behind the `VERCEL_DEPLOY_ENABLED` repo variable so
+# this pipeline is valid BEFORE Vercel is wired: until that's "true" (and the 3
+# Vercel secrets exist), main still runs the full regression and the deploy job
+# simply skips.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+concurrency:
+  group: deploy-web-${{ github.ref }}
+  # Never cancel an in-flight production deploy.
+  cancel-in-progress: false
+
+jobs:
+  lint-and-typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm -r lint
+      - run: pnpm -r typecheck
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: supabase/setup-cli@v1
+        with:
+          # Pinned (not `latest`) to avoid the rate-limited GitHub releases API
+          # lookup that intermittently fails setup.
+          version: 2.107.0
+      - run: supabase start
+      - run: pnpm -r test --coverage --ci
+      - run: pnpm test:integration
+      - run: supabase stop
+        if: always()
+
+  build-web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter web build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: build-time-placeholder-anon-key
+
+  mobile-typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter mobile typecheck
+
+  # Browser E2E (parent golden paths, #46). Off the per-PR path for speed; here
+  # it's a required gate before the prod deploy.
+  web-e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.107.0
+      - run: supabase start
+      # Point the Next dev server (Playwright's webServer starts it on 127.0.0.1)
+      # at the local Supabase stack. The anon key is read from the running stack.
+      - name: Write web env for the dev server
+        run: |
+          eval "$(supabase status -o env | grep -E '^(ANON_KEY|API_URL)=')"
+          printf 'NEXT_PUBLIC_SUPABASE_URL=%s\nNEXT_PUBLIC_SUPABASE_ANON_KEY=%s\n' \
+            "$API_URL" "$ANON_KEY" > apps/web/.env.local
+      - run: pnpm --filter web exec playwright install --with-deps chromium
+      - run: pnpm --filter web test:e2e
+      - run: supabase stop
+        if: always()
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report/**
+          if-no-files-found: ignore
+
+  # Promote to Vercel production — ONLY after the full regression above is green.
+  deploy:
+    needs: [lint-and-typecheck, test, build-web, mobile-typecheck, web-e2e]
+    if: ${{ vars.VERCEL_DEPLOY_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm install --global vercel@latest
+      - run: vercel pull --yes --environment=production --token="${{ secrets.VERCEL_TOKEN }}"
+      - run: vercel build --prod --token="${{ secrets.VERCEL_TOKEN }}"
+      - run: vercel deploy --prebuilt --prod --token="${{ secrets.VERCEL_TOKEN }}"
