@@ -3,7 +3,7 @@
 # the iPhone bottom tab bar. Kids + Schedule are reached from the Home hub, same
 # as iPhone. Seed with seed-parent-flow.sql (run-parent-flow.sh ensures the user).
 # Run with: maestro --device <iPad-udid> test parent-overview-flow.ipad.yaml
-appId: com.lootloop.app
+appId: com.lootloop.mobile
 tags:
   - parent
   - ipad

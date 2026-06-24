@@ -1,0 +1,8 @@
+# fastlane match — code-signing storage (#59). Encrypted certs/profiles live in
+# the private lootloop-certs repo; MATCH_PASSWORD (env) decrypts them. Auth to
+# Apple is via the App Store Connect API key (set in the Fastfile lane).
+git_url(ENV.fetch("MATCH_GIT_URL", "https://github.com/samipdesai/lootloop-certs.git"))
+storage_mode("git")
+
+type("appstore")
+app_identifier(["com.lootloop.mobile"])

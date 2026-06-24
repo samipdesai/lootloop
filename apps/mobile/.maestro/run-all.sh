@@ -16,7 +16,7 @@ set -uo pipefail   # not -e: we run every flow and report all failures at the en
 DIR="$(cd "$(dirname "$0")" && pwd)"
 DB_CONTAINER="${SUPABASE_DB_CONTAINER:-supabase_db_Lootloop}"
 API="${SUPABASE_API_URL:-http://127.0.0.1:54321}"
-BUNDLE="com.lootloop.app"
+BUNDLE="com.lootloop.mobile"
 IPHONE_NAME="${E2E_IPHONE:-iPhone 17 Pro}"
 IPAD_NAME="${E2E_IPAD:-iPad (A16)}"
 

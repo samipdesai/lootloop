@@ -2,7 +2,7 @@
 # (Home/Chores/Rewards/Approvals, matching the canvas) + the Home-hub pushes
 # (Schedule, Kids → Give bonus). Targets iPhone. Seed with seed-parent-flow.sql
 # (run-parent-flow.sh does both + ensures the parent auth user).
-appId: com.lootloop.app
+appId: com.lootloop.mobile
 tags:
   - parent
   - golden-path

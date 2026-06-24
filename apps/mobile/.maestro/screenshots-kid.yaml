@@ -1,0 +1,46 @@
+# App Store screenshot capture (#58) — kid surfaces via the bottom tabs (reliable
+# tab-<key> testIDs). Seed with seed-screenshots.sql first. takeScreenshot saves
+# PNGs at native resolution into the cwd maestro runs from (run per device).
+appId: com.lootloop.mobile
+---
+- launchApp:
+    clearState: true
+- assertVisible: 'Welcome back'
+- tapOn: 'Kid signing in? Use your family code'
+- tapOn:
+    id: 'kid-code-input'
+- inputText: 'MAESTRO7'
+- tapOn: 'Continue'
+- assertVisible: "Who's here?"
+- tapOn: 'Sign in as Ava'
+- assertVisible: 'Log in'
+- tapOn:
+    id: 'kid-pin-input'
+- inputText: '1234'
+- tapOn: 'Log in'
+
+# HOME — wallet, savings/store shortcuts, reading streak, today's chores
+- assertVisible: "Today's chores"
+- takeScreenshot: 01-home
+
+# CHORES
+- tapOn:
+    id: 'tab-Chores'
+- assertVisible: 'Make your bed'
+- takeScreenshot: 02-chores
+
+# STORE — reward grid
+- tapOn:
+    id: 'tab-Store'
+- assertVisible: 'Ice cream trip'
+- takeScreenshot: 03-store
+
+# READING
+- tapOn:
+    id: 'tab-Reading'
+- takeScreenshot: 04-reading
+
+# SAVINGS — balance + goal
+- tapOn:
+    id: 'tab-Savings'
+- takeScreenshot: 05-savings

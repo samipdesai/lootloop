@@ -1,0 +1,99 @@
+default_platform(:ios)
+
+# LootLoop iOS lanes (M7). Auth is via the App Store Connect API key (no Apple
+# ID / 2FA), read from APP_STORE_CONNECT_* env (repo-root .env.local locally,
+# GitHub secrets in CI). Signing (match) + the TestFlight build lane land in #59.
+platform :ios do
+  # App Store Connect API key, shared by every lane that talks to Apple.
+  # set_spaceship_token makes Spaceship-based actions (produce, deliver, pilot)
+  # authenticate with this key automatically — they don't take an api_key param.
+  def asc_key
+    app_store_connect_api_key(
+      key_id: ENV.fetch("APP_STORE_CONNECT_KEY_ID"),
+      issuer_id: ENV.fetch("APP_STORE_CONNECT_ISSUER_ID"),
+      key_filepath: ENV.fetch("LOOTLOOP_ASC_KEY_PATH"),
+      set_spaceship_token: true,
+    )
+  end
+
+  # Register the App ID / bundle id in the Developer portal via the API key
+  # (idempotent). The App Store Connect *app record* can't be created by the API
+  # — that's done once in the ASC UI (selecting this bundle id). See #57.
+  desc "Push App Store text metadata — description, keywords, categories, URLs (#58)"
+  lane :metadata do
+    deliver(
+      api_key: asc_key,
+      app_version: "1.0",
+      skip_binary_upload: true,
+      skip_screenshots: true,
+      skip_metadata: false,
+      force: true, # no interactive HTML preview
+      run_precheck_before_submit: false,
+    )
+  end
+
+  desc "Create/sync the App Store distribution cert + profile via match (#59)"
+  lane :certs do
+    match(
+      type: "appstore",
+      app_identifier: "com.lootloop.mobile",
+      api_key: asc_key,
+      readonly: false,
+    )
+  end
+
+  desc "Build a signed Release .ipa and upload to TestFlight (#59)"
+  lane :beta do
+    key = asc_key
+    # Pull the App Store signing cert + profile (read-only — created by `certs`).
+    match(type: "appstore", app_identifier: "com.lootloop.mobile", api_key: key, readonly: true)
+    # Next build number = latest on TestFlight + 1 (0 for the very first upload).
+    next_build = latest_testflight_build_number(
+      api_key: key, app_identifier: "com.lootloop.mobile", initial_build_number: 0,
+    ) + 1
+    # Apply the build number AND the match distribution signing at build time via
+    # xcargs — so the committed project is untouched: Info.plist keeps its
+    # $(CURRENT_PROJECT_VERSION) reference, and Debug/simulator dev stays on
+    # automatic signing. Only this archive uses the manual App Store profile.
+    gym(
+      workspace: "mobile.xcworkspace",
+      scheme: "mobile",
+      export_method: "app-store",
+      clean: true,
+      xcargs: "CURRENT_PROJECT_VERSION=#{next_build} " \
+              "DEVELOPMENT_TEAM=WF7D7TB3W8 CODE_SIGN_STYLE=Manual " \
+              'PROVISIONING_PROFILE_SPECIFIER="match AppStore com.lootloop.mobile" ' \
+              'CODE_SIGN_IDENTITY="Apple Distribution"',
+    )
+    pilot(api_key: key, skip_waiting_for_build_processing: true)
+  end
+
+  desc "List the App Store Connect app records (#57 verify)"
+  lane :list_apps do
+    asc_key
+    apps = Spaceship::ConnectAPI::App.all
+    UI.important("#{apps.count} app record(s):")
+    apps.each { |a| UI.message("  #{a.name}  [#{a.bundle_id}]  id=#{a.id}") }
+  end
+
+  desc "List all bundle ids registered to this account (#57 diagnosis)"
+  lane :list_bundle_ids do
+    asc_key
+    ids = Spaceship::ConnectAPI::BundleId.all(limit: 200)
+    UI.important("#{ids.count} bundle id(s) in this account:")
+    ids.each { |b| UI.message("  #{b.identifier}  (#{b.name})") }
+  end
+
+  desc "Register the com.lootloop.mobile bundle id (#57)"
+  lane :register_bundle_id do
+    asc_key # sets Spaceship::ConnectAPI.token
+    identifier = "com.lootloop.mobile"
+    existing = Spaceship::ConnectAPI::BundleId.all(limit: 200).detect { |b| b.identifier == identifier }
+    if existing
+      UI.success("✓ Bundle ID already registered: #{identifier} (#{existing.name})")
+    else
+      Spaceship::ConnectAPI::BundleId.create(name: "LootLoop", identifier: identifier, platform: "IOS")
+      UI.success("✓ Registered bundle ID: #{identifier}")
+    end
+  end
+end

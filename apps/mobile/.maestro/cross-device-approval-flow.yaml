@@ -18,7 +18,7 @@
 #
 # Prereqs: local Supabase up + seeded; the parent auth user ensured; the mobile app
 # installed on a booted sim; Metro running. Bundle id is the bare-RN default below.
-appId: com.lootloop.app
+appId: com.lootloop.mobile
 tags:
   - kid
   - realtime

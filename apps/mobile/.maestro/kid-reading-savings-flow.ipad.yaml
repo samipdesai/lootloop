@@ -1,7 +1,7 @@
 # Maestro kid reading + savings golden path — iPad. iPad split-view sidebar
 # (testID taps). Seed with seed-reading-savings-flow.sql first.
 # Run with: maestro --device <iPad-udid> test kid-reading-savings-flow.ipad.yaml
-appId: com.lootloop.app
+appId: com.lootloop.mobile
 tags:
   - kid
   - ipad

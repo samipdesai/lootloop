@@ -1,0 +1,4 @@
+app_identifier("com.lootloop.mobile") # bundle identifier (reconciled in #57)
+
+# Authentication is via the App Store Connect API key (no Apple ID / 2FA),
+# loaded in the Fastfile from APP_STORE_CONNECT_* env (see repo-root .env.local).
