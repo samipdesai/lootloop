@@ -1,0 +1,81 @@
+name: Deploy Web (gated)
+
+# Production pipeline for the web app. On every push to main it runs the FULL
+# regression — the shared _quality suite (unit + integration) PLUS the Playwright
+# web E2E — and only deploys to Vercel prod if every one of those jobs passes
+# (`deploy` declares `needs:` on all of them). This is the "full regression
+# before deployment" gate: a red test = no deploy, full stop.
+#
+# The deploy step is itself gated behind the `VERCEL_DEPLOY_ENABLED` repo
+# variable so this pipeline is valid BEFORE Vercel is wired up: until you flip
+# that variable to "true" (and add the 3 Vercel secrets), main still runs the
+# full regression on every push, and the deploy job simply skips.
+#
+# To enable production deploys (task #56), in the GitHub repo settings add:
+#   Variables → VERCEL_DEPLOY_ENABLED = true
+#   Secrets   → VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+concurrency:
+  group: deploy-web-${{ github.ref }}
+  # Never cancel an in-flight production deploy.
+  cancel-in-progress: false
+
+jobs:
+  # Unit + integration + build + mobile typecheck (identical to the PR gate).
+  quality:
+    uses: ./.github/workflows/_quality.yml
+
+  # Browser E2E (parent golden paths, #46). Kept off the per-PR path for speed;
+  # here it's a required gate before the prod deploy.
+  web-e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - run: supabase start
+      # Point the Next dev server (Playwright's webServer starts it on 127.0.0.1)
+      # at the local Supabase stack. The anon key is read from the running stack.
+      - name: Write web env for the dev server
+        run: |
+          eval "$(supabase status -o env | grep -E '^(ANON_KEY|API_URL)=')"
+          printf 'NEXT_PUBLIC_SUPABASE_URL=%s\nNEXT_PUBLIC_SUPABASE_ANON_KEY=%s\n' \
+            "$API_URL" "$ANON_KEY" > apps/web/.env.local
+      - run: pnpm --filter web exec playwright install --with-deps chromium
+      - run: pnpm --filter web test:e2e
+      - run: supabase stop
+        if: always()
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report/**
+          if-no-files-found: ignore
+
+  # Promote to Vercel production — ONLY after the full regression above is green.
+  deploy:
+    needs: [quality, web-e2e]
+    if: ${{ vars.VERCEL_DEPLOY_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm install --global vercel@latest
+      # Pull project settings (incl. Root Directory = apps/web) + prod env vars,
+      # build with them, then deploy the prebuilt output to production.
+      - run: vercel pull --yes --environment=production --token="${{ secrets.VERCEL_TOKEN }}"
+      - run: vercel build --prod --token="${{ secrets.VERCEL_TOKEN }}"
+      - run: vercel deploy --prebuilt --prod --token="${{ secrets.VERCEL_TOKEN }}"

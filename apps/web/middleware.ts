@@ -66,10 +66,14 @@ export async function middleware(request: NextRequest) {
   // link) case itself.
   if (pathname.startsWith('/reset-password')) return response;
 
-  // No session: only the public auth routes are viewable (onboarding redirects).
+  // No session: public auth routes (/login, /signup, …) render directly; any
+  // other path (the apex "/" and gated dashboard routes) sends the visitor to the
+  // public coming-soon page (#56). The app stays reachable at /login — it's just
+  // not the face of lootloop.us pre-launch. Flip this back to '/login' (or remove)
+  // for a full public launch.
   if (!user) {
     if (isPublicRoute) return response;
-    return redirect(request, '/login');
+    return redirect(request, '/coming-soon');
   }
 
   // Session present: resolve profile state.
