@@ -9,9 +9,9 @@ scan, local re-verification of the fix via the full SQL integration suite.
 
 | ID | Severity | Finding | Status |
 |----|----------|---------|--------|
-| M-1 | **Medium** | Prod function EXECUTE grants drifted wide open (anon + authenticated can call every SECURITY DEFINER fn, incl. `service_role`-only `credit_interest`) | **Fix written + verified on local; awaiting prod apply** (migration `010`) |
-| L-1 | Low | `set_updated_at` has a role-mutable `search_path` | Fixed in `010` (awaiting prod apply) |
-| L-2 | Low | Auth: leaked-password protection (HaveIBeenPwned) disabled | **Awaiting your toggle** (1 setting) |
+| M-1 | **Medium** | Prod function EXECUTE grants drifted wide open (anon + authenticated can call every SECURITY DEFINER fn, incl. `service_role`-only `credit_interest`) | ✅ **FIXED on prod** (migration `010` applied + advisor-verified 2026-06-24) |
+| L-1 | Low | `set_updated_at` has a role-mutable `search_path` | ✅ Fixed in `010` (applied to prod) |
+| L-2 | Low | Auth: leaked-password protection (HaveIBeenPwned) disabled | **Requires Pro plan** — Free tier returns HTTP 402; bundle with the Pro upgrade (see #49) |
 | — | Info | Performance: unindexed FKs, unused indexes, multiple-permissive-policies | Deferred (low priority; see below) |
 
 No critical issues. RLS is enabled and enforced on all tables; no secrets are committed.
@@ -64,9 +64,11 @@ functions already pin search_path.
 ## L-2 (Low) — Leaked-password protection disabled
 
 Supabase Auth can reject passwords found in the HaveIBeenPwned breach corpus; it's
-currently off. **Enable it** in App Store Connect… no — in **Supabase dashboard → Auth →
-Policies → "Leaked password protection"** (or via Management API
-`PATCH /v1/projects/<ref>/config/auth` `{"password_hibp_enabled": true}`). Zero app impact.
+currently off. **This is a Pro-plan feature** — attempting to enable it on the current
+Free tier returns `HTTP 402 Payment Required`. Enable it as part of upgrading the project
+to Pro (which also stops the 7-day idle pause and adds daily backups — see #49). Once on
+Pro: Management API `PATCH /v1/projects/<ref>/config/auth {"password_hibp_enabled": true}`,
+or dashboard → Auth. Zero app impact.
 
 ## Accepted / by-design (no action)
 
@@ -98,7 +100,10 @@ All `INFO`/`WARN`, none security-related, low priority for launch traffic:
 
 ## Actions required from you
 
-1. **Apply `010` to prod:** `supabase db push` (then I can re-verify grants + advisors).
-2. **Enable leaked-password protection** (one toggle, link above).
-3. (Optional) Investigate why the remote dropped 003's grants, in case future migrations
+1. ✅ ~~Apply `010` to prod~~ — DONE (applied + advisor-verified 2026-06-24).
+2. **Merge PR #33** — 010 is live on prod, but the PR is unmerged; merge so `main`/local/CI
+   migration history includes it.
+3. **Enable leaked-password protection** — requires upgrading to **Pro** (Free returns 402).
+   Bundle with the Pro upgrade (also stops 7-day idle pause + adds daily backups, per #49).
+4. (Optional) Investigate why the remote dropped 003's grants, in case future migrations
    need the same explicit re-assertion.
