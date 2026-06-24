@@ -15,6 +15,30 @@ For _fastlane_ installation instructions, see [Installing _fastlane_](https://do
 
 ## iOS
 
+### ios certs
+
+```sh
+[bundle exec] fastlane ios certs
+```
+
+Create/sync the App Store distribution cert + profile via match (#59)
+
+### ios beta
+
+```sh
+[bundle exec] fastlane ios beta
+```
+
+Build a signed Release .ipa and upload to TestFlight (#59)
+
+### ios list_apps
+
+```sh
+[bundle exec] fastlane ios list_apps
+```
+
+List the App Store Connect app records (#57 verify)
+
 ### ios list_bundle_ids
 
 ```sh

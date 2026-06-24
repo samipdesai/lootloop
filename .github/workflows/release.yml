@@ -1,14 +1,15 @@
-name: Release E2E (Maestro)
+name: Release (Maestro E2E → TestFlight)
 
-# Mobile golden-path E2E on release (per plan §4: "Maestro on release"). Runs the
-# full {kid,parent}×{iPhone,iPad} Maestro matrix on a macOS runner against a local
-# Supabase + a simulator build of the app.
+# Mobile release pipeline on a v* tag (or manual dispatch): run the full
+# {kid,parent}×{iPhone,iPad} Maestro matrix on a macOS runner, then — only if it
+# passes — build the signed Release .ipa and upload to TestFlight (#59).
 #
-# STATUS (M6 #48): WIRED, NOT YET VERIFIED IN CI. Running Maestro here needs a
-# simulator build of the iOS app (pod install + xcodebuild + install on sims) — the
-# iOS build pipeline scoped to Milestone 7 (#57/#59). Until that lands and this has
-# had a real green run, treat the build/install steps below as a scaffold. It fires
-# only on release tags + manual dispatch, so it never gates PRs or merges.
+# STATUS: the `testflight` job's fastlane `beta` lane (match → gym → pilot) is
+# VERIFIED locally end-to-end (build #1 uploaded to App Store Connect). The
+# `maestro` job's simulator build/install on a GitHub macOS runner has not yet had
+# a green CI run — run-all.sh fails fast if app/sims/Metro aren't ready, so a
+# premature tag surfaces a clear error, not a silent pass. Fires only on release
+# tags + manual dispatch, so it never gates PRs or merges.
 on:
   push:
     tags: ['v*']
@@ -62,3 +63,40 @@ jobs:
 
       - run: supabase stop
         if: always()
+
+  # Build the signed Release .ipa and upload to TestFlight — ONLY after the
+  # Maestro matrix above passes (regression-before-deploy for mobile, #59).
+  # Gated behind the IOS_TESTFLIGHT_ENABLED repo variable so this is valid before
+  # the CI signing secrets exist (until then it skips).
+  #
+  # Required secrets: APP_STORE_CONNECT_KEY_ID, APP_STORE_CONNECT_ISSUER_ID,
+  #   APP_STORE_CONNECT_API_KEY_BASE64 (base64 of the .p8), MATCH_PASSWORD,
+  #   MATCH_GIT_BASIC_AUTHORIZATION (base64 "user:PAT" with read access to the
+  #   private lootloop-certs repo).
+  testflight:
+    needs: maestro
+    if: ${{ vars.IOS_TESTFLIGHT_ENABLED == 'true' }}
+    runs-on: macos-latest
+    env:
+      APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+      APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+      MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+      MATCH_GIT_URL: https://github.com/samipdesai/lootloop-certs.git
+      MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Restore App Store Connect API key (.p8)
+        run: |
+          mkdir -p .secrets
+          echo "${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}" | base64 --decode > .secrets/AuthKey.p8
+          echo "LOOTLOOP_ASC_KEY_PATH=$PWD/.secrets/AuthKey.p8" >> "$GITHUB_ENV"
+      - name: CocoaPods install
+        run: cd apps/mobile/ios && pod install
+      - name: Build + upload to TestFlight
+        run: cd apps/mobile/ios && fastlane beta

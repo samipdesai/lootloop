@@ -63,3 +63,7 @@ supabase/.temp/
 
 # Fastlane generated artifacts
 apps/mobile/ios/fastlane/report.xml
+
+# iOS build artifacts (fastlane gym output)
+apps/mobile/ios/*.ipa
+apps/mobile/ios/*.app.dSYM.zip

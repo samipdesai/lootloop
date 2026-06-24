@@ -38,12 +38,19 @@ platform :ios do
     next_build = latest_testflight_build_number(
       api_key: key, app_identifier: "com.lootloop.mobile", initial_build_number: 0,
     ) + 1
-    increment_build_number(build_number: next_build, xcodeproj: "mobile.xcodeproj")
+    # Apply the build number AND the match distribution signing at build time via
+    # xcargs — so the committed project is untouched: Info.plist keeps its
+    # $(CURRENT_PROJECT_VERSION) reference, and Debug/simulator dev stays on
+    # automatic signing. Only this archive uses the manual App Store profile.
     gym(
       workspace: "mobile.xcworkspace",
       scheme: "mobile",
       export_method: "app-store",
       clean: true,
+      xcargs: "CURRENT_PROJECT_VERSION=#{next_build} " \
+              "DEVELOPMENT_TEAM=WF7D7TB3W8 CODE_SIGN_STYLE=Manual " \
+              'PROVISIONING_PROFILE_SPECIFIER="match AppStore com.lootloop.mobile" ' \
+              'CODE_SIGN_IDENTITY="Apple Distribution"',
     )
     pilot(api_key: key, skip_waiting_for_build_processing: true)
   end
