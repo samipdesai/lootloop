@@ -9,7 +9,7 @@
 # rationale and timing. Seed with seed-cross-device-flow.sql first (start 500,
 # pending completion worth 75 → 575 after approval).
 # Run with: maestro --device <iPad-udid> test cross-device-approval-flow.ipad.yaml
-appId: com.lootloop.app
+appId: com.lootloop.mobile
 tags:
   - kid
   - ipad

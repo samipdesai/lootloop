@@ -56,4 +56,9 @@ coverage/
 # Supabase
 supabase/.branches/
 supabase/.temp/
-.vercel
+
+# Apple .p8 keys and other local secret files
+.secrets/
+
+# Fastlane generated artifacts
+apps/mobile/ios/fastlane/report.xml

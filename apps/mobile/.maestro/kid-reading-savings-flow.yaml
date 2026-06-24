@@ -2,7 +2,7 @@
 # → log a book (#27, appears in the list) → Savings tab → deposit to savings
 # (#32, lands in history). Targets the iPhone bottom-tab layout (tab switches tap
 # the bar by position). Seed with seed-reading-savings-flow.sql first.
-appId: com.lootloop.app
+appId: com.lootloop.mobile
 tags:
   - kid
   - golden-path
