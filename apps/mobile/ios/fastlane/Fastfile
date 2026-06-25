@@ -44,6 +44,9 @@ platform :ios do
 
   desc "Build a signed Release .ipa and upload to TestFlight (#59)"
   lane :beta do
+    # Release builds talk to PRODUCTION Supabase. react-native-config picks the
+    # env file from ENVFILE at build time; default .env is LOCAL (dev/Maestro).
+    ENV["ENVFILE"] = File.expand_path("../../.env.production", __dir__)
     key = asc_key
     # Pull the App Store signing cert + profile (read-only — created by `certs`).
     match(type: "appstore", app_identifier: "com.lootloop.mobile", api_key: key, readonly: true)
