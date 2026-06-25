@@ -28,11 +28,21 @@ jest.mock('@react-native-async-storage/async-storage', () => {
 });
 
 // react-native-config — build-time env shim; provide test values so config/env
-// resolves to defined strings.
+// resolves to defined strings. SENTRY_DSN omitted → Sentry stays off in tests.
 jest.mock('react-native-config', () => ({
   __esModule: true,
   default: {
     SUPABASE_URL: 'http://localhost:54321',
     SUPABASE_ANON_KEY: 'test-anon-key',
   },
+}));
+
+// @sentry/react-native ships ESM (from @sentry/core) that Jest can't parse, and
+// we never want real reporting under test. Mock the surface we use: wrap is the
+// identity so App still renders; init is a no-op (the empty DSN above means it
+// wouldn't run anyway). Mirrors the native-boundary mocks above (task #61).
+jest.mock('@sentry/react-native', () => ({
+  __esModule: true,
+  init: jest.fn(),
+  wrap: (component) => component,
 }));

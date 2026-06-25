@@ -127,6 +127,11 @@ jobs:
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      # Sentry source-map upload (task #61). withSentryConfig only uploads when
+      # SENTRY_AUTH_TOKEN is present, so the build still succeeds before these
+      # are set. SENTRY_ORG is a non-secret repo variable; the token is a secret.
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+      SENTRY_ORG: ${{ vars.SENTRY_ORG }}
     steps:
       - uses: actions/checkout@v4
       - run: npm install --global vercel@latest
