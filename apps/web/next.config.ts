@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next';
+import { withSentryConfig } from '@sentry/nextjs';
 
 const nextConfig: NextConfig = {
   // Dev-only: allow the Next dev server's /_next resources to load when the app
@@ -8,4 +9,14 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: ['127.0.0.1'],
 };
 
-export default nextConfig;
+// Sentry (task #61). The bundler plugin only uploads source maps when an auth
+// token is present (CI/prod build), so local `next build` stays a no-op. org +
+// project identify where releases land.
+export default withSentryConfig(nextConfig, {
+  org: process.env.SENTRY_ORG,
+  project: 'lootloop-web',
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  silent: !process.env.CI,
+  widenClientFileUpload: true,
+  sourcemaps: { disable: !process.env.SENTRY_AUTH_TOKEN },
+});

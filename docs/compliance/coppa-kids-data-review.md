@@ -72,7 +72,7 @@ COPPA requires collecting **only** what is reasonably necessary for the activity
 
 **Free-text / social surface:** There is **no** free-text social feature, no chat, no comments, no public profile, and no child-to-child or child-to-stranger communication. Kid-entered free text is limited to book titles and (parent-created) chore/reward/schedule titles. This is good for COPPA — there's no avenue for a child to inadvertently disclose PII to others.
 
-**Third-party data sharing — verified absent.** A scan of `apps/mobile`, `apps/web`, and `packages/` found **no** analytics, advertising, attribution, crash-reporting, or tracking SDKs (no Firebase/AdMob/Facebook/AppsFlyer/Amplitude/Mixpanel/Segment/Sentry/Crashlytics/Google Analytics/PostHog/Vercel Analytics, etc.). The only backend is **Supabase** (Postgres + Auth + Edge Functions + Realtime), acting as our data processor. This is the single most important data-minimization fact and the foundation of the §4 Kids Category recommendation. **This must stay true** — see the §7 checklist. If any third-party SDK is ever added, this entire review must be re-run.
+**Third-party data sharing — one diagnostics processor (Sentry), scoped to internal operations.** As of task #61 the app sends **error/crash diagnostics to Sentry** (a third-party error-monitoring service) on both web and mobile. This is the *only* third-party SDK; a scan still finds **no** analytics, advertising, attribution, or behavioral-tracking SDKs (no Firebase/AdMob/Facebook/AppsFlyer/Amplitude/Mixpanel/Segment/Crashlytics/Google Analytics/PostHog/Vercel Analytics). Sentry is configured to transmit **no PII**: `sendDefaultPii: false`, no IP capture, `setUser` is never called, and a `beforeSend`/`beforeBreadcrumb` scrubber strips `user`, device name, cookies, and console breadcrumbs before any event leaves the device — so no kid display name, PIN, or balance is sent (see `apps/mobile/src/lib/sentry.ts`, `apps/web/instrumentation*.ts`). Under COPPA this falls within the **"support for the internal operations" exception** (16 CFR §312.5(c)(7)): the data is used only to maintain, secure, and debug the service — never to contact the child or for behavioral advertising. Sentry is therefore a data **sub-processor** alongside Supabase, and must be named as such in the privacy policy (§5.4) and declared in the App Privacy questionnaire as **Diagnostics / Crash Data — not linked to identity, not used for tracking**. **Counsel must confirm** this characterization. Important: this posture is compatible with a **standard App Store listing** (the route chosen in #58) but is **NOT** compatible with Apple's **Kids Category** (§4), which forbids third-party SDKs beyond core functionality. **This must stay true** — see the §7 checklist. If any *analytics/ad/tracking* SDK is added, or Sentry's PII scrubbing is weakened, this entire review must be re-run.
 
 **Minimization verdict:** The data model is already lean. The two items to act on are **birthdate** (drop or keep-optional, never required) and **avatar** (prefer presets over photo upload). Everything else is app-functional and internal-use-only.
 
@@ -107,6 +107,8 @@ Apple lets an app either (a) list in the **Kids Category** (App Store Connect ag
 2. **Confirm we will never need third-party analytics/ads in v1** — the category makes that a permanent constraint. Given §3, this is already our posture.
 
 This is a **product + legal decision**; engineering's input is only that the technical posture (no third-party SDKs) already supports either path, and supports the Kids Category specifically. Counsel and the product owner should make the final call.
+
+> **UPDATE (2026-06-24, task #58 + #61):** The listing decision was made — **standard category (4+, Education / Lifestyle), NOT the Kids Category** — because LootLoop's 5–15 range exceeds the Kids Category's 9–11 age bands and the app is parent-managed. This also **resolves the tension above**: task #61 adds **Sentry** (PII-scrubbed crash diagnostics, §3), which is permissible on a standard listing under COPPA's internal-operations exception but **would be disallowed in the Kids Category**. Choosing the standard listing is what makes Sentry compatible. If the Kids Category is ever reconsidered, Sentry would have to be removed first.
 
 ---
 
@@ -163,7 +165,7 @@ Each item tagged **[engineering]**, **[legal]**, or **[product]**. All must be t
 - [ ] **[product]** Decide birthdate: drop for v1, or keep optional and never required, with a stated purpose in-UI (§3).
 - [ ] **[product/engineering]** Confirm the avatar picker is presets/emoji, or, if photo upload exists, that it's parent-initiated and disclosed (§3).
 - [ ] **[product]** Add UI copy / guidance steering parents to first names / nicknames, not full legal names (§3).
-- [ ] **[engineering]** Re-run the third-party-SDK scan immediately before submission and confirm **zero** analytics/ad/tracking SDKs in `apps/*` and `packages/*` (§3). This is a release gate, not a one-time check.
+- [ ] **[engineering]** Re-run the third-party-SDK scan immediately before submission and confirm the **only** third-party SDK is **Sentry** (PII-scrubbed crash diagnostics, §3) — and **zero** analytics/ad/tracking SDKs in `apps/*` and `packages/*`. Confirm Sentry's PII scrubbing (`sendDefaultPii: false`, `beforeSend`/`beforeBreadcrumb`) is still in place. This is a release gate, not a one-time check.
 
 ### Privacy policy (#53)
 - [ ] **[legal/product]** Privacy policy drafted/reviewed covering all nine §5 elements; names Supabase as sub-processor; states "no ads, no third-party analytics, no sale/sharing of kids' data."
@@ -176,8 +178,8 @@ Each item tagged **[engineering]**, **[legal]**, or **[product]**. All must be t
 - [ ] **[engineering]** Confirm Edge Functions / logs contain no plaintext PIN or kid names (§6).
 
 ### App Store / Kids Category
-- [ ] **[product/legal]** Final decision on Kids Category vs standard listing ratified (preliminary recommendation: opt in — §4).
-- [ ] **[product/engineering]** If Kids Category: add a parental gate on any outbound link/purchase; set correct App Store Connect age band; complete the App Privacy ("nutrition label") questionnaire consistent with §3 (data collected, not linked to identity for tracking, no tracking).
+- [x] **[product/legal]** Final decision on Kids Category vs standard listing ratified — **standard 4+ listing** (Education / Lifestyle), not Kids Category (#58, §4). This is what permits the Sentry diagnostics SDK.
+- [ ] **[product/engineering]** Complete the App Privacy ("nutrition label") questionnaire consistent with §3: declare **Crash Data / Diagnostics → Not Linked to Your Identity, NOT used for tracking** (this is the Sentry data), plus the existing Email/Name/User Content under App Functionality. No tracking, no third-party advertising.
 - [ ] **[legal]** Counsel signs off that the overall posture (consent, notice, minimization, deletion, listing choice) satisfies COPPA and Apple's kids requirements for a US launch.
 
 ---
@@ -186,5 +188,6 @@ Each item tagged **[engineering]**, **[legal]**, or **[product]**. All must be t
 - `supabase/migrations/001_initial_schema.sql` — tables, `profiles_kid_shape` constraint, `family_id ... on delete cascade` across all family-scoped tables, `profiles.birthdate`/`avatar_url` nullability.
 - `supabase/migrations/004_auth_bootstrap.sql` — `create_family_and_parent()` (parent account creation), `family_invites` cascade.
 - `supabase/migrations/005_kid_management.sql` — `create_kid()` / `update_kid()` / `delete_kid()` (parent-only, self-authorizing), PIN bcrypt hashing.
-- `apps/mobile/package.json`, `apps/web/package.json` — verified no third-party analytics/ad/tracking SDKs.
+- `apps/mobile/package.json`, `apps/web/package.json` — no third-party analytics/ad/tracking SDKs; only Sentry (PII-scrubbed crash diagnostics, task #61).
+- `apps/mobile/src/lib/sentry.ts`, `apps/web/instrumentation.ts`, `apps/web/instrumentation-client.ts` — Sentry init with `sendDefaultPii: false` + PII scrubbing (task #61).
 - `supabase/functions/` — `kid-auth`, `family-roster`, `calculate-interest`, `generate-recurring-chores` (review for PII logging).
