@@ -4,13 +4,7 @@
 //   regular (iPad)   -> centered floating Card (max 420) with more chrome.
 // Fields / button / error are identical across both.
 import type { ReactNode } from 'react';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Text,
-  View,
-} from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSizeClass } from '../../hooks/useSizeClass';
 import { Card } from '../../components/ui/Card';
@@ -78,10 +72,11 @@ export function AuthScreen({ title, subtitle, children, formError, footer }: Aut
   );
 
   return (
-    <KeyboardAvoidingView
-      style={tw`flex-1 bg-surface-page`}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+    <View style={tw`flex-1 bg-surface-page`}>
+      {/* Let iOS smoothly adjust the scroll content inset when the keyboard opens
+          (automaticallyAdjustKeyboardInsets) instead of a KeyboardAvoidingView
+          padding animation — the latter abruptly re-centered the justify-center
+          content and visibly overlapped the header with the first field. */}
       <ScrollView
         contentContainerStyle={{
           flexGrow: 1,
@@ -92,9 +87,11 @@ export function AuthScreen({ title, subtitle, children, formError, footer }: Aut
           paddingBottom: insets.bottom + 24,
         }}
         keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets
+        keyboardDismissMode="interactive"
       >
         {body}
       </ScrollView>
-    </KeyboardAvoidingView>
+    </View>
   );
 }

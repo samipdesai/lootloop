@@ -16,6 +16,37 @@ platform :ios do
     )
   end
 
+  # Upload native dSYMs to Sentry so crash reports symbolicate (#61). Runs AFTER
+  # gym and is BOTH gated (skips without SENTRY_AUTH_TOKEN) and non-fatal (a
+  # failed upload never fails an otherwise-good TestFlight build). sentry-cli is
+  # a transitive dep of @sentry/react-native, resolved relative to it. The JS
+  # bundle already carries Debug IDs (metro withSentryConfig); wiring JS
+  # source-map auto-upload into the Xcode bundle phase is a separate follow-up
+  # that needs a real release build to verify, so it's intentionally not here.
+  def upload_dsyms_to_sentry
+    unless ENV["SENTRY_AUTH_TOKEN"]
+      UI.important("SENTRY_AUTH_TOKEN unset — skipping Sentry dSYM upload.")
+      return
+    end
+    dsym = lane_context[SharedValues::DSYM_OUTPUT_PATH]
+    unless dsym && File.exist?(dsym)
+      UI.important("No dSYM from gym — skipping Sentry dSYM upload.")
+      return
+    end
+    cli = sh("node", "-e",
+             "const p=require('path');" \
+             "console.log(require.resolve('@sentry/cli/bin/sentry-cli'," \
+             "{paths:[p.dirname(require.resolve('@sentry/react-native/package.json'))]}))",
+             log: false).strip
+    begin
+      sh("node", cli, "debug-files", "upload", "--include-sources",
+         "--org", "lootloopus", "--project", "lootloop-ios", dsym)
+      UI.success("✓ Uploaded dSYMs to Sentry (lootloop-ios)")
+    rescue => e
+      UI.error("Sentry dSYM upload failed (non-fatal): #{e}")
+    end
+  end
+
   # Register the App ID / bundle id in the Developer portal via the API key
   # (idempotent). The App Store Connect *app record* can't be created by the API
   # — that's done once in the ASC UI (selecting this bundle id). See #57.
@@ -68,6 +99,7 @@ platform :ios do
               'PROVISIONING_PROFILE_SPECIFIER="match AppStore com.lootloop.mobile" ' \
               'CODE_SIGN_IDENTITY="Apple Distribution"',
     )
+    upload_dsyms_to_sentry
     pilot(api_key: key, skip_waiting_for_build_processing: true)
   end
 
