@@ -134,6 +134,13 @@ jobs:
       SENTRY_ORG: ${{ vars.SENTRY_ORG }}
     steps:
       - uses: actions/checkout@v4
+      # `vercel build` runs the project's own build, which uses pnpm (this is a
+      # pnpm workspace) — without pnpm on PATH it fails with `spawn pnpm ENOENT`.
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
       - run: npm install --global vercel@latest
       - run: vercel pull --yes --environment=production --token="${{ secrets.VERCEL_TOKEN }}"
       - run: vercel build --prod --token="${{ secrets.VERCEL_TOKEN }}"
