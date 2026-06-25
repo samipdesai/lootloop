@@ -116,6 +116,22 @@ export function SignupForm() {
         Create account
       </Button>
 
+      {/* COPPA direct notice + consent at the moment of collection (#53/#54): the
+          parent affirms guardianship and agrees to the policies before any data is
+          collected. */}
+      <p className="text-center font-sans text-xs leading-relaxed text-ink-500">
+        By creating an account, you confirm you are 18 or older and the parent or legal
+        guardian, and you agree to our{' '}
+        <Link href="/terms" className="font-semibold text-ink-700 underline">
+          Terms
+        </Link>{' '}
+        and{' '}
+        <Link href="/privacy" className="font-semibold text-ink-700 underline">
+          Privacy Policy
+        </Link>
+        .
+      </p>
+
       {/* OAuth: Sign in with Apple — deferred, see spec §1.4 */}
 
       <p className="text-center font-sans text-sm font-semibold text-ink-500">
