@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View } from 'react-native';
+import { Linking, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { signUpParent, mapAuthError } from '@lootloop/client';
 import { supabase } from '../../lib/supabase';
@@ -92,6 +92,27 @@ export function SignupScreen({ navigation }: Props) {
         <Button block loading={submitting} disabled={!canSubmit} onPress={onSubmit}>
           Create account
         </Button>
+        {/* COPPA direct notice + consent at the moment of collection (#53/#54): the
+            parent affirms guardianship and agrees to the policies (opened in-browser)
+            before any data is collected. */}
+        <Text style={tw`text-center font-sans text-[12px] leading-[18px] text-ink-500`}>
+          By creating an account, you confirm you are 18 or older and the parent or legal
+          guardian, and you agree to our{' '}
+          <Text
+            style={tw`font-semibold text-ink-700 underline`}
+            onPress={() => Linking.openURL('https://lootloop.us/terms')}
+          >
+            Terms
+          </Text>
+          {' and '}
+          <Text
+            style={tw`font-semibold text-ink-700 underline`}
+            onPress={() => Linking.openURL('https://lootloop.us/privacy')}
+          >
+            Privacy Policy
+          </Text>
+          .
+        </Text>
         {/* OAuth: Sign in with Apple — deferred, see spec §1.4 */}
       </View>
     </AuthScreen>
