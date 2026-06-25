@@ -2,19 +2,37 @@
 // client so the caller controls how it's created (web @supabase/ssr browser
 // client, mobile plain client, etc.). RPC wrappers call the SECURITY DEFINER
 // bootstrap functions from migration 004.
-import type { AuthError, PostgrestError, SupabaseClient } from '@supabase/supabase-js';
+import type {
+  AuthError,
+  AuthResponse,
+  PostgrestError,
+  SupabaseClient,
+} from '@supabase/supabase-js';
 import type { Database } from '@lootloop/types';
+import { checkPasswordPwned } from './pwned';
 
 export type LootLoopClient = SupabaseClient<Database>;
 
 // --- Supabase Auth (email/password, parents) ---------------------------------
 
-export function signUpParent(
+export async function signUpParent(
   client: LootLoopClient,
   email: string,
   password: string,
   emailRedirectTo?: string,
-) {
+): Promise<AuthResponse> {
+  // Reject passwords found in known breaches before creating the account
+  // (security audit L-2). Fail-open lives inside checkPasswordPwned.
+  if (await checkPasswordPwned(password)) {
+    const error = {
+      name: 'AuthApiError',
+      message: 'This password appeared in a known data breach.',
+      status: 400,
+      code: 'pwned_password',
+    } as unknown as AuthError;
+    return { data: { user: null, session: null }, error };
+  }
+
   return client.auth.signUp({
     email,
     password,
@@ -77,6 +95,8 @@ export function mapAuthError(error: AuthError | PostgrestError | null | undefine
     return 'An account with this email already exists.';
   if (code === 'email_not_confirmed') return 'Please confirm your email before logging in.';
   if (code === 'weak_password') return 'Password is too weak — use at least 8 characters.';
+  if (code === 'pwned_password')
+    return 'This password appeared in a known data breach — please choose a different one.';
   if (code === 'over_email_send_rate_limit' || /rate limit|too many/i.test(msg))
     return 'Too many attempts. Please wait a moment and try again.';
 

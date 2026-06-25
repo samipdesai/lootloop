@@ -12,6 +12,11 @@ out/
 .env.local
 .env.*.local
 
+# Secrets & deploy artifacts (signing keys, API keys, Vercel link)
+.secrets/
+*.p8
+.vercel/
+
 # iOS
 apps/mobile/ios/Pods/
 apps/mobile/ios/build/
