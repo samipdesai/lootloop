@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/react-native';
 import { enableScreens } from 'react-native-screens';
 import { StatusBar } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
@@ -24,4 +25,6 @@ function App() {
   );
 }
 
-export default App;
+// Sentry.wrap adds the crash error-boundary + touch/navigation breadcrumbs
+// (task #61). Inert until initSentry() runs with a DSN (index.js / release only).
+export default Sentry.wrap(App);

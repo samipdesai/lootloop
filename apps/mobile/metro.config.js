@@ -1,4 +1,5 @@
 const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
+const { withSentryConfig } = require('@sentry/react-native/metro');
 const path = require('path');
 
 const projectRoot = __dirname;
@@ -24,4 +25,6 @@ const config = {
   },
 };
 
-module.exports = mergeConfig(getDefaultConfig(projectRoot), config);
+// withSentryConfig adds the Debug ID + source-map plumbing Sentry needs to
+// symbolicate release crashes (task #61). Harmless in dev.
+module.exports = withSentryConfig(mergeConfig(getDefaultConfig(projectRoot), config));
