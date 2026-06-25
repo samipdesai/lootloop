@@ -2,31 +2,22 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Wordmark } from '../../../components/ui/Wordmark';
 
-// Terms of Service SCAFFOLD (M7 #53).
+// Terms of Service (M7 #53).
 //
-// ⚠️ DRAFT — pending legal review. The copy below is TEMPLATE/PLACEHOLDER text
-// to give the structure for the user's lawyer to finalize. It is NOT legal
-// advice and must not ship as-is. Public route, allowlisted in middleware.ts.
+// Real, substantive copy matching how LootLoop actually works — not placeholder
+// text. Not a substitute for review by a qualified attorney; a one-time
+// professional review is still recommended. Public route, allowlisted in
+// middleware.ts.
 export const metadata: Metadata = {
-  title: 'Terms of Service (Draft) — LootLoop',
-  description: 'LootLoop terms of service — draft pending legal review.',
+  title: 'Terms of Service — LootLoop',
+  description: 'The terms that govern your use of LootLoop.',
 };
 
-const LAST_UPDATED = 'June 22, 2026';
+const LAST_UPDATED = 'June 24, 2026';
 
 export default function TermsPage() {
   return (
     <main className="mx-auto max-w-[760px] px-5 py-16">
-      <div className="mb-8 rounded-card border-2 border-coin-strong bg-coin-soft px-5 py-4">
-        <p className="font-display text-sm font-extrabold uppercase tracking-wide text-coin-ink">
-          DRAFT — pending legal review (M7 #53)
-        </p>
-        <p className="mt-1 text-sm text-coin-ink">
-          The text below is placeholder template copy for legal review. It is not
-          legal advice and must not be relied upon until finalized.
-        </p>
-      </div>
-
       <h1 className="font-display text-[32px] font-extrabold leading-tight text-ink-900">
         Terms of Service
       </h1>
@@ -38,11 +29,14 @@ export default function TermsPage() {
             1. Acceptance of Terms
           </h2>
           <p className="mt-2">
-            [PLACEHOLDER] These Terms of Service (&ldquo;Terms&rdquo;) govern your access
-            to and use of the LootLoop family chore and reward application and related
-            services (the &ldquo;Service&rdquo;). By creating an account or using the
-            Service, you agree to these Terms. If you do not agree, do not use the
-            Service.
+            These Terms of Service (&ldquo;Terms&rdquo;) govern your access to and use of
+            the LootLoop family chore and reward application and related services (the
+            &ldquo;Service&rdquo;). By creating an account or using the Service, you agree
+            to these Terms and to our{' '}
+            <Link href="/privacy" className="font-semibold text-ink-900 underline">
+              Privacy Policy
+            </Link>
+            . If you do not agree, please do not use the Service.
           </p>
         </section>
 
@@ -51,11 +45,12 @@ export default function TermsPage() {
             2. Eligibility &amp; Accounts
           </h2>
           <p className="mt-2">
-            [PLACEHOLDER] You must be at least 18 years old and the parent or legal
-            guardian of any child profile you create. You are responsible for
-            maintaining the confidentiality of your account credentials and for all
-            activity under your account, including activity by child profiles you
-            manage.
+            You must be at least 18 years old and the parent or legal guardian of any
+            child profile you create. You are responsible for keeping your account
+            credentials confidential and for all activity under your account, including
+            activity by the child profiles you create and manage. Children use the Service
+            only through profiles created and supervised by their parent or guardian; they
+            do not have independent accounts.
           </p>
         </section>
 
@@ -64,19 +59,19 @@ export default function TermsPage() {
             3. Family &amp; Child Profiles
           </h2>
           <p className="mt-2">
-            [PLACEHOLDER — REQUIRES COUNSEL REVIEW.] Parents are responsible for the
-            child profiles they create and for supervising their children&apos;s use of
-            the Service. Points, rewards, and savings within the Service are
-            in-app features for family motivation and have no monetary or cash value
-            unless explicitly stated otherwise by the parent.
+            You are responsible for the child profiles you create and for supervising your
+            children&apos;s use of the Service. Points, rewards, streaks, and savings
+            within LootLoop are in-app features intended to motivate and reward children
+            within your family. They are not currency, have no monetary or cash value, and
+            cannot be exchanged, transferred, or redeemed for money. Any real-world reward
+            a parent chooses to associate with in-app points is solely a matter between the
+            parent and child and is not provided, guaranteed, or fulfilled by LootLoop.
           </p>
         </section>
 
         <section>
-          <h2 className="font-display text-xl font-bold text-ink-900">
-            4. Acceptable Use
-          </h2>
-          <p className="mt-2">[PLACEHOLDER] You agree not to:</p>
+          <h2 className="font-display text-xl font-bold text-ink-900">4. Acceptable Use</h2>
+          <p className="mt-2">You agree not to:</p>
           <ul className="mt-2 list-disc space-y-1 pl-6">
             <li>Use the Service for any unlawful or fraudulent purpose.</li>
             <li>Attempt to access another family&apos;s data or bypass security controls.</li>
@@ -90,10 +85,12 @@ export default function TermsPage() {
             5. Subscriptions &amp; Payments
           </h2>
           <p className="mt-2">
-            [PLACEHOLDER] If the Service offers paid plans, applicable fees, billing
-            cycles, and cancellation terms will be presented at the time of purchase.
-            Charges are processed through the applicable app store or payment provider
-            and are subject to their terms.
+            LootLoop may offer optional paid features or subscriptions. If it does, the
+            applicable price, billing cycle, and cancellation terms will be shown to you
+            before you purchase. Any charges are processed by the applicable app store
+            (for example, Apple) under that store&apos;s terms, and subscriptions renew and
+            can be cancelled through your app store account. Features available for free
+            today may change in the future.
           </p>
         </section>
 
@@ -102,21 +99,22 @@ export default function TermsPage() {
             6. Intellectual Property
           </h2>
           <p className="mt-2">
-            [PLACEHOLDER] The Service, including its software, design, and branding, is
-            owned by LootLoop and protected by intellectual property laws. We grant you
-            a limited, non-exclusive, non-transferable license to use the Service for
-            your family&apos;s personal, non-commercial use.
+            The Service — including its software, design, and branding — is owned by
+            LootLoop and protected by intellectual-property laws. We grant you a limited,
+            non-exclusive, non-transferable license to use the Service for your
+            family&apos;s personal, non-commercial use. The data you and your family enter
+            remains yours; you grant us only the permissions needed to store and process it
+            to provide the Service, as described in our Privacy Policy.
           </p>
         </section>
 
         <section>
-          <h2 className="font-display text-xl font-bold text-ink-900">
-            7. Termination
-          </h2>
+          <h2 className="font-display text-xl font-bold text-ink-900">7. Termination</h2>
           <p className="mt-2">
-            [PLACEHOLDER] You may stop using the Service and delete your account at any
-            time. We may suspend or terminate access if you violate these Terms or to
-            protect the Service or other users.
+            You may stop using the Service and delete your account at any time from within
+            the app (Settings → Account). We may suspend or terminate access if you violate
+            these Terms or to protect the Service or other users. On account deletion, your
+            family&apos;s data is removed as described in our Privacy Policy.
           </p>
         </section>
 
@@ -125,10 +123,12 @@ export default function TermsPage() {
             8. Disclaimers &amp; Limitation of Liability
           </h2>
           <p className="mt-2">
-            [PLACEHOLDER — REQUIRES COUNSEL REVIEW.] The Service is provided &ldquo;as
-            is&rdquo; without warranties of any kind. To the maximum extent permitted by
-            law, LootLoop is not liable for indirect, incidental, or consequential
-            damages arising from your use of the Service.
+            The Service is provided &ldquo;as is&rdquo; and &ldquo;as available&rdquo;
+            without warranties of any kind, whether express or implied. To the maximum
+            extent permitted by law, LootLoop will not be liable for any indirect,
+            incidental, special, consequential, or punitive damages, or for any loss of
+            data, arising from or relating to your use of the Service. Some jurisdictions
+            do not allow certain limitations, so some of the above may not apply to you.
           </p>
         </section>
 
@@ -137,18 +137,17 @@ export default function TermsPage() {
             9. Changes to These Terms
           </h2>
           <p className="mt-2">
-            [PLACEHOLDER] We may update these Terms from time to time. We will post the
-            updated version with a revised &ldquo;Last updated&rdquo; date and, where
-            appropriate, notify you. Continued use after changes constitutes acceptance.
+            We may update these Terms from time to time. We will post the updated version
+            here with a revised &ldquo;Last updated&rdquo; date and, where appropriate,
+            notify you. Your continued use of the Service after an update means you accept
+            the revised Terms.
           </p>
         </section>
 
         <section>
-          <h2 className="font-display text-xl font-bold text-ink-900">
-            10. Contact Us
-          </h2>
+          <h2 className="font-display text-xl font-bold text-ink-900">10. Contact Us</h2>
           <p className="mt-2">
-            [PLACEHOLDER] Questions about these Terms? Contact us at{' '}
+            Questions about these Terms? Contact us at{' '}
             <span className="font-semibold text-ink-900">support@lootloop.us</span>.
           </p>
         </section>
