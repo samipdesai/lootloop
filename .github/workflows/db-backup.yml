@@ -33,9 +33,17 @@ jobs:
       #    secrets aren't set yet, so the project never pauses.
       - name: Keep-alive ping
         run: |
-          curl -fsS --retry 3 --max-time 30 \
-            https://tuobznejndvoeicdtasd.supabase.co/auth/v1/health
-          echo "" && echo "✓ keep-alive ping ok"
+          set -uo pipefail
+          # Any HTTP response (even a 401 without an apikey) proves the project
+          # handled a request = activity. Only a true connection failure (no
+          # response at all) should fail the keep-alive.
+          code=$(curl -sS -o /dev/null -w '%{http_code}' --retry 3 --max-time 30 \
+            https://tuobznejndvoeicdtasd.supabase.co/auth/v1/health || echo 000)
+          if [ "$code" = "000" ]; then
+            echo "::error::Could not reach the Supabase project (no HTTP response)."
+            exit 1
+          fi
+          echo "✓ keep-alive: project responded (HTTP $code)"
 
       # 2-4. Encrypted backup — gated on SUPABASE_DB_URL so the keep-alive above
       #      still works before the DB connection is configured.
