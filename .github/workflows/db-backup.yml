@@ -1,0 +1,80 @@
+name: DB Backup + Keep-Alive
+
+# Free-tier Supabase pauses a project after ~7 days with no requests, and offers
+# no backups. This daily job solves BOTH cheaply, instead of upgrading to Pro:
+#
+#   1. KEEP-ALIVE (always runs, no secrets) — pings the project's auth health
+#      endpoint so the inactivity timer never trips.
+#   2. ENCRYPTED BACKUP (runs once SUPABASE_DB_URL is set) — pg_dumps prod and
+#      stores a gpg-encrypted dump as a private artifact. The dump itself is also
+#      strong DB activity, reinforcing the keep-alive.
+#
+# Caveats (see PR): best-effort, not a managed SLA; GitHub disables schedules
+# after 60 days of repo inactivity; the dump holds real family/kids data so it is
+# ALWAYS encrypted before it leaves the runner.
+on:
+  schedule:
+    - cron: '23 7 * * *' # daily ~07:23 UTC (off the top of the hour to dodge cron congestion)
+  workflow_dispatch: {}
+
+concurrency:
+  group: db-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    env:
+      DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      GPG_PASSPHRASE: ${{ secrets.BACKUP_GPG_PASSPHRASE }}
+    steps:
+      # 1. Keep-alive — no credentials needed; the auth health endpoint is public
+      #    and a request to it counts as project activity. Runs even if the backup
+      #    secrets aren't set yet, so the project never pauses.
+      - name: Keep-alive ping
+        run: |
+          curl -fsS --retry 3 --max-time 30 \
+            https://tuobznejndvoeicdtasd.supabase.co/auth/v1/health
+          echo "" && echo "✓ keep-alive ping ok"
+
+      # 2-4. Encrypted backup — gated on SUPABASE_DB_URL so the keep-alive above
+      #      still works before the DB connection is configured.
+      - name: Install PostgreSQL 17 client
+        if: env.DB_URL != ''
+        run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | \
+            sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/pgdg.gpg
+          echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | \
+            sudo tee /etc/apt/sources.list.d/pgdg.list >/dev/null
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client-17
+          pg_dump --version
+
+      - name: Dump + encrypt
+        if: env.DB_URL != ''
+        run: |
+          set -euo pipefail
+          if [ -z "${GPG_PASSPHRASE:-}" ]; then
+            echo "::error::BACKUP_GPG_PASSPHRASE secret is not set — refusing to write an unencrypted dump."
+            exit 1
+          fi
+          TS=$(date -u +%Y%m%d-%H%M%SZ)
+          FILE="lootloop-prod-${TS}.dump"
+          # Compressed, restorable custom format. Connecting + reading the whole DB
+          # is also what keeps the project active.
+          pg_dump "$DB_URL" --format=custom --no-owner --file="$FILE"
+          gpg --batch --yes --passphrase "$GPG_PASSPHRASE" \
+            --symmetric --cipher-algo AES256 -o "${FILE}.gpg" "$FILE"
+          rm -f "$FILE"
+          ls -lh "${FILE}.gpg"
+          echo "BACKUP_FILE=${FILE}.gpg" >> "$GITHUB_ENV"
+
+      - name: Upload encrypted backup
+        if: env.DB_URL != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: db-backup-${{ github.run_id }}
+          path: ${{ env.BACKUP_FILE }}
+          retention-days: 90
+          if-no-files-found: error
