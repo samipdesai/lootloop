@@ -93,7 +93,12 @@ begin
   select name into v_fname from families where id = v_fam;
   if v_fname <> 'Fresh Family' then raise exception 'FAIL: family name not trimmed/stored, got %', v_fname; end if;
 
-  raise notice 'PASS: fresh user creates family + parent profile (names trimmed)';
+  -- Consent artifact stamped at creation (#54, migration 011).
+  perform 1 from families
+    where id = v_fam and consent_accepted_at is not null and consent_policy_version = '2026-06-24';
+  if not found then raise exception 'FAIL: consent record not stamped on new family'; end if;
+
+  raise notice 'PASS: fresh user creates family + parent profile (names trimmed, consent stamped)';
 end $$;
 
 -- 1c. RE-BIND: the SAME user calling again is rejected (already has a profile).

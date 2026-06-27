@@ -47,8 +47,8 @@ The architecture is strong, but two things are *not* automatically satisfied and
 1. **Is "the parent created an email/password account" a sufficient VPC method?**
    Creating a Supabase Auth account (email + confirmed) is closer to the old "email plus" tier than to a high-assurance method. For LootLoop's data uses this *may* be adequate **because we do not share kid PII with third parties** (no ad SDKs, no analytics — see §3 and §4) and the data is internal-use-only. The FTC permits lighter VPC for internal-use-only collection. **Counsel should confirm** whether account creation + a clear consent affirmation meets VPC for our specific data uses, or whether we need an explicit consent step.
 
-2. **We do not currently record a consent artifact.**
-   There is no `consent` table, no timestamped "I am the parent and I consent" record, and no captured version of the privacy policy the parent agreed to. COPPA expects operators to *obtain* consent; in practice you want to be able to *prove* you obtained it. **Recommendation (engineering):** add a lightweight consent record — at minimum a timestamp + policy version captured at family creation (e.g. extend `create_family_and_parent()` to stamp `families.consent_accepted_at` and `families.consent_policy_version`, or a dedicated `parental_consents` row). This is a small migration and pays for itself the first time anyone asks "prove the parent consented."
+2. **Consent artifact — IMPLEMENTED (migration `011_consent_record.sql`).**
+   `create_family_and_parent()` now stamps `families.consent_accepted_at` (timestamp) and `families.consent_policy_version` (the privacy-policy version current at family creation) atomically when the family is created. Paired with the on-screen consent affirmation on the signup screen (web + mobile, #53/#54), this gives a durable, provable record of *when* a parent consented and *to which* policy version. The version is hardcoded in the bootstrap function and bumped via a follow-up migration when the policy materially changes (existing rows keep the version they agreed to). Covered by `auth_bootstrap_test.sql`.
 
 3. **Direct notice content.** COPPA requires the parent be told *what* is collected, *how* it's used, and *that they can review/delete it*, **before** collection. Today the consent moment (onboarding) does not surface this. The onboarding flow (task referencing #53 privacy policy) must link the policy and present a plain-language summary at the point the parent creates the family / first kid.
 
@@ -158,7 +158,7 @@ Each item tagged **[engineering]**, **[legal]**, or **[product]**. All must be t
 
 ### Consent & notice
 - [ ] **[legal]** Counsel confirms whether account creation + consent affirmation meets COPPA verifiable parental consent for our internal-use-only data, or whether a stronger/explicit step is required (§2.3).
-- [ ] **[engineering]** Record a consent artifact at family creation — timestamp + privacy-policy version (e.g. `families.consent_accepted_at` / `consent_policy_version`, or a `parental_consents` table) (§2.3).
+- [x] **[engineering]** Record a consent artifact at family creation — **DONE** (migration `011_consent_record.sql`): `families.consent_accepted_at` + `consent_policy_version` stamped in `create_family_and_parent()`; covered by `auth_bootstrap_test.sql` (§2.3).
 - [ ] **[product/engineering]** Onboarding surfaces a plain-language data summary and links the privacy policy **before** the parent creates the family / first kid (direct notice) (§2.3, §5).
 
 ### Data minimization
