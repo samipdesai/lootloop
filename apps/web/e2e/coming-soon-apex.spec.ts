@@ -1,20 +1,19 @@
 import { test, expect } from '@playwright/test';
 
-// #56 — pre-launch apex routing. A logged-out visitor to the apex "/" is routed
-// to the public coming-soon page, while the parent app stays reachable at /login.
-// Guards the middleware redirect so a future change can't silently expose the
-// dashboard or login form as the face of lootloop.us before launch.
-test.describe('coming-soon apex routing', () => {
-  test('logged-out visitor to / lands on coming-soon', async ({ page }) => {
+// #56 — post-launch apex routing. After public launch, a logged-out visitor to
+// the apex "/" is routed to /login (the parent app). Pre-launch this pointed at
+// /coming-soon; that page still exists as a route but is no longer the apex face
+// of lootloop.us. Guards the middleware redirect against silent regressions.
+test.describe('apex routing (public launch)', () => {
+  test('logged-out visitor to / lands on /login', async ({ page }) => {
     await page.goto('/');
-    await expect(page).toHaveURL(/\/coming-soon/);
-    await expect(page.getByRole('heading', { name: /looped/i })).toBeVisible();
-    await expect(page.getByText(/coming soon/i)).toBeVisible();
-  });
-
-  test('/login stays reachable directly', async ({ page }) => {
-    await page.goto('/login');
     await expect(page).toHaveURL(/\/login/);
     await expect(page.getByRole('button', { name: /log in/i })).toBeVisible();
+  });
+
+  test('/coming-soon still renders directly', async ({ page }) => {
+    await page.goto('/coming-soon');
+    await expect(page).toHaveURL(/\/coming-soon/);
+    await expect(page.getByText(/coming soon/i)).toBeVisible();
   });
 });
