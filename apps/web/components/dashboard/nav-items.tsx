@@ -75,6 +75,18 @@ export const NAV_ITEMS: NavItem[] = [
     ),
   },
   {
+    href: '/family',
+    label: 'Family',
+    icon: (
+      <svg {...iconProps} aria-hidden="true">
+        <circle cx="12" cy="7" r="3.2" />
+        <path d="M5.5 20a6.5 6.5 0 0 1 13 0" />
+        <path d="M18.5 9.5a2.6 2.6 0 0 0 0-5" />
+        <path d="M5.5 9.5a2.6 2.6 0 0 1 0-5" />
+      </svg>
+    ),
+  },
+  {
     href: '/schedule',
     label: 'Schedule',
     icon: (
