@@ -62,6 +62,7 @@ const UPDATED_POINTS = 11;
 
 let parent: LootLoopClient; // RLS-scoped parent session
 let parentAuthUserId: string;
+let coParentAuthUserId: string; // second parent in the same family (co-parent)
 let familyId: string;
 let parentProfileId: string;
 let kidId: string;
@@ -126,6 +127,7 @@ afterAll(async () => {
   // Deleting the family cascades to profiles/chores/instances/completions/wallets.
   if (familyId) await sql`delete from families where id = ${familyId}`;
   if (parentAuthUserId) await admin.auth.admin.deleteUser(parentAuthUserId);
+  if (coParentAuthUserId) await admin.auth.admin.deleteUser(coParentAuthUserId);
   await sql.end({ timeout: 5 });
 });
 
@@ -136,6 +138,32 @@ test('getMyParentProfile returns the signed-in parent with family_id', async () 
   expect(data!.family_id).toBe(familyId);
   expect(data!.display_name).toBe('Test Parent');
   parentProfileId = data!.id;
+});
+
+// Co-parent regression (multi-parent family): getMyParentProfile must resolve to
+// the CALLER's own profile, not error on maybeSingle() when the family has >1
+// parent. Add a second parent to the same family, then re-run as the first parent.
+test('getMyParentProfile still returns the caller when a co-parent exists', async () => {
+  const { data: co, error: coErr } = await admin.auth.admin.createUser({
+    email: `coparent-${TAG}@lootloop.test`,
+    password: PARENT_PASSWORD,
+    email_confirm: true,
+  });
+  if (coErr || !co.user) throw coErr ?? new Error('co-parent createUser returned no user');
+  coParentAuthUserId = co.user.id;
+
+  // Insert the co-parent profile via the direct pg connection (a second parent
+  // row is exactly the state the co-parent invite flow produces in production).
+  await sql`
+    insert into profiles (family_id, role, display_name, auth_user_id)
+    values (${familyId}, 'parent', 'Co Parent', ${coParentAuthUserId})
+  `;
+
+  const { data, error } = await getMyParentProfile(parent);
+  expect(error).toBeNull();
+  expect(data).not.toBeNull();
+  expect(data!.id).toBe(parentProfileId); // still the caller, not the co-parent
+  expect(data!.display_name).toBe('Test Parent');
 });
 
 test('listKids returns the family kid', async () => {
