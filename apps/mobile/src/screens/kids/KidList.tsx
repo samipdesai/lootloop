@@ -1,30 +1,16 @@
-// Kid roster (#15). Scrollable list of kid cards: avatar/initial, name, age-mode
-// badge, and per-row Edit / Change PIN / Delete (inline confirm — no blocking
-// Alert.alert). The family device-code panel rides in the list header. Loading /
-// empty / error states are handled by the parent KidsScreen; this renders the
-// populated roster + the New affordance. One component tree; the regular (iPad)
-// size class centres the column and widens it.
+// Kid management card (#15 / #19). One card per kid: avatar/initial, name,
+// age-mode badge, optional wallet balance, and a per-row action set
+// (Bonus / History / Edit / PIN / Remove) with an inline delete confirm (no
+// blocking Alert.alert). Rendered by the parent Home (family/index.tsx), which
+// owns the roster load + the action modals.
 import { useState } from 'react';
-import { FlatList, Pressable, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Pressable, Text, View } from 'react-native';
 import type { KidProfile } from '@lootloop/client';
-import { useSizeClass } from '../../hooks/useSizeClass';
 import { Button } from '../../components/ui/Button';
 import { Icon, type IconName } from '../../components/ui/Icon';
-import { useParentNav } from '../../navigation/ParentNav';
+import { CoinBadge } from '../../components/ui/money';
 import tw from '../../lib/tw';
 import { ageModeBadge } from './ageMode';
-// (FamilyCodePanel moved to the Settings → Family code screen.)
-
-interface KidListProps {
-  kids: KidProfile[];
-  onNew: () => void;
-  onEdit: (kid: KidProfile) => void;
-  onChangePin: (kid: KidProfile) => void;
-  onGiveBonus: (kid: KidProfile) => void;
-  onHistory: (kid: KidProfile) => void;
-  onDelete: (kid: KidProfile) => Promise<void>;
-}
 
 function Avatar({ kid }: { kid: KidProfile }) {
   const initial = kid.display_name.trim().charAt(0).toUpperCase() || '?';
@@ -64,8 +50,9 @@ function ActionButton({
   );
 }
 
-function KidRow({
+export function KidRow({
   kid,
+  balance,
   onEdit,
   onChangePin,
   onGiveBonus,
@@ -73,6 +60,7 @@ function KidRow({
   onDelete,
 }: {
   kid: KidProfile;
+  balance?: number | null;
   onEdit: () => void;
   onChangePin: () => void;
   onGiveBonus: () => void;
@@ -101,7 +89,7 @@ function KidRow({
         elevation: 3,
       })}
     >
-      {/* Header: avatar + name + age band */}
+      {/* Header: avatar + name + age band + optional balance */}
       <View style={tw`flex-row items-center gap-3`}>
         <Avatar kid={kid} />
         <View style={tw`min-w-0 flex-1`}>
@@ -116,6 +104,7 @@ function KidRow({
             </View>
           </View>
         </View>
+        {balance != null ? <CoinBadge amount={balance} size="sm" tone="soft" /> : null}
       </View>
 
       <View style={tw`h-px bg-ink-100`} />
@@ -145,83 +134,5 @@ function KidRow({
         </View>
       )}
     </View>
-  );
-}
-
-export function KidList({
-  kids,
-  onNew,
-  onEdit,
-  onChangePin,
-  onGiveBonus,
-  onHistory,
-  onDelete,
-}: KidListProps) {
-  const isRegular = useSizeClass() === 'regular';
-  const insets = useSafeAreaInsets();
-  const navigation = useParentNav();
-  const canBack = navigation.canGoBack();
-
-  return (
-    <FlatList
-      data={kids}
-      keyExtractor={(k) => k.id}
-      style={tw`flex-1 bg-surface-page`}
-      contentContainerStyle={tw.style(
-        'gap-3 px-5 pb-10',
-        isRegular ? 'mx-auto w-full max-w-[720px]' : null,
-        { paddingTop: insets.top + 12 },
-      )}
-      ListHeaderComponent={
-        <View style={tw`mb-1 gap-4`}>
-          <View style={tw`flex-row items-center justify-between`}>
-            <View style={tw`flex-row items-center gap-2`}>
-              {canBack ? (
-                <Pressable
-                  testID="parent-back"
-                  accessibilityRole="button"
-                  accessibilityLabel="Back"
-                  onPress={() => navigation.goBack()}
-                  hitSlop={8}
-                  style={tw`h-10 w-10 items-center justify-center rounded-full bg-surface-card`}
-                >
-                  <Icon name="chevron-left" size={22} color="#211E27" />
-                </Pressable>
-              ) : null}
-              <View>
-                <Text style={tw`font-sans text-[13px] font-extrabold uppercase tracking-wide text-[13px] text-indigo`}>
-                  Parent
-                </Text>
-                <Text style={tw`font-display text-[26px] font-extrabold text-ink-900`}>Kids</Text>
-              </View>
-            </View>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="New kid"
-              onPress={onNew}
-              style={tw.style('h-10 w-10 items-center justify-center rounded-full bg-indigo', {
-                shadowColor: '#444CCB',
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 1,
-                shadowRadius: 0,
-                elevation: 4,
-              })}
-            >
-              <Icon name="plus" size={22} color="#FFFFFF" />
-            </Pressable>
-          </View>
-        </View>
-      }
-      renderItem={({ item }) => (
-        <KidRow
-          kid={item}
-          onEdit={() => onEdit(item)}
-          onChangePin={() => onChangePin(item)}
-          onGiveBonus={() => onGiveBonus(item)}
-          onHistory={() => onHistory(item)}
-          onDelete={() => onDelete(item)}
-        />
-      )}
-    />
   );
 }

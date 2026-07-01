@@ -23,7 +23,7 @@ import { Input } from '../../components/ui/Input';
 import { Card } from '../../components/ui/Card';
 import { FormError } from '../auth/AuthScreen';
 import tw from '../../lib/tw';
-import { WEEKDAYS, canonicalDays, parseHHMM, isAfter } from './schedule';
+import { WEEKDAYS, canonicalDays, parseHHMM, isAfter, maskTime } from './schedule';
 
 interface ScheduleFormProps {
   item?: ScheduleItem;
@@ -79,7 +79,9 @@ export function ScheduleForm({ item, kids, onSaved, onCancel }: ScheduleFormProp
   const insets = useSafeAreaInsets();
   const isEdit = !!item;
 
-  const [kidId, setKidId] = useState<string | null>(item?.kid_id ?? null);
+  // Create supports multiple kids (one schedule_item per kid); edit is single-kid
+  // (an item belongs to one kid).
+  const [kidIds, setKidIds] = useState<string[]>(item?.kid_id ? [item.kid_id] : []);
   const [title, setTitle] = useState(item?.title ?? '');
   const [startTime, setStartTime] = useState(toHHMM(item?.start_time ?? null));
   const [endTime, setEndTime] = useState(toHHMM(item?.end_time ?? null));
@@ -98,7 +100,17 @@ export function ScheduleForm({ item, kids, onSaved, onCancel }: ScheduleFormProp
         ? 'Keep the title under 120 characters.'
         : undefined;
 
-  const kidError = kidId ? undefined : 'Pick a kid for this item.';
+  const kidError =
+    kidIds.length > 0 ? undefined : isEdit ? 'Pick a kid for this item.' : 'Pick at least one kid.';
+
+  // Edit = single kid (tap replaces); create = multi-select toggle.
+  const toggleKid = (id: string) => {
+    if (isEdit) {
+      setKidIds([id]);
+      return;
+    }
+    setKidIds((prev) => (prev.includes(id) ? prev.filter((k) => k !== id) : [...prev, id]));
+  };
 
   const startParsed = parseHHMM(startTime);
   const startError = startParsed.ok ? undefined : 'Enter a start time as HH:MM (24-hour).';
@@ -122,7 +134,7 @@ export function ScheduleForm({ item, kids, onSaved, onCancel }: ScheduleFormProp
 
   const onSubmit = async () => {
     setTouched({ title: true, start: true, end: true });
-    if (!canSubmit || !kidId || !startParsed.ok) return;
+    if (!canSubmit || kidIds.length === 0 || !startParsed.ok) return;
     setSubmitting(true);
     setFormError('');
 
@@ -132,7 +144,7 @@ export function ScheduleForm({ item, kids, onSaved, onCancel }: ScheduleFormProp
 
     if (isEdit && item) {
       const patch: ScheduleItemUpdate = {
-        kid_id: kidId,
+        kid_id: kidIds[0],
         title: trimmedTitle,
         start_time: startParsed.value,
         end_time: resolvedEnd,
@@ -149,7 +161,8 @@ export function ScheduleForm({ item, kids, onSaved, onCancel }: ScheduleFormProp
       return;
     }
 
-    // Create: family_id comes from the signed-in parent's profile.
+    // Create: family_id comes from the signed-in parent's profile. One row per
+    // selected kid (schedule_items is one kid per item).
     const { data: profile, error: profileError } = await getMyParentProfile(supabase);
     if (profileError || !profile) {
       setSubmitting(false);
@@ -157,21 +170,24 @@ export function ScheduleForm({ item, kids, onSaved, onCancel }: ScheduleFormProp
       return;
     }
 
-    const input: ScheduleItemInsert = {
-      family_id: profile.family_id,
-      kid_id: kidId,
-      title: trimmedTitle,
-      start_time: startParsed.value,
-      end_time: resolvedEnd,
-      icon: resolvedIcon,
-      days_of_week: days,
-    };
-    const { error } = await createScheduleItem(supabase, input);
-    setSubmitting(false);
-    if (error) {
-      setFormError(error.message || 'Could not create the item. Try again.');
-      return;
+    for (const kidId of kidIds) {
+      const input: ScheduleItemInsert = {
+        family_id: profile.family_id,
+        kid_id: kidId,
+        title: trimmedTitle,
+        start_time: startParsed.value,
+        end_time: resolvedEnd,
+        icon: resolvedIcon,
+        days_of_week: days,
+      };
+      const { error } = await createScheduleItem(supabase, input);
+      if (error) {
+        setSubmitting(false);
+        setFormError(error.message || 'Could not create the item. Try again.');
+        return;
+      }
     }
+    setSubmitting(false);
     onSaved();
   };
 
@@ -192,9 +208,14 @@ export function ScheduleForm({ item, kids, onSaved, onCancel }: ScheduleFormProp
         </Pressable>
       </View>
 
-      {/* Kid picker */}
+      {/* Kid picker — create: pick one or more; edit: single. */}
       <View style={tw`gap-2`}>
-        <Label>Kid</Label>
+        <Label>{isEdit ? 'Kid' : 'Kids'}</Label>
+        {!isEdit ? (
+          <Text style={tw`font-sans text-[12px] font-semibold text-ink-500`}>
+            Pick one or more — the item is added for each.
+          </Text>
+        ) : null}
         {kids.length === 0 ? (
           <Text style={tw`font-sans text-[13px] font-semibold text-ink-500`}>
             No kids yet — add a kid first.
@@ -205,9 +226,9 @@ export function ScheduleForm({ item, kids, onSaved, onCancel }: ScheduleFormProp
               <Chip
                 key={kid.id}
                 label={kid.display_name}
-                selected={kidId === kid.id}
+                selected={kidIds.includes(kid.id)}
                 disabled={submitting}
-                onPress={() => setKidId(kid.id)}
+                onPress={() => toggleKid(kid.id)}
               />
             ))}
           </View>
@@ -240,7 +261,7 @@ export function ScheduleForm({ item, kids, onSaved, onCancel }: ScheduleFormProp
             hint="24-hour, HH:MM"
             value={startTime}
             onChangeText={(t) => {
-              setStartTime(t);
+              setStartTime(maskTime(t));
               if (formError) setFormError('');
             }}
             onBlur={() => setTouched((s) => ({ ...s, start: true }))}
@@ -257,7 +278,7 @@ export function ScheduleForm({ item, kids, onSaved, onCancel }: ScheduleFormProp
             hint="Optional"
             value={endTime}
             onChangeText={(t) => {
-              setEndTime(t);
+              setEndTime(maskTime(t));
               if (formError) setFormError('');
             }}
             onBlur={() => setTouched((s) => ({ ...s, end: true }))}

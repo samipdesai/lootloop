@@ -71,6 +71,16 @@ export function parseHHMM(value: string): { ok: true; value: string } | { ok: fa
   return { ok: true, value: `${String(hour).padStart(2, '0')}:${match[2]}` };
 }
 
+// Auto-format keystrokes from a number-pad into 'HH:MM' so a colon never needs
+// typing (the number pad has none). Keeps only digits, caps at 4 (HHMM), and
+// inserts the ':' once there are 3+ digits: '' → '', '7' → '7', '07' → '07',
+// '073' → '07:3', '0730' → '07:30'. Validation still happens via parseHHMM.
+export function maskTime(raw: string): string {
+  const digits = raw.replace(/\D/g, '').slice(0, 4);
+  if (digits.length <= 2) return digits;
+  return `${digits.slice(0, 2)}:${digits.slice(2)}`;
+}
+
 // Compare two valid 'HH:MM' strings; true when `end` is strictly after `start`.
 export function isAfter(start: string, end: string): boolean {
   return toMinutes(end) > toMinutes(start);

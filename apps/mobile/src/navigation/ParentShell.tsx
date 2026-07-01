@@ -11,7 +11,6 @@ import { useSizeClass } from '../hooks/useSizeClass';
 import { PlaceholderScreen } from '../screens/PlaceholderScreen';
 import { ChoresScreen } from '../screens/chores';
 import { ApprovalsScreen } from '../screens/approvals';
-import { KidsScreen } from '../screens/kids';
 import { RewardsScreen } from '../screens/rewards';
 import { ScheduleScreen } from '../screens/schedule';
 import { FamilyOverviewScreen } from '../screens/family';
@@ -28,7 +27,6 @@ const SECTIONS: Section[] = [
   { key: 'Home', label: 'Home', icon: 'layout-dashboard' },
   { key: 'Chores', label: 'Chores', icon: 'list-todo' },
   { key: 'Approvals', label: 'Approvals', icon: 'inbox' },
-  { key: 'Kids', label: 'Kids', icon: 'users' },
   { key: 'Rewards', label: 'Rewards', icon: 'gift' },
   { key: 'Schedule', label: 'Schedule', icon: 'calendar-clock' },
 ];
@@ -47,8 +45,6 @@ function renderSection(key: keyof ParentTabParamList, label: string) {
       return <ChoresScreen />;
     case 'Approvals':
       return <ApprovalsScreen />;
-    case 'Kids':
-      return <KidsScreen />;
     case 'Rewards':
       return <RewardsScreen />;
     case 'Schedule':
@@ -97,7 +93,6 @@ function ParentStackNav() {
   return (
     <ParentStack.Navigator screenOptions={{ headerShown: false }}>
       <ParentStack.Screen name="ParentTabs" component={ParentTabs} />
-      <ParentStack.Screen name="Kids" component={KidsScreen} />
       <ParentStack.Screen name="Schedule" component={ScheduleScreen} />
       <ParentStack.Screen name="FamilyCode" component={FamilyCodeScreen} />
     </ParentStack.Navigator>
