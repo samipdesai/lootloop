@@ -34,13 +34,24 @@ export interface PendingCompletion {
 // --- Parent identity ----------------------------------------------------------
 
 // The signed-in parent's own profile. UI uses family_id (createChore) and id
-// (reviewerId for approve/reject). maybeSingle: no row before onboarding completes.
-export function getMyParentProfile(client: LootLoopClient) {
-  return client
+// (reviewerId for approve/reject). Scoped by auth_user_id — NOT role='parent' —
+// because a family can have multiple parents (co-parents); matching on role alone
+// returns >1 row and maybeSingle() then errors. maybeSingle: no row before
+// onboarding completes.
+export async function getMyParentProfile(client: LootLoopClient): Promise<{
+  data: { id: string; family_id: string; display_name: string } | null;
+  error: { message: string } | null;
+}> {
+  const { data: auth, error: authError } = await client.auth.getUser();
+  if (authError || !auth.user) {
+    return { data: null, error: authError ?? new Error('Not authenticated') };
+  }
+  const { data, error } = await client
     .from('profiles')
     .select('id, family_id, display_name')
-    .eq('role', 'parent')
+    .eq('auth_user_id', auth.user.id)
     .maybeSingle();
+  return { data, error };
 }
 
 // --- Kids ---------------------------------------------------------------------
@@ -81,9 +92,7 @@ export function deleteChore(client: LootLoopClient, id: string) {
 // Pending completions for the Approval Queue. Embeds the instance (due_date,
 // points), the instance's chore (title, icon), and the kid via the
 // kid_id -> profiles FK, then flattens to PendingCompletion. Oldest first.
-export async function listPendingCompletions(
-  client: LootLoopClient,
-): Promise<{
+export async function listPendingCompletions(client: LootLoopClient): Promise<{
   data: PendingCompletion[] | null;
   error: import('@supabase/supabase-js').PostgrestError | null;
 }> {
