@@ -1,69 +1,46 @@
-// Parent: Family overview (#19) — the parent Home, rebuilt to the design canvas:
-// a "Parent / Family" header, a row of kid cards (Avatar + name + CoinBadge
-// balance), and a Quick-actions grid that jumps to the relevant tab. Reads the
-// roster + balances through the parent (GoTrue) session client; balances refresh
-// live via a wallets subscription.
+// Parent Home (#19, restructured). The family hub: a kid-management roster
+// (avatar + name + age + wallet balance + Bonus/History/Edit/PIN/Remove) above a
+// Quick-actions grid. Add kid / Co-parents / Family code / Log out live in the
+// ⚙ settings sheet. Kid balances refresh live via a wallets subscription. Kid
+// action forms open as page-sheet modals here — the standalone Kids screen was
+// retired and folded into Home.
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { listKidsWithBalances, signOut, subscribeToTable, type KidWithBalance } from '@lootloop/client';
+import {
+  deleteKid,
+  listKidsWithBalances,
+  signOut,
+  subscribeToTable,
+  type KidWithBalance,
+} from '@lootloop/client';
 import { supabase } from '../../lib/supabase';
 import { useSizeClass } from '../../hooks/useSizeClass';
-import { Avatar } from '../../components/ui/Avatar';
 import { Icon, type IconName } from '../../components/ui/Icon';
-import { CoinBadge } from '../../components/ui/money';
 import { useParentNav } from '../../navigation/ParentNav';
+import { KidRow } from '../kids/KidList';
+import { KidForm } from '../kids/KidForm';
+import { ChangePinForm } from '../kids/ChangePinForm';
+import { AwardBonusForm } from '../kids/AwardBonusForm';
+import { PointHistory } from '../kids/PointHistory';
 import tw from '../../lib/tw';
 
-// Quick actions surface the non-tab destinations (Kids, Schedule) + common
-// shortcuts. `tab` is the route name (tab or pushed stack screen) to navigate to.
+// Quick actions jump to the relevant tab / pushed screen. Bonus is no longer here
+// (it's an inline per-kid action on the roster).
 const ACTIONS: { id: string; label: string; icon: IconName; tile: string; fg: string; tab: string }[] = [
-  { id: 'bonus', label: 'Give bonus', icon: 'star', tile: 'bg-coin-soft', fg: '#8A6400', tab: 'Kids' },
   { id: 'chore', label: 'New chore', icon: 'plus', tile: 'bg-indigo-soft', fg: '#5B63E6', tab: 'Chores' },
   { id: 'schedule', label: 'Schedule', icon: 'calendar-clock', tile: 'bg-mint-soft', fg: '#0A6A46', tab: 'Schedule' },
   { id: 'rewards', label: 'Rewards', icon: 'gift', tile: 'bg-orange-soft', fg: '#8A4309', tab: 'Rewards' },
 ];
 
-function KidCard({ kid, first, onPress }: { kid: KidWithBalance; first: boolean; onPress: () => void }) {
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={kid.display_name}
-      style={tw.style('flex-1 items-center gap-2 rounded-card bg-surface-card px-3 py-4', {
-        shadowColor: 'rgba(32,36,58,1)',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 6,
-        elevation: 2,
-      })}
-    >
-      <Avatar name={kid.display_name} src={kid.avatar_url} size={48} ring={first} />
-      <Text numberOfLines={1} style={tw`font-display text-[14px] font-extrabold text-ink-900`}>
-        {kid.display_name}
-      </Text>
-      <CoinBadge amount={kid.wallet_balance} size="sm" tone="soft" />
-    </Pressable>
-  );
-}
-
-// Dashed "+ Add kid" tile that sits alongside the kid cards on the Family hub.
-function AddKidTile({ onPress }: { onPress: () => void }) {
-  return (
-    <Pressable
-      testID="add-kid"
-      accessibilityRole="button"
-      accessibilityLabel="Add kid"
-      onPress={onPress}
-      style={tw`flex-1 items-center justify-center gap-2 rounded-card border-2 border-dashed border-ink-300 px-3 py-4`}
-    >
-      <View style={tw`h-12 w-12 items-center justify-center rounded-full bg-indigo-soft`}>
-        <Icon name="plus" size={24} color="#5B63E6" />
-      </View>
-      <Text style={tw`font-display text-[14px] font-extrabold text-ink-700`}>Add kid</Text>
-    </Pressable>
-  );
-}
+// The active kid-action modal (mirrors the retired KidsScreen state machine).
+type ScreenView =
+  | { mode: 'list' }
+  | { mode: 'create' }
+  | { mode: 'edit'; kid: KidWithBalance }
+  | { mode: 'pin'; kid: KidWithBalance }
+  | { mode: 'bonus'; kid: KidWithBalance }
+  | { mode: 'history'; kid: KidWithBalance };
 
 function ActionCard({ label, icon, tile, fg, onPress }: (typeof ACTIONS)[number] & { onPress: () => void }) {
   return (
@@ -112,13 +89,13 @@ function MenuRow({
   );
 }
 
-// Settings menu — a small sheet anchored top-right. Account/family config
-// (Co-parents, Family code) and Log out. Kid management lives on Home, not here.
-// Tapping the scrim closes it.
+// Settings menu — a small sheet anchored top-right: Add kid, Co-parents,
+// Family code, Log out. Tapping the scrim closes it.
 function SettingsMenu({
   open,
   top,
   onClose,
+  onAddKid,
   onCoParents,
   onCode,
   onLogout,
@@ -126,6 +103,7 @@ function SettingsMenu({
   open: boolean;
   top: number;
   onClose: () => void;
+  onAddKid: () => void;
   onCoParents: () => void;
   onCode: () => void;
   onLogout: () => void;
@@ -146,6 +124,7 @@ function SettingsMenu({
             elevation: 8,
           })}
         >
+          <MenuRow testID="settings-add-kid" icon="plus" label="Add kid" onPress={onAddKid} />
           <MenuRow testID="settings-coparents" icon="users" label="Co-parents" onPress={onCoParents} />
           <MenuRow testID="settings-code" icon="lock" label="Family code" onPress={onCode} />
           <View style={tw`my-1 h-px bg-ink-100`} />
@@ -169,6 +148,9 @@ export function FamilyOverviewScreen() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [kids, setKids] = useState<KidWithBalance[] | null>(null);
   const [error, setError] = useState('');
+  const [view, setView] = useState<ScreenView>({ mode: 'list' });
+  // Inline confirmation after a bonus award (no blocking Alert.alert).
+  const [note, setNote] = useState('');
 
   const load = useCallback(async () => {
     setError('');
@@ -192,6 +174,29 @@ export function FamilyOverviewScreen() {
     return () => unsub();
   }, [load]);
 
+  const closeForm = () => setView({ mode: 'list' });
+
+  const handleSaved = useCallback(() => {
+    setView({ mode: 'list' });
+    void load();
+  }, [load]);
+
+  const handleBonusAwarded = useCallback((kid: KidWithBalance, amount: number) => {
+    setView({ mode: 'list' });
+    setNote(`Gave ${amount} pts to ${kid.display_name}.`);
+    void load();
+  }, [load]);
+
+  const handleDelete = useCallback(async (kid: KidWithBalance) => {
+    setError('');
+    const { error: err } = await deleteKid(supabase, kid.id);
+    if (err) {
+      setError(`Could not delete ${kid.display_name}. Try again.`);
+      return;
+    }
+    setKids((prev) => (prev ? prev.filter((k) => k.id !== kid.id) : prev));
+  }, []);
+
   if (kids === null) {
     return (
       <View style={tw`flex-1 items-center justify-center bg-surface-page`}>
@@ -200,8 +205,9 @@ export function FamilyOverviewScreen() {
     );
   }
 
-  // Pair the quick actions into rows of two for the grid.
-  const actionRows = [ACTIONS.slice(0, 2), ACTIONS.slice(2, 4)];
+  // Pair the quick actions into rows of two; a lone last card keeps half width
+  // via a flex spacer.
+  const actionRows = [ACTIONS.slice(0, 2), ACTIONS.slice(2)];
 
   return (
     <View style={tw`flex-1 bg-surface-page`}>
@@ -209,6 +215,11 @@ export function FamilyOverviewScreen() {
         open={menuOpen}
         top={insets.top}
         onClose={() => setMenuOpen(false)}
+        onAddKid={() => {
+          setMenuOpen(false);
+          setNote('');
+          setView({ mode: 'create' });
+        }}
         onCoParents={() => {
           setMenuOpen(false);
           nav.navigate('CoParents');
@@ -222,77 +233,133 @@ export function FamilyOverviewScreen() {
           void signOut(supabase);
         }}
       />
+
+      {/* Kid action forms as a native page-sheet (smooth slide up/down). */}
+      <Modal
+        visible={view.mode !== 'list'}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={closeForm}
+      >
+        <View style={tw`flex-1 bg-surface-page`}>
+          {view.mode === 'create' ? <KidForm onSaved={handleSaved} onCancel={closeForm} /> : null}
+          {view.mode === 'edit' ? (
+            <KidForm kid={view.kid} onSaved={handleSaved} onCancel={closeForm} />
+          ) : null}
+          {view.mode === 'pin' ? (
+            <ChangePinForm kid={view.kid} onSaved={closeForm} onCancel={closeForm} />
+          ) : null}
+          {view.mode === 'bonus' ? (
+            <AwardBonusForm
+              kid={view.kid}
+              onSaved={(amount) => handleBonusAwarded(view.kid, amount)}
+              onCancel={closeForm}
+            />
+          ) : null}
+          {view.mode === 'history' ? <PointHistory kid={view.kid} onBack={closeForm} /> : null}
+        </View>
+      </Modal>
+
       <ScrollView
         style={tw`flex-1 bg-surface-page`}
         contentContainerStyle={tw.style('gap-4 px-4 pb-4', isRegular ? 'mx-auto w-full max-w-[640px]' : '', {
           paddingTop: insets.top + 12,
         })}
       >
-      <View style={tw`flex-row items-start justify-between`}>
-        <View>
-          <Text style={tw`font-sans text-[13px] font-extrabold uppercase tracking-wide text-[13px] text-indigo`}>
-            Parent
-          </Text>
-          <Text style={tw`font-display text-[26px] font-extrabold text-ink-900`}>Family</Text>
+        <View style={tw`flex-row items-start justify-between`}>
+          <View>
+            <Text style={tw`font-sans text-[13px] font-extrabold uppercase tracking-wide text-[13px] text-indigo`}>
+              Parent
+            </Text>
+            <Text style={tw`font-display text-[26px] font-extrabold text-ink-900`}>Family</Text>
+          </View>
+          <Pressable
+            testID="parent-settings"
+            accessibilityRole="button"
+            accessibilityLabel="Settings"
+            onPress={() => setMenuOpen(true)}
+            hitSlop={8}
+            style={tw.style('h-10 w-10 items-center justify-center rounded-full bg-surface-card', {
+              shadowColor: 'rgba(32,36,58,1)',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.08,
+              shadowRadius: 6,
+              elevation: 2,
+            })}
+          >
+            <Icon name="settings" size={22} color="#443F4E" />
+          </Pressable>
         </View>
-        <Pressable
-          testID="parent-settings"
-          accessibilityRole="button"
-          accessibilityLabel="Settings"
-          onPress={() => setMenuOpen(true)}
-          hitSlop={8}
-          style={tw.style('h-10 w-10 items-center justify-center rounded-full bg-surface-card', {
-            shadowColor: 'rgba(32,36,58,1)',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.08,
-            shadowRadius: 6,
-            elevation: 2,
-          })}
-        >
-          <Icon name="settings" size={22} color="#443F4E" />
-        </Pressable>
-      </View>
 
-      {error ? (
-        <View style={tw`rounded-md bg-danger-soft px-4 py-3`}>
-          <Text style={tw`font-sans text-[14px] font-bold text-danger-ink`}>{error}</Text>
-        </View>
-      ) : null}
+        {error ? (
+          <View style={tw`rounded-md bg-danger-soft px-4 py-3`}>
+            <Text style={tw`font-sans text-[14px] font-bold text-danger-ink`}>{error}</Text>
+          </View>
+        ) : null}
 
-      {kids.length > 0 ? (
-        <View style={tw`flex-row flex-wrap gap-3`}>
-          {kids.map((k, i) => (
-            <KidCard key={k.id} kid={k} first={i === 0} onPress={() => nav.navigate('Kids')} />
-          ))}
-          <AddKidTile onPress={() => nav.navigate('Kids', { create: true })} />
-        </View>
-      ) : (
-        <Pressable
-          onPress={() => nav.navigate('Kids', { create: true })}
-          style={tw`items-center gap-2 rounded-card bg-surface-card px-6 py-10`}
-        >
-          <Icon name="smile" size={40} color="#A39CAD" />
-          <Text style={tw`text-center font-display text-[16px] font-extrabold text-ink-800`}>
-            Add your first kid
-          </Text>
-          <Text style={tw`text-center font-sans text-[13px] font-bold text-ink-400`}>
-            Tap to set up a child profile.
-          </Text>
-        </Pressable>
-      )}
+        {note ? (
+          <View style={tw`rounded-card bg-mint-soft px-4 py-3`}>
+            <Text style={tw`font-sans text-[14px] font-bold text-mint-ink`}>{note}</Text>
+          </View>
+        ) : null}
 
-      <Text style={tw`mt-1 font-sans text-[13px] font-extrabold uppercase tracking-wide text-[13px] text-ink-400`}>
-        Quick actions
-      </Text>
-      <View style={tw`gap-3`}>
-        {actionRows.map((row, i) => (
-          <View key={i} style={tw`flex-row gap-3`}>
-            {row.map((a) => (
-              <ActionCard key={a.id} {...a} onPress={() => nav.navigate(a.tab)} />
+        {/* Kid roster — full management cards */}
+        {kids.length > 0 ? (
+          <View style={tw`gap-3`}>
+            {kids.map((k) => (
+              <KidRow
+                key={k.id}
+                kid={k}
+                balance={k.wallet_balance}
+                onEdit={() => {
+                  setNote('');
+                  setView({ mode: 'edit', kid: k });
+                }}
+                onChangePin={() => {
+                  setNote('');
+                  setView({ mode: 'pin', kid: k });
+                }}
+                onGiveBonus={() => {
+                  setNote('');
+                  setView({ mode: 'bonus', kid: k });
+                }}
+                onHistory={() => {
+                  setNote('');
+                  setView({ mode: 'history', kid: k });
+                }}
+                onDelete={() => handleDelete(k)}
+              />
             ))}
           </View>
-        ))}
-      </View>
+        ) : (
+          <Pressable
+            testID="add-kid"
+            onPress={() => setView({ mode: 'create' })}
+            style={tw`items-center gap-2 rounded-card bg-surface-card px-6 py-10`}
+          >
+            <Icon name="smile" size={40} color="#A39CAD" />
+            <Text style={tw`text-center font-display text-[16px] font-extrabold text-ink-800`}>
+              Add your first kid
+            </Text>
+            <Text style={tw`text-center font-sans text-[13px] font-bold text-ink-400`}>
+              Tap to set up a child profile.
+            </Text>
+          </Pressable>
+        )}
+
+        <Text style={tw`mt-1 font-sans text-[13px] font-extrabold uppercase tracking-wide text-[13px] text-ink-400`}>
+          Quick actions
+        </Text>
+        <View style={tw`gap-3`}>
+          {actionRows.map((row, i) => (
+            <View key={i} style={tw`flex-row gap-3`}>
+              {row.map((a) => (
+                <ActionCard key={a.id} {...a} onPress={() => nav.navigate(a.tab)} />
+              ))}
+              {row.length === 1 ? <View style={tw`flex-1`} /> : null}
+            </View>
+          ))}
+        </View>
       </ScrollView>
     </View>
   );

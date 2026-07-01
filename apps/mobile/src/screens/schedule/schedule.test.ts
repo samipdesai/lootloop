@@ -5,7 +5,36 @@ import {
   describeDays,
   parseHHMM,
   isAfter,
+  maskTime,
 } from './schedule';
+
+describe('maskTime', () => {
+  it('inserts the colon after the second digit', () => {
+    expect(maskTime('0730')).toBe('07:30');
+  });
+
+  it('leaves one or two digits uncolonized', () => {
+    expect(maskTime('7')).toBe('7');
+    expect(maskTime('07')).toBe('07');
+  });
+
+  it('shows a partial minute after three digits', () => {
+    expect(maskTime('073')).toBe('07:3');
+  });
+
+  it('strips non-digits (including an already-typed colon)', () => {
+    expect(maskTime('07:30')).toBe('07:30');
+    expect(maskTime('a7b3')).toBe('73');
+  });
+
+  it('caps at four digits (HHMM)', () => {
+    expect(maskTime('073099')).toBe('07:30');
+  });
+
+  it('returns empty for empty', () => {
+    expect(maskTime('')).toBe('');
+  });
+});
 
 describe('canonicalDays', () => {
   it('orders Monday-first and de-dupes', () => {
