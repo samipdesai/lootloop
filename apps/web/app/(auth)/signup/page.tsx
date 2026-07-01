@@ -3,9 +3,11 @@ import { Card } from '@/components/ui/Card';
 import { CardHeader } from '@/components/ui/CardHeader';
 import { SignupForm } from './SignupForm';
 
+import { AuthCentered } from '../_AuthCentered';
+
 export default function SignupPage() {
   return (
-    <>
+    <AuthCentered>
       <Brand />
       <Card className="w-full">
         <div className="flex flex-col gap-5">
@@ -13,6 +15,6 @@ export default function SignupPage() {
           <SignupForm />
         </div>
       </Card>
-    </>
+    </AuthCentered>
   );
 }

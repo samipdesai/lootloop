@@ -58,10 +58,49 @@
   --radius-2xl: 36px;
   --radius-card: 24px;
   --radius-pill: 999px;
+
+  /* ── Animations (marketing + auth brand panels) ── */
+  --animate-float-coin: float-coin 4.6s ease-in-out infinite;
+  --animate-bob: bob 4.8s ease-in-out infinite;
+}
+
+@keyframes float-coin {
+  0%,
+  100% {
+    transform: translateY(0) rotate(var(--coin-rot, 0deg));
+  }
+  50% {
+    transform: translateY(-13px) rotate(var(--coin-rot, 0deg));
+  }
+}
+
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-2deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(2deg);
+  }
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   background: var(--color-surface-page);
   color: var(--color-ink-900);
   font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+/* Respect reduced-motion: disable brand-panel/marketing motion + smooth scroll. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .animate-float-coin,
+  .animate-bob {
+    animation: none !important;
+  }
 }
