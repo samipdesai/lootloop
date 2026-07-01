@@ -74,9 +74,14 @@ const INVALID_CREDENTIALS = {
  * Resolve the HS256 signing key the rest of the stack verifies against.
  *
  * Priority:
- *   1. SUPABASE_JWT_SECRET — set this as a function secret in deployed envs
- *      (`supabase secrets set SUPABASE_JWT_SECRET=...`). Explicit and obvious.
- *   2. The symmetric ("oct") key inside SUPABASE_JWKS — the local `supabase`
+ *   1. KID_AUTH_JWT_SECRET — set this as a function secret in deployed envs
+ *      (`supabase secrets set KID_AUTH_JWT_SECRET=...`). This is the deployed
+ *      path: set it to the project's legacy HS256 JWT secret, which PostgREST
+ *      still accepts even on projects using asymmetric signing keys. NOTE: the
+ *      platform RESERVES the `SUPABASE_` prefix, so a `SUPABASE_*` secret can't
+ *      be set — hence the un-prefixed name.
+ *   2. SUPABASE_JWT_SECRET — auto-injected in some envs; kept as a fallback.
+ *   3. The symmetric ("oct") key inside SUPABASE_JWKS — the local `supabase`
  *      stack injects SUPABASE_JWKS (NOT SUPABASE_JWT_SECRET) and its legacy
  *      HS256 key is the project JWT secret PostgREST still accepts. This lets
  *      the function work locally with zero extra config.
@@ -84,7 +89,8 @@ const INVALID_CREDENTIALS = {
  * Never hardcoded; never logged.
  */
 function getJwtSecret(): Uint8Array {
-  const explicit = Deno.env.get("SUPABASE_JWT_SECRET");
+  const explicit = Deno.env.get("KID_AUTH_JWT_SECRET") ??
+    Deno.env.get("SUPABASE_JWT_SECRET");
   if (explicit && explicit.length > 0) {
     return new TextEncoder().encode(explicit);
   }
@@ -158,7 +164,10 @@ Deno.serve(async (req) => {
   try {
     secret = getJwtSecret();
   } catch {
-    // Misconfiguration, not the caller's fault. Don't leak why.
+    // Misconfiguration, not the caller's fault. Log the FACT (never the secret)
+    // so this surfaces in edge logs instead of an opaque 500 — set
+    // KID_AUTH_JWT_SECRET as a function secret to fix.
+    console.error("kid-auth: JWT signing secret unavailable — set KID_AUTH_JWT_SECRET");
     return json({ error: "server_error" }, 500);
   }
 
