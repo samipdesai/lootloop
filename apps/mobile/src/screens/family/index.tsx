@@ -113,18 +113,20 @@ function MenuRow({
 }
 
 // Settings menu — a small sheet anchored top-right. Account/family config
-// (Family code) and Log out. Kid management lives on Home, not here. Tapping the
-// scrim closes it. (Co-parent/guardian management will slot in here later.)
+// (Co-parents, Family code) and Log out. Kid management lives on Home, not here.
+// Tapping the scrim closes it.
 function SettingsMenu({
   open,
   top,
   onClose,
+  onCoParents,
   onCode,
   onLogout,
 }: {
   open: boolean;
   top: number;
   onClose: () => void;
+  onCoParents: () => void;
   onCode: () => void;
   onLogout: () => void;
 }) {
@@ -144,6 +146,7 @@ function SettingsMenu({
             elevation: 8,
           })}
         >
+          <MenuRow testID="settings-coparents" icon="users" label="Co-parents" onPress={onCoParents} />
           <MenuRow testID="settings-code" icon="lock" label="Family code" onPress={onCode} />
           <View style={tw`my-1 h-px bg-ink-100`} />
           <MenuRow
@@ -206,6 +209,10 @@ export function FamilyOverviewScreen() {
         open={menuOpen}
         top={insets.top}
         onClose={() => setMenuOpen(false)}
+        onCoParents={() => {
+          setMenuOpen(false);
+          nav.navigate('CoParents');
+        }}
         onCode={() => {
           setMenuOpen(false);
           nav.navigate('FamilyCode');
