@@ -8,12 +8,15 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   hint?: string;
   error?: string;
   suffix?: ReactNode;
+  // Optional leading icon rendered inside the field, before the input (mirrors
+  // `suffix`). Used by the login redesign (mail / lock icons).
+  iconLeft?: ReactNode;
 }
 
 // h-12, rounded-lg (22px), 2px inset ring: border idle → indigo focus (+ glow)
 // → danger on error. Nunito 600 (design/components/core/Input.jsx contract).
 export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
-  { label, hint, error, suffix, id, className = '', ...rest },
+  { label, hint, error, suffix, iconLeft, id, className = '', ...rest },
   ref,
 ) {
   const generated = useId();
@@ -34,6 +37,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
       <div
         className={`flex h-12 items-center gap-2.5 rounded-lg bg-surface-card px-4 transition-shadow ${ring}`}
       >
+        {iconLeft && <span className="flex items-center text-ink-400">{iconLeft}</span>}
         <input
           ref={ref}
           id={inputId}

@@ -18,7 +18,7 @@ const PUBLIC_ROUTES = ['/login', '/signup', '/forgot-password', '/confirm'];
 // Fully public marketing/legal routes (M7 #55, #53). These render for anyone —
 // logged-out or logged-in, onboarded or not — and must never trigger an auth or
 // onboarding redirect. Checked first, before any session work.
-const MARKETING_ROUTES = ['/coming-soon', '/privacy', '/terms'];
+const MARKETING_ROUTES = ['/welcome', '/coming-soon', '/privacy', '/terms'];
 
 // Refreshes the Supabase session on every request (the standard @supabase/ssr
 // updateSession pattern) and gates routes by session + profile state (spec §7).
@@ -66,12 +66,16 @@ export async function middleware(request: NextRequest) {
   // link) case itself.
   if (pathname.startsWith('/reset-password')) return response;
 
-  // No session: public auth routes (/login, /signup, …) render directly; any
-  // other path (the apex "/" and gated dashboard routes) sends the visitor to
-  // /login — the app is now publicly launched (#56). (Pre-launch this pointed at
-  // /coming-soon, which still exists as a route but is no longer the apex.)
+  // No session: public auth routes (/login, /signup, …) render directly; the
+  // apex "/" REWRITES to the marketing homepage (URL stays "/", no visible
+  // redirect); any other gated path (dashboard routes) still bounces to /login.
   if (!user) {
     if (isPublicRoute) return response;
+    if (pathname === '/') {
+      const url = request.nextUrl.clone();
+      url.pathname = '/welcome';
+      return NextResponse.rewrite(url);
+    }
     return redirect(request, '/login');
   }
 

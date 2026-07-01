@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Mail, Lock } from 'lucide-react';
 import { signInParent, mapAuthError } from '@lootloop/client';
 import { createClient } from '@/lib/supabase/client';
 import { validateEmail, validatePasswordPresent } from '@/lib/auth/validation';
@@ -56,6 +57,7 @@ export function LoginForm() {
         autoCapitalize="none"
         autoCorrect="off"
         placeholder="you@example.com"
+        iconLeft={<Mail size={19} />}
         value={email}
         disabled={submitting}
         error={touched.email ? emailErr : ''}
@@ -70,12 +72,25 @@ export function LoginForm() {
       />
 
       <div className="flex flex-col gap-1.5">
+        <div className="flex items-center justify-between">
+          <label htmlFor="login-password" className="font-sans text-sm font-bold text-ink-900">
+            Password
+          </label>
+          <Link
+            href="/forgot-password"
+            className="font-sans text-[13px] font-bold text-indigo-strong hover:underline"
+          >
+            Forgot password?
+          </Link>
+        </div>
         <PasswordInput
-          label="Password"
+          id="login-password"
+          aria-label="Password"
           autoComplete="current-password"
           autoCapitalize="none"
           autoCorrect="off"
           placeholder="Your password"
+          iconLeft={<Lock size={19} />}
           value={password}
           disabled={submitting}
           error={touched.password ? passwordErr : ''}
@@ -88,12 +103,6 @@ export function LoginForm() {
             setPasswordErr(validatePasswordPresent(password));
           }}
         />
-        <Link
-          href="/forgot-password"
-          className="self-end font-sans text-[13px] font-bold text-indigo-strong hover:underline"
-        >
-          Forgot password?
-        </Link>
       </div>
 
       {formError && <ErrorBanner>{formError}</ErrorBanner>}
@@ -108,15 +117,6 @@ export function LoginForm() {
       >
         Log in
       </Button>
-
-      {/* OAuth: Sign in with Apple — deferred, see spec §1.4 */}
-
-      <p className="text-center font-sans text-sm font-semibold text-ink-500">
-        New here?{' '}
-        <Link href="/signup" className="font-bold text-orange-strong hover:underline">
-          Create an account
-        </Link>
-      </p>
     </form>
   );
 }
