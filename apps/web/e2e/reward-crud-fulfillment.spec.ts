@@ -36,7 +36,8 @@ test.describe('reward CRUD → fulfillment', () => {
     await expect(page.getByRole('heading', { name: 'Rewards' })).toBeVisible();
 
     // --- CREATE ---
-    await page.getByRole('button', { name: /add (your first )?reward/i })
+    await page
+      .getByRole('button', { name: /add (your first )?reward/i })
       .first()
       .click();
     let dialog = page.getByRole('dialog');
@@ -65,7 +66,7 @@ test.describe('reward CRUD → fulfillment', () => {
     // Seed a kid purchase (status 'purchased') awaiting hand-off.
     seedPurchasedReward(family, purchasedTitle, 200, '🍦');
 
-    await page.getByRole('tab', { name: 'Fulfillment' }).click();
+    await page.getByRole('tab', { name: 'To give' }).click();
     await expect(page.getByText(purchasedTitle)).toBeVisible();
     await expect(page.getByText(family.kidName)).toBeVisible();
 

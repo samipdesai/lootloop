@@ -23,7 +23,7 @@ export function RewardsClient() {
         <SegmentedTabs
           tabs={[
             { value: 'store', label: 'Store' },
-            { value: 'fulfillment', label: 'Fulfillment' },
+            { value: 'fulfillment', label: 'To give' },
           ]}
           value={tab}
           onChange={v => setTab(v as Tab)}
