@@ -14,3 +14,4 @@ export * from './savings';
 export * from './schedule';
 export * from './realtime';
 export * from './account';
+export * from './family';
