@@ -1,0 +1,10 @@
+# docs-site is its OWN pnpm workspace root, independent of the repo root's
+# workspace (whose globs — apps/*, packages/* — deliberately exclude docs-site).
+# Running pnpm from this directory resolves this file first, so the wiki installs
+# against its own lockfile and never bloats app installs or the quality gates.
+packages: []
+
+# core-js ships a (funding-message) build script; allow it so install doesn't
+# fail on the unreviewed-build check.
+allowBuilds:
+  core-js: true
