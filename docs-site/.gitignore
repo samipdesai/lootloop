@@ -1,0 +1,9 @@
+# Docusaurus
+/.docusaurus/
+/build/
+/node_modules/
+
+# Misc
+.DS_Store
+*.log
+.env.local

@@ -7,6 +7,8 @@
     "test": "pnpm -r test",
     "build": "pnpm -r build",
     "format": "prettier --write .",
+    "docs:dev": "pnpm -C docs-site start",
+    "docs:build": "pnpm -C docs-site build",
     "test:integration": "bash supabase/tests/run-all.sh",
     "prepare": "husky"
   },

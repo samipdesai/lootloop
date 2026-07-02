@@ -4,12 +4,15 @@ A family chore & reward management app. Parents create chores, rewards, schedule
 
 ## Documentation
 
-| Doc                                                        | What                                                                               |
-| ---------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| [**ARCHITECTURE.md**](./ARCHITECTURE.md)                   | System, data model (ER), security/RLS model, key flows, deployment — with diagrams |
-| [lootloop-technical-plan.md](./lootloop-technical-plan.md) | Source of truth: stack rationale, 42-task breakdown, SDLC conventions              |
-| [docs/session-notes/](./docs/session-notes/)               | Per-session progress notes                                                         |
-| [CLAUDE.md](./CLAUDE.md)                                   | Guidance for Claude Code in this repo                                              |
+The **[system-design wiki](./docs-site/)** is the primary docs surface — architecture, data model, security/RLS, edge & atomic functions, per-feature guides, and end-to-end flows (with Mermaid diagrams). It's a Docusaurus site under `docs-site/`, published to **https://samipdesai.github.io/lootloop/** on merge to `main`. Run it locally with `cd docs-site && pnpm install && pnpm start`.
+
+| Doc                                                        | What                                                                       |
+| ---------------------------------------------------------- | -------------------------------------------------------------------------- |
+| [**Wiki (`docs-site/`)**](./docs-site/)                    | Full system-design & feature wiki (Docusaurus) — the primary reference     |
+| [ARCHITECTURE.md](./ARCHITECTURE.md)                       | Legacy architecture doc — content now lives in the wiki; kept as a pointer |
+| [lootloop-technical-plan.md](./lootloop-technical-plan.md) | Source of truth: stack rationale, 42-task breakdown, SDLC conventions      |
+| [docs/](./docs/)                                           | Ops runbooks, compliance reviews, App Store material, per-session notes    |
+| [CLAUDE.md](./CLAUDE.md)                                   | Guidance for Claude Code in this repo                                      |
 
 ## Stack
 

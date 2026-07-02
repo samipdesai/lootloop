@@ -1,0 +1,55 @@
+name: Deploy Docs (GitHub Pages)
+
+# Builds the Docusaurus wiki in docs-site/ and publishes it to GitHub Pages.
+# docs-site is its OWN pnpm workspace root (docs-site/pnpm-workspace.yaml) — it is
+# not a member of the repo-root workspace, so running pnpm here uses its own
+# lockfile and never touches the app quality gates.
+#
+# One-time setup: repo Settings -> Pages -> Source = GitHub Actions.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs-site/**'
+      - '.github/workflows/deploy-docs.yml'
+  workflow_dispatch: {}
+
+# Allow the deploy-pages action to publish; concurrency avoids overlapping runs.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: docs-site
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # pnpm resolves docs-site/pnpm-workspace.yaml as its own root, so this uses
+      # the wiki's own lockfile independent of the repo workspace.
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs-site/build
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
