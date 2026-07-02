@@ -22,6 +22,8 @@ jest.mock('../lib/supabase', () => ({
     auth: {
       getSession: () => mockGetSession(),
       onAuthStateChange: (cb: AuthCb) => mockOnAuthStateChange(cb),
+      startAutoRefresh: jest.fn(),
+      stopAutoRefresh: jest.fn(),
     },
   },
 }));
@@ -93,13 +95,39 @@ describe('SessionProvider seeding from a persisted session', () => {
     expect(result.current.hasParentProfile).toBe(false);
   });
 
-  it('treats a lookup error as "no profile" (lands on onboarding, not a broken shell)', async () => {
+  it('does NOT treat a transient lookup error as "no profile" (no onboarding misroute)', async () => {
     mockGetSession.mockResolvedValue({ data: { session: fakeSession() } });
     mockMaybeSingle.mockResolvedValue({ data: null, error: { message: 'boom' } });
 
-    const { result } = renderSession();
-    await waitFor(() => expect(result.current.status).toBe('signedIn'));
+    const { result, unmount } = renderSession();
+    // The lookup runs and errors...
+    await waitFor(() => expect(mockMaybeSingle).toHaveBeenCalled());
+    // ...but we stay on loading (Splash) and retry, rather than flipping to
+    // signedIn-without-profile, which the navigator would render as onboarding.
+    expect(result.current.status).toBe('loading');
     expect(result.current.hasParentProfile).toBe(false);
+    unmount(); // clears the pending backoff-retry timer
+  });
+
+  it('recovers to signedIn when a later re-check succeeds (e.g. token refresh / foreground)', async () => {
+    mockGetSession.mockResolvedValue({ data: { session: fakeSession('u3') } });
+    mockMaybeSingle
+      .mockResolvedValueOnce({ data: null, error: { message: 'boom' } })
+      .mockResolvedValue({ data: { id: 'p1' }, error: null });
+
+    const { result, unmount } = renderSession();
+    await waitFor(() => expect(mockMaybeSingle).toHaveBeenCalledTimes(1));
+    expect(result.current.status).toBe('loading');
+
+    // A later auth event (token refresh, re-login) re-runs the lookup, which now
+    // succeeds — the user self-heals without a manual sign-out. This also clears
+    // the pending backoff-retry timer.
+    await act(async () => {
+      emittedCb!('TOKEN_REFRESHED', fakeSession('u3'));
+    });
+    await waitFor(() => expect(result.current.status).toBe('signedIn'));
+    expect(result.current.hasParentProfile).toBe(true);
+    unmount();
   });
 });
 

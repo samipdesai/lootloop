@@ -30,6 +30,7 @@ import {
 } from '@lootloop/client';
 import { supabase } from '../../lib/supabase';
 import { useSizeClass } from '../../hooks/useSizeClass';
+import { useRefetchOnForeground } from '../../hooks/useRefetchOnForeground';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
@@ -113,6 +114,11 @@ export function ApprovalsScreen() {
   useEffect(() => {
     load();
   }, [load]);
+
+  // Self-heal: if the initial load failed during a backend blip, reopening the
+  // app re-runs it (re-resolving the parent profile) instead of stranding the
+  // user on the error state until they sign out and back in.
+  useRefetchOnForeground(load);
 
   // Quiet refetches for realtime (#41): refresh a queue in place without flashing
   // the full-screen loading state. Used by the live subscriptions below.

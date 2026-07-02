@@ -15,6 +15,7 @@ import {
   type KidProfile,
 } from '@lootloop/client';
 import { supabase } from '../../lib/supabase';
+import { useRefetchOnForeground } from '../../hooks/useRefetchOnForeground';
 import { Button } from '../../components/ui/Button';
 import { FormError } from '../auth/AuthScreen';
 import tw from '../../lib/tw';
@@ -57,6 +58,9 @@ export function ScheduleScreen() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  // Self-heal on foreground: recover a transient load failure without a re-login.
+  useRefetchOnForeground(() => void load());
 
   const kidsById = useMemo(() => {
     const map = new Map<string, KidProfile>();
