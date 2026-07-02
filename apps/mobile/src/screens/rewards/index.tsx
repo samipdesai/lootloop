@@ -23,6 +23,7 @@ import {
 } from '@lootloop/client';
 import { supabase } from '../../lib/supabase';
 import { useSizeClass } from '../../hooks/useSizeClass';
+import { useRefetchOnForeground } from '../../hooks/useRefetchOnForeground';
 import { Button } from '../../components/ui/Button';
 import { Tabs } from '../../components/ui/Tabs';
 import { Icon } from '../../components/ui/Icon';
@@ -103,6 +104,12 @@ export function RewardsScreen() {
     void loadStore();
     void loadGive();
   }, [loadStore, loadGive]);
+
+  // Self-heal on foreground: recover a transient load failure without a re-login.
+  useRefetchOnForeground(() => {
+    void loadStore();
+    void loadGive();
+  });
 
   // Quiet refetch for realtime (#41): refresh the fulfillment queue in place
   // without flashing the section's loading state.

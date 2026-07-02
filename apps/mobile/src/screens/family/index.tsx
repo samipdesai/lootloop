@@ -16,6 +16,7 @@ import {
 } from '@lootloop/client';
 import { supabase } from '../../lib/supabase';
 import { useSizeClass } from '../../hooks/useSizeClass';
+import { useRefetchOnForeground } from '../../hooks/useRefetchOnForeground';
 import { Icon, type IconName } from '../../components/ui/Icon';
 import { useParentNav } from '../../navigation/ParentNav';
 import { KidRow } from '../kids/KidList';
@@ -166,6 +167,10 @@ export function FamilyOverviewScreen() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  // Self-heal: reopening the app re-runs the roster load, so a transient failure
+  // recovers on foreground rather than persisting until sign-out.
+  useRefetchOnForeground(() => void load());
 
   // Realtime (#41): kid balances refresh live as chores get approved / bonuses
   // land. RLS scopes the wallets stream to this parent's family.

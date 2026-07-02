@@ -9,6 +9,7 @@ import { ActivityIndicator, Modal, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { listChores, listKids, deleteChore, type Chore, type KidProfile } from '@lootloop/client';
 import { supabase } from '../../lib/supabase';
+import { useRefetchOnForeground } from '../../hooks/useRefetchOnForeground';
 import { Button } from '../../components/ui/Button';
 import { Icon } from '../../components/ui/Icon';
 import { FormError } from '../auth/AuthScreen';
@@ -61,6 +62,9 @@ export function ChoresScreen() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  // Self-heal on foreground: recover a transient load failure without a re-login.
+  useRefetchOnForeground(() => void load());
 
   const kidsById = useMemo(() => {
     const map = new Map<string, KidProfile>();
